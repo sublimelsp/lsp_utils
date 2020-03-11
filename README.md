@@ -1,4 +1,4 @@
-# LSP-utilities for Package Control
+# LSP utilities for Package Control
 
 Module with LSP-related utilities for Sublime Text
 
