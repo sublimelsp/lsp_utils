@@ -43,10 +43,15 @@ class ServerNpmResource(object):
 
     def __init__(self, package_name, server_directory, server_binary_path):
         self._initialized = False
+        self._is_ready = False
         self._package_name = package_name
         self._server_directory = server_directory
         self._binary_path = server_binary_path
         self._package_cache_path = None
+
+    @property
+    def ready(self):
+        return self._is_ready
 
     @property
     def binary_path(self):
@@ -89,18 +94,25 @@ class ServerNpmResource(object):
 
     def _install_dependencies(self, cache_server_path):
         dependencies_installed = os.path.isdir(os.path.join(cache_server_path, 'node_modules'))
-        print('{}: Server {} installed.'.format(self._package_name, 'is' if dependencies_installed else 'is not'))
 
-        if not dependencies_installed:
-            # this will be called only when the plugin gets:
-            # - installed for the first time,
-            # - or when updated on package control
-            log_and_show_message('{}: Installing server.'.format(self._package_name))
+        if dependencies_installed:
+            self._is_ready = True
+            return
 
-            run_command(
-                lambda: log_and_show_message(
-                    '{}: Server installed.'.format(self._package_name)),
-                lambda error: log_and_show_message(
-                    '{}: Error while installing the server.'.format(self._package_name), error),
-                ["npm", "install", "--verbose", "--production", "--prefix", cache_server_path, cache_server_path]
-            )
+        # this will be called only when the plugin gets:
+        # - installed for the first time,
+        # - or when updated on package control
+        log_and_show_message('{}: Installing server.'.format(self._package_name))
+
+        run_command(
+            self._on_install_success, self._on_install_error,
+            ["npm", "install", "--verbose", "--production", "--prefix", cache_server_path, cache_server_path]
+        )
+
+    def _on_install_success(self):
+        self._is_ready = True
+        log_and_show_message(
+            '{}: Server installed. It\'s recommended to restart Sublime Text.'.format(self._package_name))
+
+    def _on_install_error(self, error):
+        log_and_show_message('{}: Error while installing the server.'.format(self._package_name), error)
