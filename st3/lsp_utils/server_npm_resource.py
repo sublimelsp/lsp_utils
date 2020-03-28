@@ -1,4 +1,3 @@
-import json
 import os
 import shutil
 import sublime
@@ -78,10 +77,10 @@ class ServerNpmResource(object):
         if os.path.isdir(cache_server_path):
             # Server already in cache. Check if version has changed and if so, delete existing copy in cache.
             try:
-                src_package_json = json.loads(ResourcePath(src_path, 'package.json').read_text())
-                dst_package_json = json.loads(ResourcePath(dst_path, 'package.json').read_text())
+                src_package_json = ResourcePath(src_path, 'package.json').read_text()
+                dst_package_json = ResourcePath(dst_path, 'package.json').read_text()
 
-                if src_package_json['version'] != dst_package_json['version']:
+                if src_package_json != dst_package_json:
                     shutil.rmtree(cache_server_path)
             except FileNotFoundError:
                 shutil.rmtree(cache_server_path)
