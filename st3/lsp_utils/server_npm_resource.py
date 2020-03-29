@@ -4,7 +4,7 @@ import sublime
 import subprocess
 import threading
 
-from sublime_lib import ResourcePath
+from sublime_lib import ActivityIndicator, ResourcePath
 
 
 def run_command(on_exit, on_error, popen_args):
@@ -28,9 +28,10 @@ def run_command(on_exit, on_error, popen_args):
     return thread
 
 
-def log_and_show_message(msg, additional_logs=None):
+def log_and_show_message(msg, additional_logs=None, show_in_status=True):
     print(msg, '\n', additional_logs) if additional_logs else print(msg)
-    sublime.active_window().status_message(msg)
+    if show_in_status:
+        sublime.active_window().status_message(msg)
 
 
 class ServerNpmResource(object):
@@ -47,6 +48,7 @@ class ServerNpmResource(object):
         self._server_directory = server_directory
         self._binary_path = server_binary_path
         self._package_cache_path = None
+        self._activity_indicator = None
 
     @property
     def ready(self):
@@ -101,7 +103,13 @@ class ServerNpmResource(object):
         # this will be called only when the plugin gets:
         # - installed for the first time,
         # - or when updated on package control
-        log_and_show_message('{}: Installing server.'.format(self._package_name))
+        install_message = '{}: Installing server'.format(self._package_name)
+        log_and_show_message(install_message, show_in_status=False)
+
+        active_window = sublime.active_window()
+        if active_window:
+            self._activity_indicator = ActivityIndicator(active_window.active_view(), install_message)
+            self._activity_indicator.start()
 
         run_command(
             self._on_install_success, self._on_install_error,
@@ -110,8 +118,15 @@ class ServerNpmResource(object):
 
     def _on_install_success(self):
         self._is_ready = True
+        self._stop_indicator()
         log_and_show_message(
-            '{}: Server installed. It\'s recommended to restart Sublime Text.'.format(self._package_name))
+            '{}: Server installed. Supported files might need to be re-opened.'.format(self._package_name))
 
     def _on_install_error(self, error):
+        self._stop_indicator()
         log_and_show_message('{}: Error while installing the server.'.format(self._package_name), error)
+
+    def _stop_indicator(self):
+        if self._activity_indicator:
+            self._activity_indicator.stop()
+            self._activity_indicator = None
