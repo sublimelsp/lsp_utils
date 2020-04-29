@@ -7,7 +7,14 @@ from LSP.plugin.core.settings import ClientConfig, read_client_config
 from LSP.plugin.core.typing import Callable, Dict
 from .server_npm_resource import ServerNpmResource
 
-CLIENT_SETTING_KEYS = ['env', 'experimental_capabilities', 'languages', 'initializationOptions', 'settings']
+# Keys to read and their fallbacks.
+CLIENT_SETTING_KEYS = {
+    'env': {},
+    'experimental_capabilities': {},
+    'languages': [],
+    'initializationOptions': {},
+    'settings': {},
+}  # type: ignore
 
 
 class ApiWrapper(object):
@@ -34,9 +41,7 @@ class NpmClientHandler(LanguageHandler):
     def __init__(self):
         super().__init__()
         assert self.package_name
-        self.package_name = self.package_name
         self.settings_filename = '{}.sublime-settings'.format(self.package_name)
-
         # Calling setup() also here as this might run before `plugin_loaded`.
         # Will be a no-op if already ran.
         # See https://github.com/sublimelsp/LSP/issues/899
@@ -89,8 +94,8 @@ class NpmClientHandler(LanguageHandler):
             if migrated or changed:
                 sublime.save_settings(self.settings_filename)
 
-            for key in CLIENT_SETTING_KEYS:
-                settings[key] = loaded_settings.get(key)
+            for key, default in CLIENT_SETTING_KEYS.items():
+                settings[key] = loaded_settings.get(key, default)
 
         return settings
 
@@ -137,9 +142,9 @@ class NpmClientHandler(LanguageHandler):
 
     def on_initialized(self, client) -> None:
         """
-        This method should not be overridden. Use the `on_api_ready` abstraction.
+        This method should not be overridden. Use the `on_ready` abstraction.
         """
-        self.on_api_ready(ApiWrapper(client))
+        self.on_ready(ApiWrapper(client))
 
     def on_ready(self, api: ApiWrapper) -> None:
         pass
