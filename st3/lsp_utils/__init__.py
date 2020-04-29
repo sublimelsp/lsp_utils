@@ -1,1 +1,2 @@
+from .npm_client_handler import NpmClientHandler
 from .server_npm_resource import ServerNpmResource
