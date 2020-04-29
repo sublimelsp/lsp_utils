@@ -2,11 +2,25 @@ import shutil
 import sublime
 
 from LSP.plugin.core.handlers import LanguageHandler
+from LSP.plugin.core.protocol import Response
 from LSP.plugin.core.settings import ClientConfig, read_client_config
-from LSP.plugin.core.typing import Dict
+from LSP.plugin.core.typing import Callable, Dict
 from .server_npm_resource import ServerNpmResource
 
 CLIENT_SETTING_KEYS = ['env', 'experimental_capabilities', 'languages', 'initializationOptions', 'settings']
+
+
+class ApiWrapper(object):
+    def __init__(self, client):
+        self.__client = client
+
+    def on_notification(self, method: str, handler: Callable) -> None:
+        self.__client.on_notification(method, handler)
+
+    def on_request(self, method: str, handler: Callable) -> None:
+        self.__client.on_request(
+            method,
+            lambda params, request_id: self.__client.send_response(Response(request_id, handler(params))))
 
 
 class NpmClientHandler(LanguageHandler):
@@ -120,6 +134,12 @@ class NpmClientHandler(LanguageHandler):
         return self.server.ready
 
     def on_initialized(self, client) -> None:
+        """
+        This method should not be overridden. Use the `on_api_ready` abstraction.
+        """
+        self.on_api_ready(ApiWrapper(client))
+
+    def on_ready(self, api: ApiWrapper) -> None:
         pass
 
     def _is_node_installed(self):
