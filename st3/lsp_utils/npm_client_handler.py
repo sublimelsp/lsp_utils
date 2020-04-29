@@ -25,9 +25,13 @@ class ApiWrapper(object):
         self.__client.on_notification(method, handler)
 
     def on_request(self, method: str, handler: Callable) -> None:
-        self.__client.on_request(
-            method,
-            lambda params, request_id: self.__client.send_response(Response(request_id, handler(params))))
+        def on_response(params, request_id):
+            handler(params, lambda result: send_response(request_id, result))
+
+        def send_response(request_id, result):
+            self.__client.send_response(Response(request_id, result))
+
+        self.__client.on_request(method, on_response)
 
 
 class NpmClientHandler(LanguageHandler):
