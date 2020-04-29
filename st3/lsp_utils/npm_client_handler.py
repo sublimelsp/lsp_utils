@@ -25,16 +25,16 @@ class ApiWrapper(object):
 
 class NpmClientHandler(LanguageHandler):
     # To be overridden by subclass.
-    PACKAGE_NAME = None
-    SERVER_DIRECTORY = None
-    SERVER_BINARY_PATH = None
+    package_name = None
+    server_directory = None
+    server_binary_path = None
     # Internal
-    __SERVER = None
+    __server = None
 
     def __init__(self):
         super().__init__()
-        assert self.PACKAGE_NAME
-        self.package_name = self.PACKAGE_NAME
+        assert self.package_name
+        self.package_name = self.package_name
         self.settings_filename = '{}.sublime-settings'.format(self.package_name)
 
         # Calling setup() also here as this might run before `plugin_loaded`.
@@ -44,17 +44,17 @@ class NpmClientHandler(LanguageHandler):
 
     @classmethod
     def setup(cls) -> None:
-        assert cls.PACKAGE_NAME
-        assert cls.SERVER_DIRECTORY
-        assert cls.SERVER_BINARY_PATH
-        if not cls.__SERVER:
-            cls.__SERVER = ServerNpmResource(cls.PACKAGE_NAME, cls.SERVER_DIRECTORY, cls.SERVER_BINARY_PATH)
-        cls.__SERVER.setup()
+        assert cls.package_name
+        assert cls.server_directory
+        assert cls.server_binary_path
+        if not cls.__server:
+            cls.__server = ServerNpmResource(cls.package_name, cls.server_directory, cls.server_binary_path)
+        cls.__server.setup()
 
     @classmethod
     def cleanup(cls) -> None:
-        if cls.__SERVER:
-            cls.__SERVER.cleanup()
+        if cls.__server:
+            cls.__server.cleanup()
 
     @property
     def name(self) -> str:
@@ -62,11 +62,11 @@ class NpmClientHandler(LanguageHandler):
 
     @property
     def config(self) -> ClientConfig:
-        assert self.__SERVER
+        assert self.__server
 
         configuration = {
             'enabled': True,
-            'command': ['node', self.__SERVER.binary_path] + self.get_binary_arguments(),
+            'command': ['node', self.__server.binary_path] + self.get_binary_arguments(),
         }
 
         configuration.update(self._read_configuration())
@@ -131,7 +131,9 @@ class NpmClientHandler(LanguageHandler):
         if not self._is_node_installed():
             sublime.status_message("{}: Please install Node.js for the server to work.".format(self.package_name))
             return False
-        return self.server.ready
+        if not self.__server:
+            return False
+        return self.__server.ready
 
     def on_initialized(self, client) -> None:
         """
