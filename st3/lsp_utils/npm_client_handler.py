@@ -67,7 +67,7 @@ class NpmClientHandler(LanguageHandler):
 
     @property
     def name(self) -> str:
-        return self.package_name.lower()
+        return self.package_name.lower()  # type: ignore
 
     @property
     def config(self) -> ClientConfig:
