@@ -120,7 +120,7 @@ class ServerNpmResource(object):
         self._is_ready = True
         self._stop_indicator()
         log_and_show_message(
-            '{}: Server installed. Supported files might need to be re-opened.'.format(self._package_name))
+            '{}: Server installed. Sublime Text restart might be required.'.format(self._package_name))
 
     def _on_install_error(self, error):
         self._stop_indicator()
