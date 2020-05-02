@@ -128,7 +128,7 @@ class NpmClientHandler(LanguageHandler):
             return True
         return False
 
-    def on_client_configuration_ready(self, configuration: Dict):
+    def on_client_configuration_ready(self, configuration: Dict) -> None:
         """
         Called with default configuration object that contains merged default and user settings.
 
