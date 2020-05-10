@@ -1,11 +1,30 @@
+from .server_npm_resource import ServerNpmResource
+from LSP.plugin.core.typing import Callable, Dict, List, Optional
 import shutil
 import sublime
 
-from LSP.plugin.core.handlers import LanguageHandler
-from LSP.plugin.core.protocol import Response
-from LSP.plugin.core.settings import ClientConfig, read_client_config
-from LSP.plugin.core.typing import Callable, Dict
-from .server_npm_resource import ServerNpmResource
+USE_NEW_API = True
+
+try:
+
+    from LSP.plugin import ClientConfig
+    from LSP.plugin import read_client_config
+    from LSP.plugin import Response
+    from LSP.plugin import Session
+    from LSP.plugin import WorkspaceFolder
+    from LSP.plugin.core.rpc import method2attr  # temporary
+    BaseClass = Session
+
+except ImportError:
+
+    USE_NEW_API = False
+    from LSP.plugin.core.handlers import LanguageHandler
+    from LSP.plugin.core.protocol import Response
+    from LSP.plugin.core.protocol import WorkspaceFolder
+    from LSP.plugin.core.settings import ClientConfig
+    from LSP.plugin.core.settings import read_client_config
+    BaseClass = LanguageHandler
+
 
 # Keys to read and their fallbacks.
 CLIENT_SETTING_KEYS = {
@@ -17,39 +36,53 @@ CLIENT_SETTING_KEYS = {
 }  # type: ignore
 
 
-class ApiWrapper(object):
+class ApiWrapper:
+
     def __init__(self, client):
         self.__client = client
 
     def on_notification(self, method: str, handler: Callable) -> None:
-        self.__client.on_notification(method, handler)
+        if USE_NEW_API:
+            setattr(self.__client, method2attr(method), handler)
+        else:
+            self.__client.on_notification(method, handler)
 
     def on_request(self, method: str, handler: Callable) -> None:
-        def on_response(params, request_id):
-            handler(params, lambda result: send_response(request_id, result))
+        if USE_NEW_API:
 
-        def send_response(request_id, result):
-            self.__client.send_response(Response(request_id, result))
+            def handler_wrapper(this, params, request_id):
+                handler(params, lambda result: this.send_response(Response(request_id, result)))
 
-        self.__client.on_request(method, on_response)
+            setattr(self.__client, method2attr(method), handler_wrapper)
+
+        else:
+
+            def on_response(params, request_id):
+                handler(params, lambda result: send_response(request_id, result))
+
+            def send_response(request_id, result):
+                self.__client.send_response(Response(request_id, result))
+
+            self.__client.on_request(method, on_response)
 
 
-class NpmClientHandler(LanguageHandler):
+class NpmClientHandler(BaseClass):  # type: ignore
     # To be overridden by subclass.
     package_name = None
     server_directory = None
     server_binary_path = None
     # Internal
     __server = None
+    settings_filename = None
 
     def __init__(self):
         super().__init__()
         assert self.package_name
-        self.settings_filename = '{}.sublime-settings'.format(self.package_name)
         # Calling setup() also here as this might run before `plugin_loaded`.
         # Will be a no-op if already ran.
         # See https://github.com/sublimelsp/LSP/issues/899
-        self.setup()
+        if self.__server is None:
+            self.setup()
 
     @classmethod
     def setup(cls) -> None:
@@ -59,51 +92,77 @@ class NpmClientHandler(LanguageHandler):
         if not cls.__server:
             cls.__server = ServerNpmResource(cls.package_name, cls.server_directory, cls.server_binary_path)
         cls.__server.setup()
+        cls.settings_filename = '{}.sublime-settings'.format(cls.package_name)
 
     @classmethod
     def cleanup(cls) -> None:
         if cls.__server:
             cls.__server.cleanup()
 
-    @property
-    def name(self) -> str:
-        return self.package_name.lower()  # type: ignore
-
-    @property
-    def config(self) -> ClientConfig:
-        assert self.__server
+    @classmethod
+    def config(cls) -> ClientConfig:
+        if cls.__server is None:
+            cls.setup()
 
         configuration = {
             'enabled': True,
-            'command': ['node', self.__server.binary_path] + self.get_binary_arguments(),
+            'command': ['node', cls.__server.binary_path] + cls.get_binary_arguments(),
         }
 
-        configuration.update(self._read_configuration())
-        self.on_client_configuration_ready(configuration)
-        return read_client_config(self.name, configuration)
+        configuration.update(cls._read_configuration())
+        cls.on_client_configuration_ready(configuration)
+        return read_client_config(cls.name, configuration)
 
-    def get_binary_arguments(self):
+    @classmethod
+    def name(cls) -> str:
+        return cls.package_name.lower()  # type: ignore
+
+    @classmethod
+    def needs_update_or_installation(cls) -> bool:
+        return False
+
+    @classmethod
+    def install_or_update(cls) -> None:
+        pass
+
+    @classmethod
+    def standard_configuration(cls) -> ClientConfig:
+        return cls.config()
+
+    @classmethod
+    def adjust_configuration(cls, configuration: ClientConfig) -> ClientConfig:
+        return configuration
+
+    @classmethod
+    def can_start(cls, window: sublime.Window, initiating_view: sublime.View,
+                  workspace_folders: List[WorkspaceFolder], configuration: ClientConfig) -> Optional[str]:
+        return None
+
+    @classmethod
+    def get_binary_arguments(cls):
         """
         Returns a list of extra arguments to append when starting server.
         """
         return ['--stdio']
 
-    def _read_configuration(self) -> Dict:
+    @classmethod
+    def _read_configuration(cls) -> Dict:
         settings = {}  # type: Dict
-        loaded_settings = sublime.load_settings(self.settings_filename)  # type: sublime.Settings
+        loaded_settings = sublime.load_settings(cls.settings_filename)  # type: sublime.Settings
 
         if loaded_settings:
-            migrated = self._migrate_obsolete_settings(loaded_settings)
-            changed = self.on_settings_read(loaded_settings)
+            migrated = cls._migrate_obsolete_settings(loaded_settings)
+            changed = cls.on_settings_read(loaded_settings)
             if migrated or changed:
-                sublime.save_settings(self.settings_filename)
+                sublime.save_settings(cls.settings_filename)
 
             for key, default in CLIENT_SETTING_KEYS.items():
                 settings[key] = loaded_settings.get(key, default)
 
         return settings
 
-    def on_settings_read(self, settings: sublime.Settings):
+    @classmethod
+    def on_settings_read(cls, settings: sublime.Settings):
         """
         Called when package settings were read. Receives a `sublime.Settings` object.
 
@@ -113,7 +172,8 @@ class NpmClientHandler(LanguageHandler):
         """
         return False
 
-    def _migrate_obsolete_settings(self, settings: sublime.Settings):
+    @classmethod
+    def _migrate_obsolete_settings(cls, settings: sublime.Settings):
         """
         Migrates setting with a root `client` key to flattened structure.
         Receives a `sublime.Settings` object.
@@ -129,7 +189,8 @@ class NpmClientHandler(LanguageHandler):
             return True
         return False
 
-    def on_client_configuration_ready(self, configuration: Dict) -> None:
+    @classmethod
+    def on_client_configuration_ready(cls, configuration: Dict) -> None:
         """
         Called with default configuration object that contains merged default and user settings.
 
@@ -149,7 +210,8 @@ class NpmClientHandler(LanguageHandler):
         """
         This method should not be overridden. Use the `on_ready` abstraction.
         """
-        self.on_ready(ApiWrapper(client))
+        wrapper = ApiWrapper(self if USE_NEW_API else client)
+        self.on_ready(wrapper)
 
     def on_ready(self, api: ApiWrapper) -> None:
         pass
