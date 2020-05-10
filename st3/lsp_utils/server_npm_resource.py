@@ -49,6 +49,8 @@ class ServerNpmResource(object):
         self._binary_path = server_binary_path
         self._package_cache_path = None
         self._activity_indicator = None
+        if not self._package_name or not self._server_directory or not self._binary_path:
+            raise Exception('ServerNpmResource could not initialize due to wrong input')
 
     @property
     def ready(self):

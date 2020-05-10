@@ -94,7 +94,7 @@ class NpmClientHandler(LanguageHandler):
 
     def _read_configuration(self) -> Dict:
         settings = {}  # type: Dict
-        loaded_settings = sublime.load_settings(self.settings_filename)  # type: sublime.Settings
+        loaded_settings = sublime.load_settings(self.settings_filename)
 
         if loaded_settings:
             migrated = self._migrate_obsolete_settings(loaded_settings)
