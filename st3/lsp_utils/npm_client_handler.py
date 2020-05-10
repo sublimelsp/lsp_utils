@@ -103,7 +103,8 @@ class NpmClientHandler(LanguageHandler):
 
         return settings
 
-    def on_settings_read(self, settings: sublime.Settings):
+    @classmethod
+    def on_settings_read(cls, settings: sublime.Settings):
         """
         Called when package settings were read. Receives a `sublime.Settings` object.
 
@@ -129,7 +130,8 @@ class NpmClientHandler(LanguageHandler):
             return True
         return False
 
-    def on_client_configuration_ready(self, configuration: Dict) -> None:
+    @classmethod
+    def on_client_configuration_ready(cls, configuration: Dict) -> None:
         """
         Called with default configuration object that contains merged default and user settings.
 
