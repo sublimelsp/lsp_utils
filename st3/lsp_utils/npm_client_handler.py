@@ -1,6 +1,5 @@
 import shutil
 import sublime
-
 from LSP.plugin.core.handlers import LanguageHandler
 from LSP.plugin.core.protocol import Response
 from LSP.plugin.core.settings import ClientConfig, read_client_config
@@ -15,6 +14,10 @@ CLIENT_SETTING_KEYS = {
     'initializationOptions': {},
     'settings': {},
 }  # type: ignore
+
+
+def is_node_installed():
+    return shutil.which('node') is not None
 
 
 class ApiWrapper(object):
@@ -82,7 +85,8 @@ class NpmClientHandler(LanguageHandler):
         self.on_client_configuration_ready(configuration)
         return read_client_config(self.name, configuration)
 
-    def get_binary_arguments(self):
+    @classmethod
+    def get_binary_arguments(cls):
         """
         Returns a list of extra arguments to append when starting server.
         """
@@ -139,13 +143,14 @@ class NpmClientHandler(LanguageHandler):
         """
         pass
 
-    def on_start(self, window) -> bool:
-        if not self._is_node_installed():
-            sublime.status_message("{}: Please install Node.js for the server to work.".format(self.package_name))
+    @classmethod
+    def on_start(cls, window) -> bool:
+        if not is_node_installed():
+            sublime.status_message("{}: Please install Node.js for the server to work.".format(cls.package_name))
             return False
-        if not self.__server:
+        if not cls.__server:
             return False
-        return self.__server.ready
+        return cls.__server.ready
 
     def on_initialized(self, client) -> None:
         """
@@ -155,6 +160,3 @@ class NpmClientHandler(LanguageHandler):
 
     def on_ready(self, api: ApiWrapper) -> None:
         pass
-
-    def _is_node_installed(self):
-        return shutil.which('node') is not None
