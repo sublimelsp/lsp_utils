@@ -81,6 +81,9 @@ class NpmClientHandler(AbstractPlugin):
         settings = sublime.load_settings(basename)
         settings.set('enabled', True)
         settings.set('command', ['node', cls.__server.binary_path] + cls.get_binary_arguments())
+        languages = settings.get('languages', None)
+        if languages:
+            settings.set('languages', cls._upgrade_languages_list(languages))
         cls.on_settings_read(settings)
         # Read into a dict so we can call old API "on_client_configuration_ready" and then
         # resave potentially changed values.
@@ -92,6 +95,19 @@ class NpmClientHandler(AbstractPlugin):
             settings.set(key, settings_dict[key])
 
         return settings, filepath
+
+    @classmethod
+    def _upgrade_languages_list(cls, languages):
+        upgraded_list = []
+        for language in languages:
+            if 'scopes' in language:
+                upgraded_list.append({
+                    'languageId': language.get('languageId'),
+                    'document_selector': ' | '.join(language.get('scopes')),
+                })
+            else:
+                upgraded_list.append(language)
+        return upgraded_list
 
     @classmethod
     def get_binary_arguments(cls):
