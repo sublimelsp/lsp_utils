@@ -100,7 +100,11 @@ class NpmClientHandler(AbstractPlugin):
     def _upgrade_languages_list(cls, languages):
         upgraded_list = []
         for language in languages:
-            if 'scopes' in language:
+            if 'document_selector' in language:
+                language.pop('scopes', None)
+                language.pop('syntaxes', None)
+                upgraded_list.append(language)
+            elif 'scopes' in language:
                 upgraded_list.append({
                     'languageId': language.get('languageId'),
                     'document_selector': ' | '.join(language.get('scopes')),
