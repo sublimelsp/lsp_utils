@@ -76,12 +76,20 @@ class NpmClientHandler(LanguageHandler):
     def config(self) -> ClientConfig:
         assert self.__server
 
+        client_configuration = self._read_configuration()
+        command = ['node', self.__server.binary_path] + self.get_binary_arguments()
+        extra_args = client_configuration.get('extra_binary_arguments', None)
+        if isinstance(extra_args, list):
+            command += extra_args
+
         configuration = {
             'enabled': True,
-            'command': ['node', self.__server.binary_path] + self.get_binary_arguments(),
+            'command': command,
         }
 
-        configuration.update(self._read_configuration())
+        for key, default in CLIENT_SETTING_KEYS.items():
+            configuration[key] = client_configuration.get(key, default)
+
         self.on_client_configuration_ready(configuration)
         return read_client_config(self.name, configuration)
 
@@ -101,9 +109,6 @@ class NpmClientHandler(LanguageHandler):
             changed = self.on_settings_read(loaded_settings)
             if migrated or changed:
                 sublime.save_settings(self.settings_filename)
-
-            for key, default in CLIENT_SETTING_KEYS.items():
-                settings[key] = loaded_settings.get(key, default)
 
         return settings
 
