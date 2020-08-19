@@ -3,6 +3,7 @@ try:
 except ImportError:
     lsp_version = (0, 0, 0)
 
+from .api_wrapper import ApiWrapperInterface
 from .server_npm_resource import ServerNpmResource
 
 if lsp_version >= (1, 0, 0):
@@ -11,6 +12,7 @@ else:
     from .npm_client_handler import NpmClientHandler
 
 __all__ = [
+    'ApiWrapperInterface',
     'NpmClientHandler',
     'ServerNpmResource',
 ]
