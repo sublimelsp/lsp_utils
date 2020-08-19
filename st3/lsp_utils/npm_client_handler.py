@@ -1,10 +1,13 @@
-import shutil
-import sublime
+from .api_wrapper import ApiWrapperInterface
+from .server_npm_resource import ServerNpmResource
 from LSP.plugin.core.handlers import LanguageHandler
+from LSP.plugin.core.protocol import Notification
+from LSP.plugin.core.protocol import Request
 from LSP.plugin.core.protocol import Response
 from LSP.plugin.core.settings import ClientConfig, read_client_config
-from LSP.plugin.core.typing import Callable, Dict
-from .server_npm_resource import ServerNpmResource
+from LSP.plugin.core.typing import Any, Callable, Dict, Optional
+import shutil
+import sublime
 
 # Keys to read and their fallbacks.
 CLIENT_SETTING_KEYS = {
@@ -20,7 +23,7 @@ def is_node_installed():
     return shutil.which('node') is not None
 
 
-class ApiWrapper(object):
+class ApiWrapper(ApiWrapperInterface):
     def __init__(self, client):
         self.__client = client
 
@@ -35,6 +38,13 @@ class ApiWrapper(object):
             self.__client.send_response(Response(request_id, result))
 
         self.__client.on_request(method, on_response)
+
+    def send_notification(self, method: str, params: Any) -> None:
+        self.__client.send_notification(Notification(method, params))
+
+    def send_request(self, method: str, params: Any, handler: Callable[[Optional[str], bool], None]) -> None:
+        self.__client.send_request(
+            Request(method, params), lambda result: handler(result, False), lambda result: handler(result, True))
 
 
 class NpmClientHandler(LanguageHandler):

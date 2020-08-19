@@ -1,11 +1,14 @@
+from .api_wrapper import ApiWrapperInterface
 from .server_npm_resource import ServerNpmResource
 from LSP.plugin import AbstractPlugin
 from LSP.plugin import ClientConfig
+from LSP.plugin import Notification
+from LSP.plugin import Request
 from LSP.plugin import Response
 from LSP.plugin import Session
 from LSP.plugin import WorkspaceFolder
 from LSP.plugin.core.rpc import method2attr
-from LSP.plugin.core.typing import Callable, Dict, List, Optional, Tuple
+from LSP.plugin.core.typing import Any, Callable, Dict, List, Optional, Tuple
 import shutil
 import sublime
 import weakref
@@ -20,7 +23,7 @@ CLIENT_SETTING_KEYS = {
 }  # type: ignore
 
 
-class ApiWrapper(object):
+class ApiWrapper(ApiWrapperInterface):
     def __init__(self, plugin: AbstractPlugin):
         self.__plugin = plugin
 
@@ -38,6 +41,18 @@ class ApiWrapper(object):
 
         setattr(self.__plugin, method2attr(method), on_response)
 
+    def send_notification(self, method: str, params: Any) -> None:
+        session = self.__plugin.weaksession()
+        if session:
+            session.send_notification(Notification(method, params))
+
+    def send_request(self, method: str, params: Any, handler: Callable[[Optional[str], bool], None]) -> None:
+        session = self.__plugin.weaksession()
+        if session:
+            session.send_request(
+                Request(method, params), lambda result: handler(result, False), lambda result: handler(result, True))
+        else:
+            handler(None, True)
 
 class NpmClientHandler(AbstractPlugin):
     package_name = ''  # type: str
