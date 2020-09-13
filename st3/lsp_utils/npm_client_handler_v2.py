@@ -59,7 +59,7 @@ class NpmClientHandler(AbstractPlugin):
     server_directory = ''  # type: str
     server_binary_path = ''  # type: str
     # Internal
-    __server = None  # type: ServerNpmResource
+    __server = None  # type: Optional[ServerNpmResource]
 
     @classmethod
     def setup(cls) -> None:
@@ -67,7 +67,8 @@ class NpmClientHandler(AbstractPlugin):
             print('ERROR: [lsp_utils] package_name is required to instantiate an instance of {}'.format(cls))
             return
         if not cls.__server:
-            cls.__server = ServerNpmResource(cls.package_name, cls.server_directory, cls.server_binary_path)
+            cls.__server = ServerNpmResource(cls.package_name, cls.server_directory, cls.server_binary_path,
+                                             cls.minimum_node_version())
             cls.__server.setup()
 
     @classmethod
@@ -78,6 +79,10 @@ class NpmClientHandler(AbstractPlugin):
     @classmethod
     def name(cls) -> str:
         return cls.package_name
+
+    @classmethod
+    def minimum_node_version(cls) -> Tuple[int, int, int]:
+        return (8, 0, 0)
 
     @classmethod
     def needs_update_or_installation(cls) -> bool:

@@ -5,7 +5,7 @@ from LSP.plugin.core.protocol import Notification
 from LSP.plugin.core.protocol import Request
 from LSP.plugin.core.protocol import Response
 from LSP.plugin.core.settings import ClientConfig, read_client_config
-from LSP.plugin.core.typing import Any, Callable, Dict, Optional
+from LSP.plugin.core.typing import Any, Callable, Dict, Optional, Tuple
 import shutil
 import sublime
 
@@ -70,7 +70,8 @@ class NpmClientHandler(LanguageHandler):
         assert cls.server_directory
         assert cls.server_binary_path
         if not cls.__server:
-            cls.__server = ServerNpmResource(cls.package_name, cls.server_directory, cls.server_binary_path)
+            cls.__server = ServerNpmResource(cls.package_name, cls.server_directory, cls.server_binary_path,
+                                             cls.minimum_node_version())
         cls.__server.setup()
 
     @classmethod
@@ -81,6 +82,10 @@ class NpmClientHandler(LanguageHandler):
     @property
     def name(self) -> str:
         return self.package_name.lower()  # type: ignore
+
+    @classmethod
+    def minimum_node_version(cls) -> Tuple[int, int, int]:
+        return (8, 0, 0)
 
     @property
     def config(self) -> ClientConfig:
