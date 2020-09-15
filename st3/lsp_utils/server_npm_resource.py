@@ -16,13 +16,17 @@ def run_command(on_success, on_error, popen_args) -> None:
     on_error when the subprocess throws an error
     would give to subprocess.Popen.
     """
+
+    def decode_bytes(input: bytes) -> str:
+        return input.decode('utf-8', 'ignore')
+
     def run_in_thread(on_success, on_error, popen_args):
         try:
             output = subprocess.check_output(popen_args, shell=sublime.platform() == 'windows',
-                                             universal_newlines=True, stderr=subprocess.STDOUT)
-            on_success(output.strip())
+                                             stderr=subprocess.STDOUT)
+            on_success(decode_bytes(output).strip())
         except subprocess.CalledProcessError as error:
-            on_error(error.output.strip())
+            on_error(decode_bytes(error.output).strip())
 
     thread = threading.Thread(target=run_in_thread, args=(on_success, on_error, popen_args))
     thread.start()
