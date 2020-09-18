@@ -84,6 +84,10 @@ class NpmClientHandler(LanguageHandler):
         return self.package_name.lower()  # type: ignore
 
     @classmethod
+    def additional_variables(cls) -> Optional[Dict[str, str]]:
+        return {}
+
+    @classmethod
     def minimum_node_version(cls) -> Tuple[int, int, int]:
         return (8, 0, 0)
 
@@ -98,7 +102,8 @@ class NpmClientHandler(LanguageHandler):
 
         configuration.update(self._read_configuration())
         self.on_client_configuration_ready(configuration)
-        return read_client_config(self.name, configuration)
+        base_settings_path = 'Packages/{}/{}'.format(self.package_name, self.settings_filename)
+        return read_client_config(self.name, configuration, base_settings_path)
 
     @classmethod
     def get_binary_arguments(cls):

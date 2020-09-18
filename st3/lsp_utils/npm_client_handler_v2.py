@@ -54,6 +54,7 @@ class ApiWrapper(ApiWrapperInterface):
         else:
             handler(None, True)
 
+
 class NpmClientHandler(AbstractPlugin):
     package_name = ''  # type: str
     server_directory = ''  # type: str
