@@ -11,6 +11,7 @@ import sublime
 
 # Keys to read and their fallbacks.
 CLIENT_SETTING_KEYS = {
+    'command': [],
     'env': {},
     'experimental_capabilities': {},
     'languages': [],
