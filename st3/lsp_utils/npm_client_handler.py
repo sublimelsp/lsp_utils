@@ -86,7 +86,9 @@ class NpmClientHandler(LanguageHandler):
 
     @classmethod
     def additional_variables(cls) -> Optional[Dict[str, str]]:
-        return {}
+        return {
+            'server_path': cls.__server.binary_path
+        }
 
     @classmethod
     def minimum_node_version(cls) -> Tuple[int, int, int]:
@@ -96,12 +98,12 @@ class NpmClientHandler(LanguageHandler):
     def config(self) -> ClientConfig:
         assert self.__server
 
-        configuration = {
-            'enabled': True,
-            'command': ['node', self.__server.binary_path] + self.get_binary_arguments(),
-        }
-
+        configuration = {'enabled': True}  # type: Dict[str, Any]
         configuration.update(self._read_configuration())
+
+        if not configuration['command']:
+            configuration['command'] = ['node', self.__server.binary_path] + self.get_binary_arguments()
+
         self.on_client_configuration_ready(configuration)
         base_settings_path = 'Packages/{}/{}'.format(self.package_name, self.settings_filename)
         return read_client_config(self.name, configuration, base_settings_path)
