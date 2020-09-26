@@ -95,6 +95,12 @@ class NpmClientHandler(AbstractPlugin):
         pass
 
     @classmethod
+    def additional_variables(cls) -> Optional[Dict[str, str]]:
+        return {
+            'server_path': cls.__server.binary_path
+        }
+
+    @classmethod
     def configuration(cls) -> Tuple[sublime.Settings, str]:
         cls.setup()
         name = cls.name()
