@@ -15,6 +15,7 @@ import weakref
 
 # Keys to read and their fallbacks.
 CLIENT_SETTING_KEYS = {
+    'command': [],
     'env': {},
     'experimental_capabilities': {},
     'languages': [],
@@ -101,7 +102,8 @@ class NpmClientHandler(AbstractPlugin):
         filepath = "Packages/{}/{}".format(name, basename)
         settings = sublime.load_settings(basename)
         settings.set('enabled', True)
-        settings.set('command', ['node', cls.__server.binary_path] + cls.get_binary_arguments())
+        if not settings.get('command'):
+            settings.set('command', ['node', cls.__server.binary_path] + cls.get_binary_arguments())
         languages = settings.get('languages', None)
         if languages:
             settings.set('languages', cls._upgrade_languages_list(languages))
