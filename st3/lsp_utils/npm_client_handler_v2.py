@@ -6,6 +6,7 @@ from LSP.plugin import Notification
 from LSP.plugin import Request
 from LSP.plugin import Response
 from LSP.plugin import Session
+from LSP.plugin import SessionBufferProtocol
 from LSP.plugin import WorkspaceFolder
 from LSP.plugin.core.rpc import method2attr
 from LSP.plugin.core.typing import Any, Callable, Dict, List, Optional, Tuple
@@ -180,3 +181,18 @@ class NpmClientHandler(AbstractPlugin):
 
     def on_ready(self, api: ApiWrapper) -> None:
         pass
+
+    def get_session_buffer_for_uri(self, uri: str) -> Optional[SessionBufferProtocol]:
+        """
+        Return the session buffer for the requested URI.
+
+        :param    uri:  The URI to get session buffer for.
+
+        :returns: An optional session buffer if found for the URI.
+        """
+        session = self.weaksession()
+        if session:
+            return session.get_session_buffer_for_uri_async(uri)
+        return None
+
+
