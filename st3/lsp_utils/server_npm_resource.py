@@ -60,13 +60,14 @@ class ServerNpmResource(object):
     """
 
     def __init__(self, package_name: str, server_directory: str, server_binary_path: str,
-                 minimum_node_version: Tuple[int, int, int]) -> None:
+                 minimum_node_version: Tuple[int, int, int], install_in_cache: bool) -> None:
         self._initialized = False
         self._is_ready = False
         self._package_name = package_name
         self._server_directory = server_directory
         self._binary_path = server_binary_path
         self._minimum_node_version = minimum_node_version
+        self._install_in_cache = install_in_cache
         self._package_cache_path = ''
         self._activity_indicator = None
         if not self._package_name or not self._server_directory or not self._binary_path:
@@ -85,7 +86,11 @@ class ServerNpmResource(object):
             return
 
         self._initialized = True
-        self._package_cache_path = os.path.join(sublime.cache_path(), self._package_name)
+        if self._install_in_cache:
+            data_dir = sublime.cache_path()
+        else:
+            data_dir = os.path.normpath(os.path.join(sublime.cache_path(), '..'))
+        self._package_cache_path = os.path.join(data_dir, 'LSP-servers', self._package_name)
 
         self._copy_to_cache()
 
@@ -95,29 +100,29 @@ class ServerNpmResource(object):
 
     def _copy_to_cache(self) -> None:
         src_path = 'Packages/{}/{}/'.format(self._package_name, self._server_directory)
-        dst_path = 'Cache/{}/{}/'.format(self._package_name, self._server_directory)
-        cache_server_path = os.path.join(self._package_cache_path, self._server_directory)
+        dst_path = os.path.join(self._package_cache_path, self._server_directory)
 
-        if os.path.isdir(cache_server_path):
+        if os.path.isdir(dst_path):
             # Server already in cache. Check if version has changed and if so, delete existing copy in cache.
             try:
                 src_package_json = ResourcePath(src_path, 'package.json').read_text()
-                dst_package_json = ResourcePath(dst_path, 'package.json').read_text()
+                with open(os.path.join(dst_path, 'package.json'), 'r') as file:
+                    dst_package_json = file.read()
 
                 if src_package_json != dst_package_json:
-                    shutil.rmtree(cache_server_path)
+                    shutil.rmtree(dst_path)
             except FileNotFoundError:
-                shutil.rmtree(cache_server_path)
+                shutil.rmtree(dst_path)
 
-        if not os.path.isdir(cache_server_path):
+        if not os.path.isdir(dst_path):
             # create cache folder
-            ResourcePath(src_path).copytree(cache_server_path, exist_ok=True)
+            ResourcePath(src_path).copytree(dst_path, exist_ok=True)
 
-        dependencies_installed = os.path.isdir(os.path.join(cache_server_path, 'node_modules'))
+        dependencies_installed = os.path.isdir(os.path.join(dst_path, 'node_modules'))
         if dependencies_installed:
             self._is_ready = True
         else:
-            self._check_requirements(cache_server_path)
+            self._check_requirements(dst_path)
 
     def _check_requirements(self, server_path: str) -> None:
         if shutil.which('node') is None:

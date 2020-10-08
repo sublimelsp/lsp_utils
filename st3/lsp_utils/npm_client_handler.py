@@ -72,7 +72,7 @@ class NpmClientHandler(LanguageHandler):
         assert cls.server_binary_path
         if not cls.__server:
             cls.__server = ServerNpmResource(cls.package_name, cls.server_directory, cls.server_binary_path,
-                                             cls.minimum_node_version())
+                                             cls.minimum_node_version(), cls.install_in_cache())
         cls.__server.setup()
 
     @classmethod
@@ -93,6 +93,10 @@ class NpmClientHandler(LanguageHandler):
     @classmethod
     def minimum_node_version(cls) -> Tuple[int, int, int]:
         return (8, 0, 0)
+
+    @classmethod
+    def install_in_cache(cls) -> bool:
+        return True
 
     @property
     def config(self) -> ClientConfig:
