@@ -90,7 +90,7 @@ class ServerNpmResource(object):
             data_dir = sublime.cache_path()
         else:
             data_dir = os.path.normpath(os.path.join(sublime.cache_path(), '..'))
-        self._package_cache_path = os.path.join(data_dir, 'LSP-servers', self._package_name)
+        self._package_cache_path = os.path.join(data_dir, 'LSP Data', self._package_name)
 
         self._copy_to_cache()
 
