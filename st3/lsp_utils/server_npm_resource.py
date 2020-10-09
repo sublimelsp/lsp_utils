@@ -87,10 +87,10 @@ class ServerNpmResource(object):
 
         self._initialized = True
         if self._install_in_cache:
-            data_dir = sublime.cache_path()
+            self._package_cache_path = os.path.join(sublime.cache_path(), self._package_name)
         else:
             data_dir = os.path.normpath(os.path.join(sublime.cache_path(), '..'))
-        self._package_cache_path = os.path.join(data_dir, 'LSP Data', self._package_name)
+            self._package_cache_path = os.path.join(data_dir, 'Package Storage', self._package_name)
 
         self._copy_to_cache()
 
