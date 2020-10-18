@@ -6,6 +6,13 @@ import sublime
 import urllib.request
 import zipfile
 
+try:
+    from LSP.plugin.core.views import get_storage_path
+except ImportError:
+    # polyfill for LSP in ST 3
+    def get_storage_path() -> str:
+        return os.path.abspath(os.path.join(sublime.cache_path(), "..", "Package Storage"))
+
 
 def log_and_show_message(msg, additional_logs: str = None, show_in_status: bool = True) -> None:
     print(msg, "\n", additional_logs) if additional_logs else print(msg)
@@ -32,6 +39,7 @@ class ServerVscodeMarketplaceResource(object):
         extension_item_name: str,
         extension_version: str,
         server_binary_path: str,
+        install_in_cache: bool,
     ) -> None:
         self._initialized = False
         self._is_ready = False
@@ -39,6 +47,7 @@ class ServerVscodeMarketplaceResource(object):
         self._extension_item_name = extension_item_name
         self._extension_version = extension_version
         self._binary_path = server_binary_path
+        self._install_in_cache = install_in_cache
         self._package_cache_path = ""
         self._activity_indicator = None
 
@@ -68,7 +77,7 @@ class ServerVscodeMarketplaceResource(object):
 
         self._initialized = True
         self._package_cache_path = os.path.join(
-            sublime.cache_path(),
+            sublime.cache_path() if self._install_in_cache else get_storage_path(),
             self._package_name,
             "{}~{}".format(self._extension_item_name, self._extension_version),
         )

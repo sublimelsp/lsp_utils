@@ -1,5 +1,5 @@
-from .api_wrapper import ApiWrapperInterface
 from .server_vscode_marketplace_resource import ServerVscodeMarketplaceResource
+from lsp_utils.api_wrapper import ApiWrapperInterface
 from LSP.plugin import AbstractPlugin
 from LSP.plugin import ClientConfig
 from LSP.plugin import Notification
@@ -79,6 +79,7 @@ class VscodeMarketplaceClientHandler(AbstractPlugin):
                 cls.extension_item_name,
                 cls.extension_version,
                 cls.server_binary_path,
+                cls.install_in_cache(),
             )
             cls.__server.setup()
 
@@ -90,6 +91,10 @@ class VscodeMarketplaceClientHandler(AbstractPlugin):
     @classmethod
     def name(cls) -> str:
         return cls.package_name
+
+    @classmethod
+    def install_in_cache(cls) -> bool:
+        return False
 
     @classmethod
     def needs_update_or_installation(cls) -> bool:
