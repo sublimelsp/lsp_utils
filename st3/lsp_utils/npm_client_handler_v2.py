@@ -1,5 +1,5 @@
 from .api_wrapper import ApiWrapperInterface
-from .server_npm_resource import ServerNpmResource
+from .server_npm_resource import get_server_npm_resource_for_package, ServerNpmResource
 from LSP.plugin import AbstractPlugin
 from LSP.plugin import ClientConfig
 from LSP.plugin import Notification
@@ -9,6 +9,7 @@ from LSP.plugin import Session
 from LSP.plugin import WorkspaceFolder
 from LSP.plugin.core.rpc import method2attr
 from LSP.plugin.core.typing import Any, Callable, Dict, List, Optional, Tuple
+import os
 import shutil
 import sublime
 import weakref
@@ -57,9 +58,9 @@ class ApiWrapper(ApiWrapperInterface):
 
 
 class NpmClientHandler(AbstractPlugin):
-    package_name = ''  # type: str
-    server_directory = ''  # type: str
-    server_binary_path = ''  # type: str
+    package_name = ''
+    server_directory = ''
+    server_binary_path = ''
     # Internal
     __server = None  # type: Optional[ServerNpmResource]
 
@@ -69,8 +70,9 @@ class NpmClientHandler(AbstractPlugin):
             print('ERROR: [lsp_utils] package_name is required to instantiate an instance of {}'.format(cls))
             return
         if not cls.__server:
-            cls.__server = ServerNpmResource(cls.package_name, cls.server_directory, cls.server_binary_path,
-                                             cls.minimum_node_version(), cls.install_in_cache())
+            cls.__server = get_server_npm_resource_for_package(
+                cls.package_name, cls.server_directory, cls.server_binary_path, cls.package_storage(),
+                cls.minimum_node_version())
             cls.__server.setup()
 
     @classmethod
@@ -85,6 +87,14 @@ class NpmClientHandler(AbstractPlugin):
     @classmethod
     def minimum_node_version(cls) -> Tuple[int, int, int]:
         return (8, 0, 0)
+
+    @classmethod
+    def package_storage(cls) -> str:
+        if cls.install_in_cache():
+            storage_path = sublime.cache_path()
+        else:
+            storage_path = cls.storage_path()
+        return os.path.join(storage_path, cls.package_name)
 
     @classmethod
     def install_in_cache(cls) -> bool:

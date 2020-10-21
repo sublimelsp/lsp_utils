@@ -1,4 +1,4 @@
-from LSP.plugin.core.typing import Optional, Tuple
+from LSP.plugin.core.typing import Callable, List, Optional, Tuple
 from sublime_lib import ActivityIndicator, ResourcePath
 import os
 import re
@@ -7,8 +7,30 @@ import sublime
 import subprocess
 import threading
 
+StringCallback = Callable[[str], None]
+SemanticVersion = Tuple[int, int, int]
 
-def run_command(on_success, on_error, popen_args) -> None:
+
+def get_server_npm_resource_for_package(
+    package_name: str, server_directory: str, server_binary_path: str, package_storage: str,
+    minimum_node_version: SemanticVersion
+) -> Optional['ServerNpmResource']:
+    if shutil.which('node') is None:
+        log_and_show_message('lsp_utils: Node binary not found on the PATH!')
+        return None
+    installed_node_version = node_version_resolver.resolve()
+    if not installed_node_version:
+        return None
+    if installed_node_version < minimum_node_version:
+        error = 'Installed node version ({}) is lower than required version ({})'.format(
+            version_to_string(installed_node_version), version_to_string(minimum_node_version))
+        log_and_show_message('{}: Error:'.format(package_name), error)
+        return None
+    return ServerNpmResource(package_name, server_directory, server_binary_path, package_storage,
+                             version_to_string(installed_node_version))
+
+
+def run_command(on_success: StringCallback, on_error: StringCallback, popen_args) -> None:
     """
     Runs the given args in a subprocess.Popen, and then calls the function
     on_success when the subprocess completes.
@@ -17,10 +39,7 @@ def run_command(on_success, on_error, popen_args) -> None:
     would give to subprocess.Popen.
     """
 
-    def decode_bytes(input: bytes) -> str:
-        return input.decode('utf-8', 'ignore')
-
-    def run_in_thread(on_success, on_error, popen_args):
+    def execute(on_success, on_error, popen_args):
         try:
             output = subprocess.check_output(popen_args, shell=sublime.platform() == 'windows',
                                              stderr=subprocess.STDOUT)
@@ -28,11 +47,15 @@ def run_command(on_success, on_error, popen_args) -> None:
         except subprocess.CalledProcessError as error:
             on_error(decode_bytes(error.output).strip())
 
-    thread = threading.Thread(target=run_in_thread, args=(on_success, on_error, popen_args))
+    thread = threading.Thread(target=execute, args=(on_success, on_error, popen_args))
     thread.start()
 
 
-def parse_version(version: str) -> Tuple[int, int, int]:
+def decode_bytes(data: bytes) -> str:
+    return data.decode('utf-8', 'ignore')
+
+
+def parse_version(version: str) -> SemanticVersion:
     """Convert filename to version tuple (major, minor, patch)."""
     match = re.match(r'v?(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(?:-.+)?', version)
     if match:
@@ -42,7 +65,7 @@ def parse_version(version: str) -> Tuple[int, int, int]:
         return 0, 0, 0
 
 
-def version_to_string(version: Tuple[int, int, int]) -> str:
+def version_to_string(version: SemanticVersion) -> str:
     return '.'.join([str(c) for c in version])
 
 
@@ -52,7 +75,32 @@ def log_and_show_message(msg, additional_logs: str = None, show_in_status: bool 
         sublime.active_window().status_message(msg)
 
 
-class ServerNpmResource(object):
+class NodeVersionResolver:
+    """
+    A singleton for resolving Node version once per session.
+    """
+    def __init__(self) -> None:
+        self._version = None  # type: Optional[SemanticVersion]
+
+    def resolve(self) -> Optional[SemanticVersion]:
+        if self._version:
+            return self._version
+
+        try:
+            output = subprocess.check_output(
+                ['node', '--version'], shell=sublime.platform() == 'windows', stderr=subprocess.STDOUT)
+            self._version = parse_version(decode_bytes(output).strip())
+        except subprocess.CalledProcessError as error:
+            error = decode_bytes(error.output).strip()
+            log_and_show_message('lsp_utils(NodeVersionResolver): Error resolving node version: {}!'.format(error))
+
+        return self._version
+
+
+node_version_resolver = NodeVersionResolver()
+
+
+class ServerNpmResource:
     """Global object providing paths to server resources.
     Also handles the installing and updating of the server in cache.
 
@@ -60,15 +108,14 @@ class ServerNpmResource(object):
     """
 
     def __init__(self, package_name: str, server_directory: str, server_binary_path: str,
-                 minimum_node_version: Tuple[int, int, int], install_in_cache: bool) -> None:
+                 package_storage: str, node_version: str) -> None:
         self._initialized = False
         self._is_ready = False
         self._package_name = package_name
         self._server_directory = server_directory
         self._binary_path = server_binary_path
-        self._minimum_node_version = minimum_node_version
-        self._install_in_cache = install_in_cache
-        self._package_cache_path = ''
+        self._package_storage = package_storage
+        self._node_version = node_version
         self._activity_indicator = None
         if not self._package_name or not self._server_directory or not self._binary_path:
             raise Exception('ServerNpmResource could not initialize due to wrong input')
@@ -79,28 +126,22 @@ class ServerNpmResource(object):
 
     @property
     def binary_path(self) -> str:
-        return os.path.join(self._package_cache_path, self._binary_path)
+        return os.path.join(self._package_storage, self._binary_path)
 
     def setup(self) -> None:
         if self._initialized:
             return
 
         self._initialized = True
-        if self._install_in_cache:
-            self._package_cache_path = os.path.join(sublime.cache_path(), self._package_name)
-        else:
-            data_dir = os.path.normpath(os.path.join(sublime.cache_path(), '..'))
-            self._package_cache_path = os.path.join(data_dir, 'Package Storage', self._package_name)
-
-        self._copy_to_cache()
+        self._copy_to_storage()
 
     def cleanup(self) -> None:
-        if os.path.isdir(self._package_cache_path):
-            shutil.rmtree(self._package_cache_path)
+        if os.path.isdir(self._package_storage):
+            shutil.rmtree(self._package_storage)
 
-    def _copy_to_cache(self) -> None:
+    def _copy_to_storage(self) -> None:
         src_path = 'Packages/{}/{}/'.format(self._package_name, self._server_directory)
-        dst_path = os.path.join(self._package_cache_path, self._server_directory)
+        dst_path = os.path.join(self._package_storage, self._node_version, self._server_directory)
 
         if os.path.isdir(dst_path):
             # Server already in cache. Check if version has changed and if so, delete existing copy in cache.
@@ -122,30 +163,13 @@ class ServerNpmResource(object):
         if dependencies_installed:
             self._is_ready = True
         else:
-            self._check_requirements(dst_path)
-
-    def _check_requirements(self, server_path: str) -> None:
-        if shutil.which('node') is None:
-            self._on_error('Please install Node.js for the server to work.')
-        else:
-            run_command(
-                lambda version: self._on_check_requirements_result(version, server_path),
-                self._on_error, ['node', '--version'])
-
-    def _on_check_requirements_result(self, version_string: str, server_path: str) -> None:
-        installed_version = parse_version(version_string)
-        if installed_version < self._minimum_node_version:
-            self._on_error(
-                'Installed node version ({}) is lower than required version ({})'.format(
-                    version_to_string(installed_version), version_to_string(self._minimum_node_version)))
-        else:
-            self._install_dependencies(server_path)
+            self._install_dependencies(dst_path)
 
     def _install_dependencies(self, server_path: str) -> None:
         # this will be called only when the plugin gets:
         # - installed for the first time,
         # - or when updated on package control
-        install_message = '{}: Installing server'.format(self._package_name)
+        install_message = '{}: Installing server in path: {}'.format(self._package_name, server_path)
         log_and_show_message(install_message, show_in_status=False)
 
         active_window = sublime.active_window()
