@@ -16,7 +16,10 @@ def get_server_npm_resource_for_package(
     minimum_node_version: SemanticVersion
 ) -> Optional['ServerNpmResource']:
     if shutil.which('node') is None:
-        log_and_show_message('lsp_utils: Node binary not found on the PATH!')
+        log_and_show_message(
+            '{}: Error: Node binary not found on the PATH.'
+            'Check the LSP Troubleshooting section for information on how to fix that: '
+            'https://lsp.readthedocs.io/en/latest/troubleshooting/'.format(package_name))
         return None
     installed_node_version = node_version_resolver.resolve()
     if not installed_node_version:

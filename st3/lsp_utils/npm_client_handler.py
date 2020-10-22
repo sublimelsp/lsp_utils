@@ -75,7 +75,8 @@ class NpmClientHandler(LanguageHandler):
             cls.__server = get_server_npm_resource_for_package(
                 cls.package_name, cls.server_directory, cls.server_binary_path,
                 cls.package_storage(), cls.minimum_node_version())
-            cls.__server.setup()
+            if cls.__server:
+                cls.__server.setup()
 
     @classmethod
     def cleanup(cls) -> None:
@@ -89,7 +90,7 @@ class NpmClientHandler(LanguageHandler):
     @classmethod
     def additional_variables(cls) -> Optional[Dict[str, str]]:
         return {
-            'server_path': cls.__server.binary_path
+            'server_path': cls.binary_path()
         }
 
     @classmethod
@@ -105,18 +106,20 @@ class NpmClientHandler(LanguageHandler):
         return os.path.join(storage_path, cls.package_name)
 
     @classmethod
+    def binary_path(cls) -> str:
+        return cls.__server.binary_path if cls.__server else ''
+
+    @classmethod
     def install_in_cache(cls) -> bool:
         return True
 
     @property
     def config(self) -> ClientConfig:
-        assert self.__server
-
-        configuration = {'enabled': True}  # type: Dict[str, Any]
+        configuration = {'enabled': self.__server != None}  # type: Dict[str, Any]
         configuration.update(self._read_configuration())
 
         if not configuration['command']:
-            configuration['command'] = ['node', self.__server.binary_path] + self.get_binary_arguments()
+            configuration['command'] = ['node', self.binary_path()] + self.get_binary_arguments()
 
         self.on_client_configuration_ready(configuration)
         base_settings_path = 'Packages/{}/{}'.format(self.package_name, self.settings_filename)
@@ -185,9 +188,7 @@ class NpmClientHandler(LanguageHandler):
         if not is_node_installed():
             sublime.status_message("{}: Please install Node.js for the server to work.".format(cls.package_name))
             return False
-        if not cls.__server:
-            return False
-        return cls.__server.ready
+        return cls.__server != None and cls.__server.ready
 
     def on_initialized(self, client) -> None:
         """

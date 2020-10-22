@@ -73,7 +73,8 @@ class NpmClientHandler(AbstractPlugin):
             cls.__server = get_server_npm_resource_for_package(
                 cls.package_name, cls.server_directory, cls.server_binary_path, cls.package_storage(),
                 cls.minimum_node_version())
-            cls.__server.setup()
+            if cls.__server:
+                cls.__server.setup()
 
     @classmethod
     def cleanup(cls) -> None:
@@ -97,6 +98,10 @@ class NpmClientHandler(AbstractPlugin):
         return os.path.join(storage_path, cls.package_name)
 
     @classmethod
+    def binary_path(cls) -> str:
+        return cls.__server.binary_path if cls.__server else ''
+
+    @classmethod
     def install_in_cache(cls) -> bool:
         return True
 
@@ -111,7 +116,7 @@ class NpmClientHandler(AbstractPlugin):
     @classmethod
     def additional_variables(cls) -> Optional[Dict[str, str]]:
         return {
-            'server_path': cls.__server.binary_path
+            'server_path': cls.binary_path()
         }
 
     @classmethod
@@ -121,9 +126,9 @@ class NpmClientHandler(AbstractPlugin):
         basename = "{}.sublime-settings".format(name)
         filepath = "Packages/{}/{}".format(name, basename)
         settings = sublime.load_settings(basename)
-        settings.set('enabled', True)
+        settings.set('enabled', cls.__server != None)
         if not settings.get('command'):
-            settings.set('command', ['node', cls.__server.binary_path] + cls.get_binary_arguments())
+            settings.set('command', ['node', cls.binary_path()] + cls.get_binary_arguments())
         languages = settings.get('languages', None)
         if languages:
             settings.set('languages', cls._upgrade_languages_list(languages))
