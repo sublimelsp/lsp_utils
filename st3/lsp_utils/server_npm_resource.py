@@ -126,7 +126,7 @@ class ServerNpmResource:
 
     @property
     def binary_path(self) -> str:
-        return os.path.join(self._package_storage, self._binary_path)
+        return os.path.join(self._package_storage, self._node_version, self._binary_path)
 
     def setup(self) -> None:
         if self._initialized:
