@@ -1,5 +1,5 @@
 from .api_wrapper import ApiWrapperInterface
-from .server_npm_resource import ServerNpmResource
+from .server_npm_resource import get_server_npm_resource_for_package, ServerNpmResource
 from LSP.plugin import AbstractPlugin
 from LSP.plugin import ClientConfig
 from LSP.plugin import Notification
@@ -9,6 +9,7 @@ from LSP.plugin import Session
 from LSP.plugin import WorkspaceFolder
 from LSP.plugin.core.rpc import method2attr
 from LSP.plugin.core.typing import Any, Callable, Dict, List, Optional, Tuple
+import os
 import shutil
 import sublime
 import weakref
@@ -57,9 +58,9 @@ class ApiWrapper(ApiWrapperInterface):
 
 
 class NpmClientHandler(AbstractPlugin):
-    package_name = ''  # type: str
-    server_directory = ''  # type: str
-    server_binary_path = ''  # type: str
+    package_name = ''
+    server_directory = ''
+    server_binary_path = ''
     # Internal
     __server = None  # type: Optional[ServerNpmResource]
 
@@ -69,9 +70,11 @@ class NpmClientHandler(AbstractPlugin):
             print('ERROR: [lsp_utils] package_name is required to instantiate an instance of {}'.format(cls))
             return
         if not cls.__server:
-            cls.__server = ServerNpmResource(cls.package_name, cls.server_directory, cls.server_binary_path,
-                                             cls.minimum_node_version())
-            cls.__server.setup()
+            cls.__server = get_server_npm_resource_for_package(
+                cls.package_name, cls.server_directory, cls.server_binary_path, cls.package_storage(),
+                cls.minimum_node_version())
+            if cls.__server:
+                cls.__server.setup()
 
     @classmethod
     def cleanup(cls) -> None:
@@ -87,6 +90,22 @@ class NpmClientHandler(AbstractPlugin):
         return (8, 0, 0)
 
     @classmethod
+    def package_storage(cls) -> str:
+        if cls.install_in_cache():
+            storage_path = sublime.cache_path()
+        else:
+            storage_path = cls.storage_path()
+        return os.path.join(storage_path, cls.package_name)
+
+    @classmethod
+    def binary_path(cls) -> str:
+        return cls.__server.binary_path if cls.__server else ''
+
+    @classmethod
+    def install_in_cache(cls) -> bool:
+        return True
+
+    @classmethod
     def needs_update_or_installation(cls) -> bool:
         return False
 
@@ -97,7 +116,7 @@ class NpmClientHandler(AbstractPlugin):
     @classmethod
     def additional_variables(cls) -> Optional[Dict[str, str]]:
         return {
-            'server_path': cls.__server.binary_path
+            'server_path': cls.binary_path()
         }
 
     @classmethod
@@ -107,9 +126,9 @@ class NpmClientHandler(AbstractPlugin):
         basename = "{}.sublime-settings".format(name)
         filepath = "Packages/{}/{}".format(name, basename)
         settings = sublime.load_settings(basename)
-        settings.set('enabled', True)
+        settings.set('enabled', cls.__server != None)
         if not settings.get('command'):
-            settings.set('command', ['node', cls.__server.binary_path] + cls.get_binary_arguments())
+            settings.set('command', ['node', cls.binary_path()] + cls.get_binary_arguments())
         languages = settings.get('languages', None)
         if languages:
             settings.set('languages', cls._upgrade_languages_list(languages))
