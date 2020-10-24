@@ -7,7 +7,6 @@ from LSP.plugin.core.protocol import Response
 from LSP.plugin.core.settings import ClientConfig, read_client_config
 from LSP.plugin.core.typing import Any, Callable, Dict, Optional, Tuple
 import os
-import shutil
 import sublime
 
 # Keys to read and their fallbacks.
@@ -19,10 +18,6 @@ CLIENT_SETTING_KEYS = {
     'initializationOptions': {},
     'settings': {},
 }  # type: ignore
-
-
-def is_node_installed():
-    return shutil.which('node') is not None
 
 
 class ApiWrapper(ApiWrapperInterface):
@@ -75,8 +70,8 @@ class NpmClientHandler(LanguageHandler):
             cls.__server = get_server_npm_resource_for_package(
                 cls.package_name, cls.server_directory, cls.server_binary_path,
                 cls.package_storage(), cls.minimum_node_version())
-            if cls.__server:
-                cls.__server.setup()
+            if cls.__server and cls.__server.needs_installation():
+                cls.__server.install_or_update(async_io=True)
 
     @classmethod
     def cleanup(cls) -> None:
@@ -185,9 +180,6 @@ class NpmClientHandler(LanguageHandler):
 
     @classmethod
     def on_start(cls, window) -> bool:
-        if not is_node_installed():
-            sublime.status_message("{}: Please install Node.js for the server to work.".format(cls.package_name))
-            return False
         return cls.__server != None and cls.__server.ready
 
     def on_initialized(self, client) -> None:
