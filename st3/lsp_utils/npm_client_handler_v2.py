@@ -195,8 +195,9 @@ class NpmClientHandler(AbstractPlugin):
             return "{}: Error installing server dependencies.".format(cls.package_name)
         if not cls.__server.ready:
             return "{}: Server installation in progress...".format(cls.package_name)
-        # Lazily update command after server has initialized.
-        configuration.command = ['node', cls.binary_path()] + cls.get_binary_arguments()
+        # Lazily update command after server has initialized if not set manually by the user.
+        if not configuration.command:
+            configuration.command = ['node', cls.binary_path()] + cls.get_binary_arguments()
         return None
 
     def __init__(self, weaksession: 'weakref.ref[Session]') -> None:
