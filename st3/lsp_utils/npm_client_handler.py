@@ -7,6 +7,7 @@ from LSP.plugin.core.protocol import Response
 from LSP.plugin.core.settings import ClientConfig, read_client_config
 from LSP.plugin.core.typing import Any, Callable, Dict, Optional, Tuple
 import os
+import shutil
 import sublime
 
 # Keys to read and their fallbacks.
@@ -75,8 +76,8 @@ class NpmClientHandler(LanguageHandler):
 
     @classmethod
     def cleanup(cls) -> None:
-        if cls.__server:
-            cls.__server.cleanup()
+        if os.path.isdir(cls.package_storage()):
+            shutil.rmtree(cls.package_storage())
 
     @property
     def name(self) -> str:

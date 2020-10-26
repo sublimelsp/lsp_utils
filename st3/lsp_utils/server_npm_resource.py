@@ -95,10 +95,6 @@ class ServerNpmResource:
     def dst_path(self) -> str:
         return os.path.join(self._package_storage, self._node_version, self._server_directory)
 
-    def cleanup(self) -> None:
-        if os.path.isdir(self._package_storage):
-            shutil.rmtree(self._package_storage)
-
     def needs_installation(self) -> bool:
         if self._initialized:
             return False

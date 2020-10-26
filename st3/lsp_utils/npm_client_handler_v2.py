@@ -75,8 +75,8 @@ class NpmClientHandler(AbstractPlugin):
     @classmethod
     def cleanup(cls) -> None:
         unregister_plugin(cls)
-        if cls.__server:
-            cls.__server.cleanup()
+        if os.path.isdir(cls.package_storage()):
+            shutil.rmtree(cls.package_storage())
 
     @classmethod
     def name(cls) -> str:
