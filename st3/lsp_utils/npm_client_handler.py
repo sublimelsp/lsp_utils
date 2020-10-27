@@ -131,16 +131,12 @@ class NpmClientHandler(LanguageHandler):
     def _read_configuration(self) -> Dict:
         settings = {}  # type: Dict
         loaded_settings = sublime.load_settings(self.settings_filename)
-
         if loaded_settings:
-            migrated = self._migrate_obsolete_settings(loaded_settings)
             changed = self.on_settings_read(loaded_settings)
-            if migrated or changed:
+            if changed:
                 sublime.save_settings(self.settings_filename)
-
             for key, default in CLIENT_SETTING_KEYS.items():
                 settings[key] = loaded_settings.get(key, default)
-
         return settings
 
     @classmethod
@@ -152,22 +148,6 @@ class NpmClientHandler(LanguageHandler):
 
         Return True if settings were modified to save changes to file.
         """
-        return False
-
-    def _migrate_obsolete_settings(self, settings: sublime.Settings):
-        """
-        Migrates setting with a root `client` key to flattened structure.
-        Receives a `sublime.Settings` object.
-
-        Returns True if settings were migrated.
-        """
-        client = settings.get('client')  # type: Dict
-        if client:
-            settings.erase('client')
-            # Migrate old keys
-            for key, value in client.items():
-                settings.set(key, value)
-            return True
         return False
 
     @classmethod
