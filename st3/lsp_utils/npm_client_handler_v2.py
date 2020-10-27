@@ -3,9 +3,11 @@ from .server_npm_resource import get_server_npm_resource_for_package, ServerNpmR
 from LSP.plugin import AbstractPlugin
 from LSP.plugin import ClientConfig
 from LSP.plugin import Notification
+from LSP.plugin import register_plugin
 from LSP.plugin import Request
 from LSP.plugin import Response
 from LSP.plugin import Session
+from LSP.plugin import unregister_plugin
 from LSP.plugin import WorkspaceFolder
 from LSP.plugin.core.rpc import method2attr
 from LSP.plugin.core.typing import Any, Callable, Dict, List, Optional, Tuple
@@ -66,20 +68,15 @@ class NpmClientHandler(AbstractPlugin):
 
     @classmethod
     def setup(cls) -> None:
+        register_plugin(cls)
         if not cls.package_name:
             print('ERROR: [lsp_utils] package_name is required to instantiate an instance of {}'.format(cls))
-            return
-        if not cls.__server:
-            cls.__server = get_server_npm_resource_for_package(
-                cls.package_name, cls.server_directory, cls.server_binary_path, cls.package_storage(),
-                cls.minimum_node_version())
-            if cls.__server:
-                cls.__server.setup()
 
     @classmethod
     def cleanup(cls) -> None:
-        if cls.__server:
-            cls.__server.cleanup()
+        unregister_plugin(cls)
+        if os.path.isdir(cls.package_storage()):
+            shutil.rmtree(cls.package_storage())
 
     @classmethod
     def name(cls) -> str:
@@ -106,14 +103,6 @@ class NpmClientHandler(AbstractPlugin):
         return True
 
     @classmethod
-    def needs_update_or_installation(cls) -> bool:
-        return False
-
-    @classmethod
-    def install_or_update(cls) -> None:
-        pass
-
-    @classmethod
     def additional_variables(cls) -> Optional[Dict[str, str]]:
         return {
             'server_path': cls.binary_path()
@@ -121,14 +110,11 @@ class NpmClientHandler(AbstractPlugin):
 
     @classmethod
     def configuration(cls) -> Tuple[sublime.Settings, str]:
-        cls.setup()
         name = cls.name()
         basename = "{}.sublime-settings".format(name)
         filepath = "Packages/{}/{}".format(name, basename)
         settings = sublime.load_settings(basename)
-        settings.set('enabled', cls.__server != None)
-        if not settings.get('command'):
-            settings.set('command', ['node', cls.binary_path()] + cls.get_binary_arguments())
+        settings.set('enabled', True)
         languages = settings.get('languages', None)
         if languages:
             settings.set('languages', cls._upgrade_languages_list(languages))
@@ -189,12 +175,29 @@ class NpmClientHandler(AbstractPlugin):
         pass
 
     @classmethod
+    def needs_update_or_installation(cls) -> bool:
+        if not cls.__server:
+            cls.__server = get_server_npm_resource_for_package(
+                cls.package_name, cls.server_directory, cls.server_binary_path, cls.package_storage(),
+                cls.minimum_node_version())
+            if cls.__server:
+                return cls.__server.needs_installation()
+        return False
+
+    @classmethod
+    def install_or_update(cls) -> None:
+        cls.__server.install_or_update(async_io=False)
+
+    @classmethod
     def can_start(cls, window: sublime.Window, initiating_view: sublime.View,
                   workspace_folders: List[WorkspaceFolder], configuration: ClientConfig) -> Optional[str]:
-        if shutil.which('node') is None:
-            return "{}: Please install Node.js for the server to work.".format(cls.package_name)
-        if not cls.__server or not cls.__server.ready:
-            return "{}: Server installation in progress.".format(cls.package_name)
+        if not cls.__server or cls.__server.error_on_install:
+            return "{}: Error installing server dependencies.".format(cls.package_name)
+        if not cls.__server.ready:
+            return "{}: Server installation in progress...".format(cls.package_name)
+        # Lazily update command after server has initialized if not set manually by the user.
+        if not configuration.command:
+            configuration.command = ['node', cls.binary_path()] + cls.get_binary_arguments()
         return None
 
     def __init__(self, weaksession: 'weakref.ref[Session]') -> None:

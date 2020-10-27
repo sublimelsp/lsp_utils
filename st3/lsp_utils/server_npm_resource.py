@@ -1,14 +1,14 @@
+from .helpers import log_and_show_message
+from .helpers import parse_version
+from .helpers import run_command_async
+from .helpers import run_command_sync
+from .helpers import SemanticVersion
+from .helpers import version_to_string
 from LSP.plugin.core.typing import Callable, List, Optional, Tuple
 from sublime_lib import ActivityIndicator, ResourcePath
 import os
-import re
 import shutil
 import sublime
-import subprocess
-import threading
-
-StringCallback = Callable[[str], None]
-SemanticVersion = Tuple[int, int, int]
 
 
 def get_server_npm_resource_for_package(
@@ -33,51 +33,6 @@ def get_server_npm_resource_for_package(
                              version_to_string(installed_node_version))
 
 
-def run_command(on_success: StringCallback, on_error: StringCallback, popen_args) -> None:
-    """
-    Runs the given args in a subprocess.Popen, and then calls the function
-    on_success when the subprocess completes.
-    on_success is a callable object, and popen_args is a list/tuple of args that
-    on_error when the subprocess throws an error
-    would give to subprocess.Popen.
-    """
-
-    def execute(on_success, on_error, popen_args):
-        try:
-            output = subprocess.check_output(popen_args, shell=sublime.platform() == 'windows',
-                                             stderr=subprocess.STDOUT)
-            on_success(decode_bytes(output).strip())
-        except subprocess.CalledProcessError as error:
-            on_error(decode_bytes(error.output).strip())
-
-    thread = threading.Thread(target=execute, args=(on_success, on_error, popen_args))
-    thread.start()
-
-
-def decode_bytes(data: bytes) -> str:
-    return data.decode('utf-8', 'ignore')
-
-
-def parse_version(version: str) -> SemanticVersion:
-    """Convert filename to version tuple (major, minor, patch)."""
-    match = re.match(r'v?(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(?:-.+)?', version)
-    if match:
-        major, minor, patch = match.groups()
-        return int(major), int(minor), int(patch)
-    else:
-        return 0, 0, 0
-
-
-def version_to_string(version: SemanticVersion) -> str:
-    return '.'.join([str(c) for c in version])
-
-
-def log_and_show_message(msg, additional_logs: str = None, show_in_status: bool = True) -> None:
-    print(msg, '\n', additional_logs) if additional_logs else print(msg)
-    if show_in_status:
-        sublime.active_window().status_message(msg)
-
-
 class NodeVersionResolver:
     """
     A singleton for resolving Node version once per session.
@@ -88,15 +43,11 @@ class NodeVersionResolver:
     def resolve(self) -> Optional[SemanticVersion]:
         if self._version:
             return self._version
-
-        try:
-            output = subprocess.check_output(
-                ['node', '--version'], shell=sublime.platform() == 'windows', stderr=subprocess.STDOUT)
-            self._version = parse_version(decode_bytes(output).strip())
-        except subprocess.CalledProcessError as error:
-            error = decode_bytes(error.output).strip()
+        version, error = run_command_sync(['node', '--version'])
+        if error is not None:
             log_and_show_message('lsp_utils(NodeVersionResolver): Error resolving node version: {}!'.format(error))
-
+        else:
+            self._version = parse_version(version)
         return self._version
 
 
@@ -114,6 +65,7 @@ class ServerNpmResource:
                  package_storage: str, node_version: str) -> None:
         self._initialized = False
         self._is_ready = False
+        self._error_on_install = False
         self._package_name = package_name
         self._server_directory = server_directory
         self._binary_path = server_binary_path
@@ -128,47 +80,50 @@ class ServerNpmResource:
         return self._is_ready
 
     @property
+    def error_on_install(self) -> bool:
+        return self._error_on_install
+
+    @property
     def binary_path(self) -> str:
         return os.path.join(self._package_storage, self._node_version, self._binary_path)
 
-    def setup(self) -> None:
+    @property
+    def src_path(self) -> str:
+        return 'Packages/{}/{}/'.format(self._package_name, self._server_directory)
+
+    @property
+    def dst_path(self) -> str:
+        return os.path.join(self._package_storage, self._node_version, self._server_directory)
+
+    def needs_installation(self) -> bool:
         if self._initialized:
-            return
-
+            return False
         self._initialized = True
-        self._copy_to_storage()
-
-    def cleanup(self) -> None:
-        if os.path.isdir(self._package_storage):
-            shutil.rmtree(self._package_storage)
-
-    def _copy_to_storage(self) -> None:
-        src_path = 'Packages/{}/{}/'.format(self._package_name, self._server_directory)
-        dst_path = os.path.join(self._package_storage, self._node_version, self._server_directory)
-
-        if os.path.isdir(dst_path):
-            # Server already in cache. Check if version has changed and if so, delete existing copy in cache.
+        installed = False
+        if os.path.isdir(self.dst_path):
+            # Server already installed. Check if version has changed.
             try:
-                src_package_json = ResourcePath(src_path, 'package.json').read_text()
-                with open(os.path.join(dst_path, 'package.json'), 'r') as file:
+                src_package_json = ResourcePath(self.src_path, 'package.json').read_text()
+                with open(os.path.join(self.dst_path, 'package.json'), 'r') as file:
                     dst_package_json = file.read()
-
-                if src_package_json != dst_package_json:
-                    shutil.rmtree(dst_path)
+                if src_package_json == dst_package_json:
+                    installed = True
             except FileNotFoundError:
-                shutil.rmtree(dst_path)
+                # Needs to be re-installed.
+                pass
+        self._is_ready = installed
+        return not installed
 
-        if not os.path.isdir(dst_path):
-            # create cache folder
-            ResourcePath(src_path).copytree(dst_path, exist_ok=True)
-
-        dependencies_installed = os.path.isdir(os.path.join(dst_path, 'node_modules'))
+    def install_or_update(self, async_io: bool) -> None:
+        shutil.rmtree(self.dst_path, ignore_errors=True)
+        ResourcePath(self.src_path).copytree(self.dst_path, exist_ok=True)
+        dependencies_installed = os.path.isdir(os.path.join(self.dst_path, 'node_modules'))
         if dependencies_installed:
             self._is_ready = True
         else:
-            self._install_dependencies(dst_path)
+            self._install_dependencies(self.dst_path, async_io)
 
-    def _install_dependencies(self, server_path: str) -> None:
+    def _install_dependencies(self, server_path: str, async_io: bool) -> None:
         # this will be called only when the plugin gets:
         # - installed for the first time,
         # - or when updated on package control
@@ -180,10 +135,12 @@ class ServerNpmResource:
             self._activity_indicator = ActivityIndicator(active_window.active_view(), install_message)
             self._activity_indicator.start()
 
-        run_command(
-            self._on_install_success, self._on_error,
-            ["npm", "install", "--verbose", "--production", "--prefix", server_path, server_path]
-        )
+        args = ["npm", "install", "--verbose", "--production", "--prefix", server_path, server_path]
+        if async_io:
+            run_command_async(args, self._on_install_success, self._on_error)
+        else:
+            output, error = run_command_sync(args)
+            self._on_error(error) if error is not None else self._on_install_success(output)
 
     def _on_install_success(self, _: str) -> None:
         self._is_ready = True
@@ -192,6 +149,7 @@ class ServerNpmResource:
             '{}: Server installed. Sublime Text restart might be required.'.format(self._package_name))
 
     def _on_error(self, error: str) -> None:
+        self._error_on_install = True
         self._stop_indicator()
         log_and_show_message('{}: Error:'.format(self._package_name), error)
 
