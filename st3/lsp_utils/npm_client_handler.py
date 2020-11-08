@@ -84,12 +84,6 @@ class NpmClientHandler(LanguageHandler):
         return self.package_name.lower()  # type: ignore
 
     @classmethod
-    def additional_variables(cls) -> Optional[Dict[str, str]]:
-        return {
-            'server_path': cls.binary_path()
-        }
-
-    @classmethod
     def minimum_node_version(cls) -> Tuple[int, int, int]:
         return (8, 0, 0)
 
@@ -106,8 +100,19 @@ class NpmClientHandler(LanguageHandler):
         return cls.__server.binary_path if cls.__server else ''
 
     @classmethod
+    def server_directory_path(cls) -> str:
+        return cls.__server.dst_path if cls.__server else ''
+
+    @classmethod
     def install_in_cache(cls) -> bool:
         return True
+
+    @classmethod
+    def additional_variables(cls) -> Optional[Dict[str, str]]:
+        return {
+            'server_path': cls.binary_path(),
+            'server_directory_path': cls.server_directory_path(),
+        }
 
     @property
     def config(self) -> ClientConfig:

@@ -99,13 +99,18 @@ class NpmClientHandler(AbstractPlugin):
         return cls.__server.binary_path if cls.__server else ''
 
     @classmethod
+    def server_directory_path(cls) -> str:
+        return cls.__server.dst_path if cls.__server else ''
+
+    @classmethod
     def install_in_cache(cls) -> bool:
         return True
 
     @classmethod
     def additional_variables(cls) -> Optional[Dict[str, str]]:
         return {
-            'server_path': cls.binary_path()
+            'server_path': cls.binary_path(),
+            'server_directory_path': cls.server_directory_path(),
         }
 
     @classmethod
