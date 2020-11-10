@@ -4,39 +4,23 @@ from .helpers import run_command_async
 from .helpers import run_command_sync
 from .helpers import SemanticVersion
 from .helpers import version_to_string
-from LSP.plugin.core.typing import Callable, List, Optional, Tuple
-from sublime_lib import ActivityIndicator, ResourcePath
+from .server_resource_interface import ServerResourceInterface
+from .server_resource_interface import ServerStatus
+from LSP.plugin.core.typing import Dict, Optional
+from sublime_lib import ActivityIndicator
+from sublime_lib import ResourcePath
 import os
 import shutil
 import sublime
 
-
-def get_server_npm_resource_for_package(
-    package_name: str, server_directory: str, server_binary_path: str, package_storage: str,
-    minimum_node_version: SemanticVersion
-) -> Optional['ServerNpmResource']:
-    if shutil.which('node') is None:
-        log_and_show_message(
-            '{}: Error: Node binary not found on the PATH.'
-            'Check the LSP Troubleshooting section for information on how to fix that: '
-            'https://lsp.readthedocs.io/en/latest/troubleshooting/'.format(package_name))
-        return None
-    installed_node_version = node_version_resolver.resolve()
-    if not installed_node_version:
-        return None
-    if installed_node_version < minimum_node_version:
-        error = 'Installed node version ({}) is lower than required version ({})'.format(
-            version_to_string(installed_node_version), version_to_string(minimum_node_version))
-        log_and_show_message('{}: Error:'.format(package_name), error)
-        return None
-    return ServerNpmResource(package_name, server_directory, server_binary_path, package_storage,
-                             version_to_string(installed_node_version))
+__all__ = ['ServerNpmResource']
 
 
 class NodeVersionResolver:
     """
     A singleton for resolving Node version once per session.
     """
+
     def __init__(self) -> None:
         self._version = None  # type: Optional[SemanticVersion]
 
@@ -54,12 +38,35 @@ class NodeVersionResolver:
 node_version_resolver = NodeVersionResolver()
 
 
-class ServerNpmResource:
-    """Global object providing paths to server resources.
-    Also handles the installing and updating of the server in cache.
-
-    setup() needs to be called during (or after) plugin_loaded() for paths to be valid.
+class ServerNpmResource(ServerResourceInterface):
     """
+    An implementation of :class:`lsp_utils.ServerResourceInterface` implementing server management for
+    npm-based severs. Handles installation and updates of the server in package storage.
+    """
+
+    @classmethod
+    def create(cls, options: Dict) -> Optional['ServerNpmResource']:
+        package_name = options['package_name']
+        server_directory = options['server_directory']
+        server_binary_path = options['server_binary_path']
+        package_storage = options['package_storage']
+        minimum_node_version = options['minimum_node_version']
+        if shutil.which('node') is None:
+            log_and_show_message(
+                '{}: Error: Node binary not found on the PATH.'
+                'Check the LSP Troubleshooting section for information on how to fix that: '
+                'https://lsp.readthedocs.io/en/latest/troubleshooting/'.format(package_name))
+            return None
+        installed_node_version = node_version_resolver.resolve()
+        if not installed_node_version:
+            return None
+        if installed_node_version < minimum_node_version:
+            error = 'Installed node version ({}) is lower than required version ({})'.format(
+                version_to_string(installed_node_version), version_to_string(minimum_node_version))
+            log_and_show_message('{}: Error:'.format(package_name), error)
+            return None
+        return ServerNpmResource(package_name, server_directory, server_binary_path, package_storage,
+                                 version_to_string(installed_node_version))
 
     def __init__(self, package_name: str, server_directory: str, server_binary_path: str,
                  package_storage: str, node_version: str) -> None:
@@ -75,13 +82,14 @@ class ServerNpmResource:
         if not self._package_name or not self._server_directory or not self._binary_path:
             raise Exception('ServerNpmResource could not initialize due to wrong input')
 
-    @property
-    def ready(self) -> bool:
-        return self._is_ready
+    # --- ServerResourceInterface -------------------------------------------------------------------------------------
 
-    @property
-    def error_on_install(self) -> bool:
-        return self._error_on_install
+    def get_status(self) -> int:
+        if self._is_ready:
+            return ServerStatus.READY
+        if self._error_on_install:
+            return ServerStatus.ERROR
+        return ServerStatus.UNINITIALIZED
 
     @property
     def binary_path(self) -> str:
@@ -92,7 +100,7 @@ class ServerNpmResource:
         return 'Packages/{}/{}/'.format(self._package_name, self._server_directory)
 
     @property
-    def dst_path(self) -> str:
+    def server_directory_path(self) -> str:
         return os.path.join(self._package_storage, self._node_version, self._server_directory)
 
     def needs_installation(self) -> bool:
@@ -100,11 +108,11 @@ class ServerNpmResource:
             return False
         self._initialized = True
         installed = False
-        if os.path.isdir(self.dst_path):
+        if os.path.isdir(self.server_directory_path):
             # Server already installed. Check if version has changed.
             try:
                 src_package_json = ResourcePath(self.src_path, 'package.json').read_text()
-                with open(os.path.join(self.dst_path, 'package.json'), 'r') as file:
+                with open(os.path.join(self.server_directory_path, 'package.json'), 'r') as file:
                     dst_package_json = file.read()
                 if src_package_json == dst_package_json:
                     installed = True
@@ -114,14 +122,22 @@ class ServerNpmResource:
         self._is_ready = installed
         return not installed
 
-    def install_or_update(self, async_io: bool) -> None:
-        shutil.rmtree(self.dst_path, ignore_errors=True)
-        ResourcePath(self.src_path).copytree(self.dst_path, exist_ok=True)
-        dependencies_installed = os.path.isdir(os.path.join(self.dst_path, 'node_modules'))
+    def install_or_update_async(self) -> None:
+        self._install_or_update(async_io=True)
+
+    def install_or_update_sync(self) -> None:
+        self._install_or_update(async_io=False)
+
+    # --- Internal ----------------------------------------------------------------------------------------------------
+
+    def _install_or_update(self, async_io: bool) -> None:
+        shutil.rmtree(self.server_directory_path, ignore_errors=True)
+        ResourcePath(self.src_path).copytree(self.server_directory_path, exist_ok=True)
+        dependencies_installed = os.path.isdir(os.path.join(self.server_directory_path, 'node_modules'))
         if dependencies_installed:
             self._is_ready = True
         else:
-            self._install_dependencies(self.dst_path, async_io)
+            self._install_dependencies(self.server_directory_path, async_io)
 
     def _install_dependencies(self, server_path: str, async_io: bool) -> None:
         # this will be called only when the plugin gets:
