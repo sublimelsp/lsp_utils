@@ -31,6 +31,11 @@ class ClientHandlerInterface(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
+    def get_displayed_name(cls) -> str:
+        ...
+
+    @classmethod
+    @abstractmethod
     def package_storage(cls) -> str:
         ...
 
@@ -57,11 +62,6 @@ class ClientHandlerInterface(metaclass=ABCMeta):
     @classmethod
     @abstractmethod
     def binary_path(cls) -> str:
-        ...
-
-    @classmethod
-    @abstractmethod
-    def server_directory_path(cls) -> str:
         ...
 
     @classmethod

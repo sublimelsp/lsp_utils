@@ -1,6 +1,5 @@
 from .helpers import log_and_show_message
 from .helpers import parse_version
-from .helpers import run_command_async
 from .helpers import run_command_sync
 from .helpers import SemanticVersion
 from .helpers import version_to_string
@@ -122,24 +121,18 @@ class ServerNpmResource(ServerResourceInterface):
         self._is_ready = installed
         return not installed
 
-    def install_or_update_async(self) -> None:
-        self._install_or_update(async_io=True)
-
-    def install_or_update_sync(self) -> None:
-        self._install_or_update(async_io=False)
-
-    # --- Internal ----------------------------------------------------------------------------------------------------
-
-    def _install_or_update(self, async_io: bool) -> None:
+    def install_or_update(self) -> None:
         shutil.rmtree(self.server_directory_path, ignore_errors=True)
         ResourcePath(self.src_path).copytree(self.server_directory_path, exist_ok=True)
         dependencies_installed = os.path.isdir(os.path.join(self.server_directory_path, 'node_modules'))
         if dependencies_installed:
             self._is_ready = True
         else:
-            self._install_dependencies(self.server_directory_path, async_io)
+            self._install_dependencies(self.server_directory_path)
 
-    def _install_dependencies(self, server_path: str, async_io: bool) -> None:
+    # --- Internal ----------------------------------------------------------------------------------------------------
+
+    def _install_dependencies(self, server_path: str) -> None:
         # this will be called only when the plugin gets:
         # - installed for the first time,
         # - or when updated on package control
@@ -152,11 +145,8 @@ class ServerNpmResource(ServerResourceInterface):
             self._activity_indicator.start()
 
         args = ["npm", "install", "--verbose", "--production", "--prefix", server_path, server_path]
-        if async_io:
-            run_command_async(args, self._on_install_success, self._on_error)
-        else:
-            output, error = run_command_sync(args)
-            self._on_error(error) if error is not None else self._on_install_success(output)
+        output, error = run_command_sync(args)
+        self._on_error(error) if error is not None else self._on_install_success(output)
 
     def _on_install_success(self, _: str) -> None:
         self._is_ready = True

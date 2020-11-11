@@ -45,7 +45,7 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
 
     @property
     def name(self) -> str:
-        return self.package_name.lower()
+        return self.get_displayed_name().lower()
 
     @classmethod
     def additional_variables(cls) -> Optional[Dict[str, str]]:
@@ -71,7 +71,7 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
     def on_start(cls, window: sublime.Window) -> bool:
         if cls.manages_server():
             server = cls.get_server()
-            return server != None and server.get_status() == ServerStatus.READY
+            return server is not None and server.get_status() == ServerStatus.READY
         message = cls.is_allowed_to_start(window)
         if message:
             window.status_message('{}: {}'.format(cls.package_name, message))
@@ -89,7 +89,7 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
         if cls.manages_server():
             server = cls.get_server()
             if server and server.needs_installation():
-                server.install_or_update_async()
+                sublime.set_timeout_async(server.install_or_update)
 
     @classmethod
     def get_default_settings_schema(cls) -> Dict[str, Any]:

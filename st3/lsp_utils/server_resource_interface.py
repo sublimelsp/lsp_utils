@@ -42,16 +42,10 @@ class ServerResourceInterface(metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def install_or_update_sync(self) -> None:
+    def install_or_update(self) -> None:
         """
-        Do the actual update/installation of the server binary. Synchronous variant.
-        """
-        ...
-
-    @abstractmethod
-    def install_or_update_async(self) -> None:
-        """
-        Do the actual update/installation of the server binary. Asynchronous variant.
+        Do the actual update/installation of the server binary. Don't start extra threads to do the work as everything
+        is handled automatically.
         """
         ...
 
@@ -59,7 +53,9 @@ class ServerResourceInterface(metaclass=ABCMeta):
     def get_status(self) -> int:
         """
         Determines the current status of the server. The state changes as the server is being installed, updated or
-        runs into an error doing those.
+        runs into an error doing those. Initialize with :attr:`ServerStatus.UNINITIALIZED` and change to either
+        Set to :attr:`ServerStatus.ERROR` or :attr:`ServerStatus.READY` depending on if the server was installed
+        correctly or is already installed.
 
         :returns: A number corresponding to the :class:`ServerStatus` class members.
         """
@@ -69,12 +65,5 @@ class ServerResourceInterface(metaclass=ABCMeta):
     def binary_path(self) -> str:
         """
         Returns a filesystem path to the server binary.
-        """
-        ...
-
-    @abstractproperty
-    def server_directory_path(self) -> str:
-        """
-        Returns a filesystem path to the server directory.
         """
         ...

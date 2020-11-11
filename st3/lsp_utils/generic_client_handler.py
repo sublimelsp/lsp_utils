@@ -42,6 +42,15 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
         super().cleanup()
 
     @classmethod
+    def get_displayed_name(cls) -> str:
+        """
+        Returns the name the server will that will be shown in the ST UI (for example in the status field).
+
+        Defaults to the value of :attr:`package_name`.
+        """
+        return cls.package_name
+
+    @classmethod
     def package_storage(cls) -> str:
         return os.path.join(cls.get_storage_path(), cls.package_name)
 
@@ -77,20 +86,6 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
         return []
 
     @classmethod
-    def server_directory_path(cls) -> str:
-        """
-        Returns a filesystem path to the server directory root.
-
-        The default implementation returns `server_directory_path` property of the :class:`ServerResourceInterface`
-        server instance.
-        """
-        if cls.manages_server():
-            server = cls.get_server()
-            if server:
-                return server.server_directory_path
-        return ''
-
-    @classmethod
     def read_settings(cls) -> Tuple[sublime.Settings, str]:
         filename = "{}.sublime-settings".format(cls.package_name)
         loaded_settings = sublime.load_settings(filename)
@@ -116,11 +111,13 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
         """
         Override to add more variables here to be expanded when reading settings.
 
+        Default implementation adds a `${server_path}` variable that holds filesystem path to the server
+        binary (only when :meth:`manages_server` is `True`).
+
         Remember to call the super class and merge the results if overriding.
         """
         return {
             'server_path': cls.binary_path(),
-            'server_directory_path': cls.server_directory_path(),
         }
 
     @classmethod

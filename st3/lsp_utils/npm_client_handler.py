@@ -2,7 +2,7 @@ from .generic_client_handler import GenericClientHandler
 from .server_npm_resource import ServerNpmResource
 from .server_resource_interface import ServerResourceInterface
 from abc import abstractproperty
-from LSP.plugin.core.typing import List, Optional, Tuple
+from LSP.plugin.core.typing import Dict, List, Optional, Tuple
 import sublime
 
 __all__ = ['NpmClientHandler']
@@ -41,6 +41,30 @@ class NpmClientHandler(GenericClientHandler):
         """
         return (8, 0, 0)
 
+    @classmethod
+    def server_directory_path(cls) -> str:
+        """
+        Returns a filesystem path to the server directory root. This includes the version of currently used node
+        version so it's not the direct root of the package storage.
+        """
+        if cls.__server:
+            return cls.__server.server_directory_path
+        return ''
+
+    @classmethod
+    def get_additional_variables(cls) -> Optional[Dict[str, str]]:
+        """
+        Overrides :meth:`GenericClientHandler.get_additional_variables`, providing additional variable for use in the
+        settings.
+
+        Remember to call the super class and merge the results if overriding.
+        """
+        variables = super().get_additional_variables()
+        variables.update({
+            'server_directory_path': cls.server_directory_path(),
+        })
+        return variables
+
     # --- GenericClientHandler handlers -------------------------------------------------------------------------------
 
     @classmethod
@@ -59,12 +83,12 @@ class NpmClientHandler(GenericClientHandler):
     def get_server(cls) -> Optional[ServerResourceInterface]:
         if not cls.__server:
             cls.__server = ServerNpmResource.create({
-                    'package_name': cls.package_name,
-                    'server_directory': cls.server_directory,
-                    'server_binary_path': cls.server_binary_path,
-                    'package_storage': cls.package_storage(),
-                    'minimum_node_version': cls.minimum_node_version(),
-                })
+                'package_name': cls.package_name,
+                'server_directory': cls.server_directory,
+                'server_binary_path': cls.server_binary_path,
+                'package_storage': cls.package_storage(),
+                'minimum_node_version': cls.minimum_node_version(),
+            })
         return cls.__server
 
     def __init__(self, *args, **kwargs) -> None:

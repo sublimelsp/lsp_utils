@@ -61,7 +61,7 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface):
 
     @classmethod
     def name(cls) -> str:
-        return cls.package_name
+        return cls.get_displayed_name()
 
     @classmethod
     def configuration(cls) -> Tuple[sublime.Settings, str]:
@@ -82,7 +82,7 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface):
     def install_or_update(cls) -> None:
         server = cls.get_server()
         if server:
-            server.install_or_update_sync()
+            server.install_or_update()
 
     @classmethod
     def can_start(cls, window: sublime.Window, initiating_view: sublime.View,
