@@ -13,12 +13,11 @@ jobs:
     name: Deploy documentation
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Python
-        uses: actions/setup-python@v1
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
         with:
           python-version: 3.9
 
-      - uses: actions/checkout@v1
       - run: |
           cd docs
           make install
