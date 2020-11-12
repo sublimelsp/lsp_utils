@@ -53,7 +53,7 @@ always_document_param_types = True
 autodoc_inherit_docstrings = False
 autodoc_member_order = 'bysource'
 autodoc_mock_imports = [
-    'sublime', 'sublime_lib', 'sublime_plugin', 'markdown', 'mdpopups'
+    'sublime', 'sublime_lib', 'sublime_plugin', 'markdown', 'mdpopups', 'wcmatch'
 ]
 autodoc_default_options = {
     'members': True,
