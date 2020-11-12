@@ -37,7 +37,6 @@ class ServerResourceInterface(metaclass=ABCMeta):
 
         :returns: `True` if the server needs to be installed or updated. This will result in calling
                   :meth:`install_or_update()`.
-        :rtype: bool
         """
         ...
 

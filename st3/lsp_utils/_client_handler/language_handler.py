@@ -1,4 +1,5 @@
 from ..api_wrapper_interface import ApiWrapperInterface
+from ..helpers import log_and_show_message
 from ..server_resource_interface import ServerStatus
 from .interface import ClientHandlerInterface
 from LSP.plugin import ClientConfig
@@ -8,6 +9,7 @@ from LSP.plugin import read_client_config
 from LSP.plugin import Request
 from LSP.plugin import Response
 from LSP.plugin.core.typing import Any, Callable, Dict, Optional
+from sublime_lib import ActivityIndicator
 import sublime
 
 __all__ = ['ClientHandler']
@@ -40,6 +42,7 @@ class ApiWrapper(ApiWrapperInterface):
 
 
 class ClientHandler(LanguageHandler, ClientHandlerInterface):
+    _setup_called = False
 
     # --- LanguageHandler handlers ------------------------------------------------------------------------------------
 
@@ -85,11 +88,26 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
 
     @classmethod
     def setup(cls) -> None:
+        if cls._setup_called:
+            return
+        cls._setup_called = True
         super().setup()
         if cls.manages_server():
             server = cls.get_server()
             if server and server.needs_installation():
-                sublime.set_timeout_async(server.install_or_update)
+
+                def perform_install() -> None:
+                    message = '{}: Installing server in path: {}'.format(cls.get_displayed_name(), server.binary_path)
+                    log_and_show_message(message, show_in_status=False)
+                    with ActivityIndicator(sublime.active_window(), message):
+                        server.install_or_update()
+
+                sublime.set_timeout_async(perform_install)
+
+    @classmethod
+    def cleanup(cls) -> None:
+        super().cleanup()
+        cls._setup_called = False
 
     @classmethod
     def get_default_settings_schema(cls) -> Dict[str, Any]:

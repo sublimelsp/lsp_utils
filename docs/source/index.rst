@@ -29,4 +29,7 @@ See also documentation on dependencies_.
 .. toctree::
    :caption: API Documentation
 
-   api
+   client_handlers
+   server_resource_handlers
+   api_handler
+   utilities
