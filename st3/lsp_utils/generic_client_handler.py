@@ -23,6 +23,8 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
 
     This name must be set and must match the basename of the corresponding `*.sublime-settings` file.
     It's also used as a directory name for package storage when implementing a server resource interface.
+    Recommended to use `__package__` value fo this one. If you need to override handler name in the UI,
+    override :meth:`get_displayed_name()` also.
 
     :required: Yes
     """
@@ -44,7 +46,7 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
     @classmethod
     def get_displayed_name(cls) -> str:
         """
-        Returns the name the server will that will be shown in the ST UI (for example in the status field).
+        Returns the name that will be shown in the ST UI (for example in the status field).
 
         Defaults to the value of :attr:`package_name`.
         """

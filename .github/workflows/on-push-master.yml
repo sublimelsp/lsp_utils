@@ -1,0 +1,23 @@
+name: On Push To Master
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy_docs:
+    name: Deploy documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.9
+
+      - uses: actions/checkout@v1
+      - run: |
+          cd docs
+          make install
+          make build
+          make deploy

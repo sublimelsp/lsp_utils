@@ -6,11 +6,14 @@ BUILDDIR      = .
 
 .PHONY: clean
 
-installdeps:
-	pip3 install sphinx sphinx-rtd-theme sphinx-autodoc-typehints
+install:
+	pip3 install sphinx sphinx-rtd-theme sphinx-autodoc-typehints ghp-import
 
-html:
+build:
 	sphinx-build -M html "$(SOURCEDIR)" "$(BUILDDIR)"
+
+deploy:
+	ghp-import --no-jekyll --push --force .
 
 clean:
 	rm -rf doctrees html
