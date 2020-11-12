@@ -13,7 +13,7 @@ build:
 	sphinx-build -M html "$(SOURCEDIR)" "$(BUILDDIR)"
 
 deploy:
-	ghp-import --no-jekyll --push --force .
+	ghp-import --no-jekyll --push --force html
 
 clean:
 	rm -rf doctrees html
