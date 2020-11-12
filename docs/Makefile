@@ -8,6 +8,9 @@ BUILDDIR      = .
 
 install:
 	pip3 install sphinx sphinx-rtd-theme sphinx-autodoc-typehints ghp-import
+	rm -rf source/modules
+	mkdir -p source/modules
+	cd source/modules && git clone --branch st4000-exploration --depth 1 -- git@github.com:sublimelsp/LSP.git
 
 build:
 	sphinx-build -M html "$(SOURCEDIR)" "$(BUILDDIR)"

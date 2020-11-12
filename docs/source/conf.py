@@ -14,15 +14,7 @@
 #
 import os
 import sys
-# ---------------------------------------------------------------------------------------------------------------------
-# NOTE: This setup is specific to my machine. It's necessary to expose all depenendecies to Sphinx so that the types
-# are shown correctly.
-sublime_packages = os.path.join(os.path.expanduser('~'), 'Library/Application Support/Sublime Text/Packages')
-sys.path.insert(0, sublime_packages)
-sys.path.insert(0, sublime_packages + '/LSP/stubs')
-sys.path.insert(0, sublime_packages + '/backrefs/st3')
-sys.path.insert(0, sublime_packages + '/wcmatch/st3')
-# ---------------------------------------------------------------------------------------------------------------------
+sys.path.insert(0, os.path.abspath('modules'))
 sys.path.insert(0, os.path.abspath('../../st3'))
 sys.path.insert(0, os.path.abspath('extensions'))
 
@@ -60,7 +52,9 @@ always_document_param_types = True
 
 autodoc_inherit_docstrings = False
 autodoc_member_order = 'bysource'
-autodoc_mock_imports = ['sublime', 'sublime_lib', 'sublime_plugin']
+autodoc_mock_imports = [
+    'sublime', 'sublime_lib', 'sublime_plugin', 'markdown', 'mdpopups'
+]
 autodoc_default_options = {
     'members': True,
     'inherited-members': False,
