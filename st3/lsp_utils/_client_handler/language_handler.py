@@ -94,15 +94,27 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
         super().setup()
         if cls.manages_server():
             server = cls.get_server()
-            if server and server.needs_installation():
+            if not server:
+                return
+            try:
+                if not server.needs_installation():
+                    return
+            except Exception as exception:
+                log_and_show_message('{}: Error:'.format(cls.package_name), str(exception))
+                return
 
-                def perform_install() -> None:
-                    message = '{}: Installing server in path: {}'.format(cls.get_displayed_name(), server.binary_path)
+            def perform_install() -> None:
+                name = cls.package_name
+                try:
+                    message = '{}: Installing server in path: {}'.format(name, cls.get_storage_path())
                     log_and_show_message(message, show_in_status=False)
                     with ActivityIndicator(sublime.active_window(), message):
                         server.install_or_update()
+                    log_and_show_message('{}: Server installed. Sublime Text restart is required.'.format(name))
+                except Exception as exception:
+                    log_and_show_message('{}: Server installation error: {}'.format(name), str(exception))
 
-                sublime.set_timeout_async(perform_install)
+            sublime.set_timeout_async(perform_install)
 
     @classmethod
     def cleanup(cls) -> None:

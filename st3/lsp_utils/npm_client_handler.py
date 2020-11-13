@@ -42,16 +42,6 @@ class NpmClientHandler(GenericClientHandler):
         return (8, 0, 0)
 
     @classmethod
-    def server_directory_path(cls) -> str:
-        """
-        Returns a filesystem path to the server directory root. This includes the version of currently used node
-        version so it's not the direct root of the package storage.
-        """
-        if cls.__server:
-            return cls.__server.server_directory_path
-        return ''
-
-    @classmethod
     def get_additional_variables(cls) -> Optional[Dict[str, str]]:
         """
         Overrides :meth:`GenericClientHandler.get_additional_variables`, providing additional variable for use in the
@@ -61,7 +51,7 @@ class NpmClientHandler(GenericClientHandler):
         """
         variables = super().get_additional_variables()
         variables.update({
-            'server_directory_path': cls.server_directory_path(),
+            'server_directory_path': cls._server_directory_path(),
         })
         return variables
 
@@ -90,6 +80,12 @@ class NpmClientHandler(GenericClientHandler):
                 'minimum_node_version': cls.minimum_node_version(),
             })
         return cls.__server
+
+    @classmethod
+    def _server_directory_path(cls) -> str:
+        if cls.__server:
+            return cls.__server.server_directory_path
+        return ''
 
     def __init__(self, *args, **kwargs) -> None:
         # Seems unnecessary to override but it's to hide the original argument from the documentation.
