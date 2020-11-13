@@ -93,6 +93,7 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
         cls._setup_called = True
         super().setup()
         if cls.manages_server():
+            name = cls.package_name
             server = cls.get_server()
             if not server:
                 return
@@ -100,11 +101,10 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
                 if not server.needs_installation():
                     return
             except Exception as exception:
-                log_and_show_message('{}: Error:'.format(cls.package_name), str(exception))
+                log_and_show_message('{}: Error checking if server was installed: {}'.format(name), str(exception))
                 return
 
             def perform_install() -> None:
-                name = cls.package_name
                 try:
                     message = '{}: Installing server in path: {}'.format(name, cls.get_storage_path())
                     log_and_show_message(message, show_in_status=False)
