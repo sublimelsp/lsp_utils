@@ -47,6 +47,11 @@ class NpmClientHandler(GenericClientHandler):
         Overrides :meth:`GenericClientHandler.get_additional_variables`, providing additional variable for use in the
         settings.
 
+        The additional variables are:
+
+        - `${server_path}` - holds filesystem path to the server binary (only
+          when :meth:`GenericClientHandler.manages_server()` is `True`).
+
         Remember to call the super class and merge the results if overriding.
         """
         variables = super().get_additional_variables()

@@ -19,4 +19,4 @@ deploy:
 	ghp-import --no-jekyll --push --force html
 
 clean:
-	rm -rf doctrees html
+	rm -rf doctrees html source/modules
