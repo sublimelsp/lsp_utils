@@ -1,4 +1,5 @@
 from ._client_handler import ClientHandler
+from ._client_handler import as_notification_handler, as_request_handler
 from .api_wrapper_interface import ApiWrapperInterface
 from .generic_client_handler import GenericClientHandler
 from .npm_client_handler import NpmClientHandler
@@ -14,4 +15,7 @@ __all__ = [
     'ServerResourceInterface',
     'ServerStatus'
     'ServerNpmResource',
+    # decorator-related
+    'as_notification_handler',
+    'as_request_handler',
 ]
