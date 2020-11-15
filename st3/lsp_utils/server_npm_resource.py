@@ -5,6 +5,7 @@ from .helpers import SemanticVersion
 from .helpers import version_to_string
 from .server_resource_interface import ServerResourceInterface
 from .server_resource_interface import ServerStatus
+from hashlib import md5
 from LSP.plugin.core.typing import Dict, Optional
 from sublime_lib import ResourcePath
 import os
@@ -94,10 +95,10 @@ class ServerNpmResource(ServerResourceInterface):
         if os.path.isdir(self._server_dest):
             # Server already installed. Check if version has changed.
             try:
-                src_package_json = ResourcePath(self._server_src, 'package.json').read_text()
-                with open(os.path.join(self._server_dest, 'package.json'), 'r') as file:
-                    dst_package_json = file.read()
-                if src_package_json == dst_package_json:
+                src_hash = md5(ResourcePath(self._server_src, 'package.json').read_bytes()).hexdigest()
+                with open(os.path.join(self._server_dest, 'package.json'), 'rb') as file:
+                    dst_hash = md5(file.read()).hexdigest()
+                if src_hash == dst_hash:
                     installed = True
             except FileNotFoundError:
                 # Needs to be re-installed.
