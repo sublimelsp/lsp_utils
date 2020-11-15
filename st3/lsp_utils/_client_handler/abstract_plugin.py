@@ -110,8 +110,8 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface):
 
     @classmethod
     def cleanup(cls) -> None:
-        super().cleanup()
         unregister_plugin(cls)
+        super().cleanup()
 
     @classmethod
     def get_default_settings_schema(cls) -> Dict[str, Any]:
