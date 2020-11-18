@@ -14,8 +14,8 @@ Handler = Callable[[Any, Any], None]
 MessageMethods = Union[str, List[str]]
 
 _HANDLER_MARKS = {
-    "notification": "__handle_notification_events",
-    "request": "__handle_request_events",
+    "notification": "__handle_notification_message_methods",
+    "request": "__handle_request_message_methods",
 }
 
 
