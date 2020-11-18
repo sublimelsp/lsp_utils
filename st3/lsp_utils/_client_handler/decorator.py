@@ -1,9 +1,13 @@
-from LSP.plugin.core.typing import Any, Callable, Iterable, Union
+from ..api_wrapper_interface import ApiWrapperInterface
+from .interface import ClientHandlerInterface
+from LSP.plugin.core.typing import Any, Callable, Iterable, List, Union
+import inspect
 
 __all__ = [
     "HANDLER_MARKS",
     "notification_handler",
     "request_handler",
+    "register_decorated_handlers",
 ]
 
 # the first argument is always "self"
@@ -38,3 +42,25 @@ def _create_handler(client_event: str, server_events: T_SERVER_EVENTS) -> Callab
         return func
 
     return decorator
+
+
+def register_decorated_handlers(client_handler: ClientHandlerInterface, api: ApiWrapperInterface) -> None:
+    """
+    Register decorator-style custom event handlers.
+
+    This method works as following steps:
+
+    1. Scan through all methods of this object.
+    2. If a method is decorated, it will has a "handler mark" attribute which is put by the decorator.
+    3. Register the method with wanted events, which are stored in the "handler mark" attribute.
+
+    :param api: The API instance for interacting with the server.
+    """
+    for _, func in inspect.getmembers(client_handler, predicate=inspect.isroutine):
+        # client_event is like "notification", "request"
+        for client_event, handler_mark in HANDLER_MARKS.items():
+            event_registrator = getattr(api, "on_" + client_event, None)
+            if callable(event_registrator):
+                server_events = getattr(func, handler_mark, [])  # type: List[str]
+                for server_event in server_events:
+                    event_registrator(server_event, func)

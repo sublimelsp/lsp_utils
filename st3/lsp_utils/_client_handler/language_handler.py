@@ -1,7 +1,7 @@
 from ..api_wrapper_interface import ApiWrapperInterface
 from ..helpers import log_and_show_message
 from ..server_resource_interface import ServerStatus
-from .decorator import HANDLER_MARKS
+from .decorator import register_decorated_handlers
 from .interface import ClientHandlerInterface
 from LSP.plugin import ClientConfig
 from LSP.plugin import LanguageHandler
@@ -9,9 +9,8 @@ from LSP.plugin import Notification
 from LSP.plugin import read_client_config
 from LSP.plugin import Request
 from LSP.plugin import Response
-from LSP.plugin.core.typing import Any, Callable, Dict, List, Optional
+from LSP.plugin.core.typing import Any, Callable, Dict, Optional
 from sublime_lib import ActivityIndicator
-import inspect
 import sublime
 
 __all__ = ['ClientHandler']
@@ -85,7 +84,7 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
 
     def on_initialized(self, client) -> None:
         api = ApiWrapper(client)
-        self._register_decorated_handlers(api)
+        register_decorated_handlers(self, api)
         self.on_ready(api)
 
     # --- ClientHandlerInterface --------------------------------------------------------------------------------------
@@ -148,24 +147,3 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
         # Will be a no-op if already ran.
         # See https://github.com/sublimelsp/LSP/issues/899
         self.setup()
-
-    def _register_decorated_handlers(self, api: ApiWrapperInterface) -> None:
-        """
-        Register decorator-style custom event handlers.
-
-        This method works as following steps:
-
-        1. Scan through all methods of this object.
-        2. If a method is decorated, it will has a "handler mark" attribute which is put by the decorator.
-        3. Register the method with wanted events, which are stored in the "handler mark" attribute.
-
-        :param api: The API instance for interacting with the server.
-        """
-        for _, func in inspect.getmembers(self, predicate=inspect.isroutine):
-            # client_event is like "notification", "request"
-            for client_event, handler_mark in HANDLER_MARKS.items():
-                event_registrator = getattr(api, "on_" + client_event, None)
-                if callable(event_registrator):
-                    server_events = getattr(func, handler_mark, [])  # type: List[str]
-                    for server_event in server_events:
-                        event_registrator(server_event, func)
