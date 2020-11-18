@@ -11,7 +11,7 @@ __all__ = [
 
 # the first argument is always "self"
 T_HANDLER = Callable[[Any, Any], None]
-T_SERVER_EVENTS = Union[str, List[str]]
+T_MESSAGE_KINDS = Union[str, List[str]]
 
 _HANDLER_MARKS = {
     "notification": "__handle_notification_events",
@@ -19,25 +19,25 @@ _HANDLER_MARKS = {
 }
 
 
-def notification_handler(server_events: T_SERVER_EVENTS) -> Callable[[T_HANDLER], T_HANDLER]:
-    """ Marks the decorated function as a "notification" event handler. """
+def notification_handler(notification_kinds: T_MESSAGE_KINDS) -> Callable[[T_HANDLER], T_HANDLER]:
+    """ Marks the decorated function as a "notification" message handler. """
 
-    return _create_handler("notification", server_events)
-
-
-def request_handler(server_events: T_SERVER_EVENTS) -> Callable[[T_HANDLER], T_HANDLER]:
-    """ Marks the decorated function as a "request" event handler. """
-
-    return _create_handler("request", server_events)
+    return _create_handler("notification", notification_kinds)
 
 
-def _create_handler(client_event: str, server_events: T_SERVER_EVENTS) -> Callable[[T_HANDLER], T_HANDLER]:
-    """ Marks the decorated function as a event handler. """
+def request_handler(request_kinds: T_MESSAGE_KINDS) -> Callable[[T_HANDLER], T_HANDLER]:
+    """ Marks the decorated function as a "request" message handler. """
 
-    server_events = [server_events] if isinstance(server_events, str) else list(server_events)
+    return _create_handler("request", request_kinds)
+
+
+def _create_handler(client_event: str, message_kinds: T_MESSAGE_KINDS) -> Callable[[T_HANDLER], T_HANDLER]:
+    """ Marks the decorated function as a message handler. """
+
+    message_kinds = [message_kinds] if isinstance(message_kinds, str) else list(message_kinds)
 
     def decorator(func: T_HANDLER) -> T_HANDLER:
-        setattr(func, _HANDLER_MARKS[client_event], server_events)
+        setattr(func, _HANDLER_MARKS[client_event], message_kinds)
         return func
 
     return decorator
@@ -64,12 +64,12 @@ def register_decorated_handlers(client_handler: ClientHandlerInterface, api: Api
             if is_registered:
                 break
 
-            server_events = getattr(func, handler_mark, None)  # type: Optional[List[str]]
-            if server_events is None:
+            message_kinds = getattr(func, handler_mark, None)  # type: Optional[List[str]]
+            if message_kinds is None:
                 continue
 
             event_registrator = getattr(api, "on_" + client_event, None)
             if callable(event_registrator):
-                for server_event in server_events:
-                    event_registrator(server_event, func)
+                for message_kind in message_kinds:
+                    event_registrator(message_kind, func)
                 is_registered = True
