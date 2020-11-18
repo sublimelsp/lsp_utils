@@ -22,13 +22,24 @@ _HANDLER_MARKS = {
 
 
 def notification_handler(notification_methods: MessageMethods) -> Callable[[NotificationHandler], NotificationHandler]:
-    """ Marks the decorated function as a "notification" message handler. """
+    """
+    Marks the decorated function as a "notification" message handler.
+
+    On server sending the notification, the decorated function will be called with the `params` argument which contains
+    the payload.
+    """
 
     return _create_handler("notification", notification_methods)
 
 
 def request_handler(request_methods: MessageMethods) -> Callable[[RequestHandler], RequestHandler]:
-    """ Marks the decorated function as a "request" message handler. """
+    """
+    Marks the decorated function as a "request" message handler.
+
+    On server sending the request, the decorated function will be called with two two arguments (`params` and
+    `respond`). The first argument (`params`) is the sent payload and the second function must be used to respond to the
+    request. The response function takes any data that should be sent in response.
+    """
 
     return _create_handler("request", request_methods)
 
