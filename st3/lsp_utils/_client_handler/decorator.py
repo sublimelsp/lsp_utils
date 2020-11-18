@@ -11,7 +11,7 @@ __all__ = [
 
 # the first argument is always "self"
 T_HANDLER = Callable[[Any, Any], None]
-T_MESSAGE_KINDS = Union[str, List[str]]
+T_MESSAGE_METHODS = Union[str, List[str]]
 
 _HANDLER_MARKS = {
     "notification": "__handle_notification_events",
@@ -19,25 +19,25 @@ _HANDLER_MARKS = {
 }
 
 
-def notification_handler(notification_kinds: T_MESSAGE_KINDS) -> Callable[[T_HANDLER], T_HANDLER]:
+def notification_handler(notification_methods: T_MESSAGE_METHODS) -> Callable[[T_HANDLER], T_HANDLER]:
     """ Marks the decorated function as a "notification" message handler. """
 
-    return _create_handler("notification", notification_kinds)
+    return _create_handler("notification", notification_methods)
 
 
-def request_handler(request_kinds: T_MESSAGE_KINDS) -> Callable[[T_HANDLER], T_HANDLER]:
+def request_handler(request_methods: T_MESSAGE_METHODS) -> Callable[[T_HANDLER], T_HANDLER]:
     """ Marks the decorated function as a "request" message handler. """
 
-    return _create_handler("request", request_kinds)
+    return _create_handler("request", request_methods)
 
 
-def _create_handler(client_event: str, message_kinds: T_MESSAGE_KINDS) -> Callable[[T_HANDLER], T_HANDLER]:
+def _create_handler(client_event: str, message_methods: T_MESSAGE_METHODS) -> Callable[[T_HANDLER], T_HANDLER]:
     """ Marks the decorated function as a message handler. """
 
-    message_kinds = [message_kinds] if isinstance(message_kinds, str) else list(message_kinds)
+    message_methods = [message_methods] if isinstance(message_methods, str) else list(message_methods)
 
     def decorator(func: T_HANDLER) -> T_HANDLER:
-        setattr(func, _HANDLER_MARKS[client_event], message_kinds)
+        setattr(func, _HANDLER_MARKS[client_event], message_methods)
         return func
 
     return decorator
@@ -64,12 +64,12 @@ def register_decorated_handlers(client_handler: ClientHandlerInterface, api: Api
             if is_registered:
                 break
 
-            message_kinds = getattr(func, handler_mark, None)  # type: Optional[List[str]]
-            if message_kinds is None:
+            message_methods = getattr(func, handler_mark, None)  # type: Optional[List[str]]
+            if message_methods is None:
                 continue
 
             event_registrator = getattr(api, "on_" + client_event, None)
             if callable(event_registrator):
-                for message_kind in message_kinds:
-                    event_registrator(message_kind, func)
+                for message_method in message_methods:
+                    event_registrator(message_method, func)
                 is_registered = True
