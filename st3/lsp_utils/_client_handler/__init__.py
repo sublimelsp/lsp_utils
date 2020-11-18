@@ -1,4 +1,5 @@
-from .decorator import as_notification_handler, as_request_handler
+from .decorator import notification_handler
+from .decorator import request_handler
 from LSP.plugin import __version__ as lsp_version
 
 
@@ -10,6 +11,6 @@ else:
 __all__ = [
     'ClientHandler',
     # decorator-related
-    'as_notification_handler',
-    'as_request_handler',
+    'notification_handler',
+    'request_handler',
 ]

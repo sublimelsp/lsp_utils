@@ -161,10 +161,10 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         api = ApiWrapper(self)
-        self._register_custom_server_event_handlers(api)
+        self._register_decorated_handlers(api)
         self.on_ready(api)
 
-    def _register_custom_server_event_handlers(self, api: ApiWrapperInterface) -> None:
+    def _register_decorated_handlers(self, api: ApiWrapperInterface) -> None:
         """
         Register decorator-style custom event handlers.
 

@@ -9,7 +9,7 @@ from LSP.plugin import Notification
 from LSP.plugin import read_client_config
 from LSP.plugin import Request
 from LSP.plugin import Response
-from LSP.plugin.core.typing import Any, Callable, Dict, Optional
+from LSP.plugin.core.typing import Any, Callable, Dict, List, Optional
 from sublime_lib import ActivityIndicator
 import inspect
 import sublime
@@ -85,7 +85,7 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
 
     def on_initialized(self, client) -> None:
         api = ApiWrapper(client)
-        self._register_custom_server_event_handlers(api)
+        self._register_decorated_handlers(api)
         self.on_ready(api)
 
     # --- ClientHandlerInterface --------------------------------------------------------------------------------------
@@ -149,7 +149,7 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
         # See https://github.com/sublimelsp/LSP/issues/899
         self.setup()
 
-    def _register_custom_server_event_handlers(self, api: ApiWrapperInterface) -> None:
+    def _register_decorated_handlers(self, api: ApiWrapperInterface) -> None:
         """
         Register decorator-style custom event handlers.
 
