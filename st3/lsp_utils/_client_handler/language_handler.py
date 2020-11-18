@@ -74,10 +74,12 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
     def on_start(cls, window: sublime.Window) -> bool:
         if cls.manages_server():
             server = cls.get_server()
-            return server is not None and server.get_status() == ServerStatus.READY
+            if server is None or server.get_status() != ServerStatus.READY:
+                log_and_show_message('{}: Server not ready'.format(cls.get_displayed_name()))
+                return False
         message = cls.is_allowed_to_start(window)
         if message:
-            window.status_message('{}: {}'.format(cls.package_name, message))
+            log_and_show_message('{}: {}'.format(cls.get_displayed_name(), message))
             return False
         return True
 
