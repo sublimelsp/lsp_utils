@@ -1,6 +1,6 @@
 from ..api_wrapper_interface import ApiWrapperInterface
 from .interface import ClientHandlerInterface
-from LSP.plugin.core.typing import Any, Callable, Iterable, List, Union
+from LSP.plugin.core.typing import Any, Callable, Iterable, List, Optional, Union
 import inspect
 
 __all__ = [
@@ -67,10 +67,11 @@ def register_decorated_handlers(client_handler: ClientHandlerInterface, api: Api
 
             event_registrator = getattr(api, "on_" + client_event, None)
             if callable(event_registrator):
-                try:
-                    server_events = getattr(func, handler_mark)  # type: List[str]
-                    for server_event in server_events:
-                        event_registrator(server_event, func)
-                    is_decorated = True
-                except AttributeError:
-                    pass
+                server_events = getattr(func, handler_mark, None)  # type: Optional[List[str]]
+                if server_events is None:
+                    continue
+
+                is_decorated = True
+                for server_event in server_events:
+                    event_registrator(server_event, func)
+
