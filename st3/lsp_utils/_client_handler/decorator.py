@@ -56,13 +56,12 @@ def register_decorated_handlers(client_handler: ClientHandlerInterface, api: Api
     :param api: The API instance for interacting with the server.
     """
     for _, func in inspect.getmembers(client_handler, predicate=inspect.isroutine):
-        is_decorated = False  # indicates whether `func` is found decorated
+        is_registered = False  # indicates whether `func` has been registered for any event
 
-        # client_event is like "notification", "request"
         for client_event, handler_mark in _HANDLER_MARKS.items():
             # it makes no sense that a handler handlers both "notification" and "request"
-            # so we do early break once we've registered the handler for any event
-            if is_decorated:
+            # so we do early break once we've registered a handler for any event
+            if is_registered:
                 break
 
             server_events = getattr(func, handler_mark, None)  # type: Optional[List[str]]
@@ -71,6 +70,6 @@ def register_decorated_handlers(client_handler: ClientHandlerInterface, api: Api
 
             event_registrator = getattr(api, "on_" + client_event, None)
             if callable(event_registrator):
-                is_decorated = True
                 for server_event in server_events:
                     event_registrator(server_event, func)
+                is_registered = True
