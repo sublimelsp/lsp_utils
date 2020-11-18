@@ -13,7 +13,6 @@ from LSP.plugin import unregister_plugin
 from LSP.plugin import WorkspaceFolder
 from LSP.plugin.core.rpc import method2attr
 from LSP.plugin.core.typing import Any, Callable, Dict, List, Optional, Tuple
-import inspect
 import sublime
 import weakref
 
