@@ -1,6 +1,6 @@
 from ..api_wrapper_interface import ApiWrapperInterface
 from .interface import ClientHandlerInterface
-from LSP.plugin.core.typing import Any, Callable, List, Optional, Union
+from LSP.plugin.core.typing import Any, Callable, List, Optional, TypeVar, Union
 import inspect
 
 __all__ = [
@@ -9,8 +9,10 @@ __all__ = [
     "register_decorated_handlers",
 ]
 
+T = TypeVar('T')
 # the first argument is always "self"
-Handler = Callable[[Any, Any], None]
+NotificationHandler = Callable[[Any, Any], None]
+RequestHandler = Callable[[Any, Any, Callable[[Any], None]], None]
 MessageMethods = Union[str, List[str]]
 
 _HANDLER_MARKS = {
@@ -19,24 +21,24 @@ _HANDLER_MARKS = {
 }
 
 
-def notification_handler(notification_methods: MessageMethods) -> Callable[[Handler], Handler]:
+def notification_handler(notification_methods: MessageMethods) -> Callable[[NotificationHandler], NotificationHandler]:
     """ Marks the decorated function as a "notification" message handler. """
 
     return _create_handler("notification", notification_methods)
 
 
-def request_handler(request_methods: MessageMethods) -> Callable[[Handler], Handler]:
+def request_handler(request_methods: MessageMethods) -> Callable[[RequestHandler], RequestHandler]:
     """ Marks the decorated function as a "request" message handler. """
 
     return _create_handler("request", request_methods)
 
 
-def _create_handler(client_event: str, message_methods: MessageMethods) -> Callable[[Handler], Handler]:
+def _create_handler(client_event: str, message_methods: MessageMethods) -> Callable[[T], T]:
     """ Marks the decorated function as a message handler. """
 
     message_methods = [message_methods] if isinstance(message_methods, str) else message_methods
 
-    def decorator(func: Handler) -> Handler:
+    def decorator(func: T) -> T:
         setattr(func, _HANDLER_MARKS[client_event], message_methods)
         return func
 
@@ -47,12 +49,13 @@ def register_decorated_handlers(client_handler: ClientHandlerInterface, api: Api
     """
     Register decorator-style custom message handlers.
 
-    This method works as following steps:
+    This method works as following:
 
     1. Scan through all methods of `client_handler`.
-    2. If a method is decorated, it will has a "handler mark" attribute which is set by the decorator.
+    2. If a method is decorated, it will have a "handler mark" attribute which is set by the decorator.
     3. Register the method with wanted message methods, which are stored in the "handler mark" attribute.
 
+    :param client_handler: The instance of the client handler.
     :param api: The API instance for interacting with the server.
     """
     for _, func in inspect.getmembers(client_handler, predicate=inspect.isroutine):
@@ -66,6 +69,6 @@ def register_decorated_handlers(client_handler: ClientHandlerInterface, api: Api
                 for message_method in message_methods:
                     event_registrator(message_method, func)
 
-                # it makes no sense that a handler handlers both "notification" and "request"
+                # it makes no sense that a handler handles both "notification" and "request"
                 # so we do early break once we've registered a handler
                 break
