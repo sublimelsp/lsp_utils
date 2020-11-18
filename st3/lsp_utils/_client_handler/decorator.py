@@ -45,22 +45,22 @@ def _create_handler(client_event: str, message_methods: T_MESSAGE_METHODS) -> Ca
 
 def register_decorated_handlers(client_handler: ClientHandlerInterface, api: ApiWrapperInterface) -> None:
     """
-    Register decorator-style custom event handlers.
+    Register decorator-style custom message handlers.
 
     This method works as following steps:
 
-    1. Scan through all methods of the `client_handler`.
-    2. If a method is decorated, it will has a "handler mark" attribute which is set by a decorator.
-    3. Register the method with wanted events, which are stored in the "handler mark" attribute.
+    1. Scan through all methods of `client_handler`.
+    2. If a method is decorated, it will has a "handler mark" attribute which is set by the decorator.
+    3. Register the method with wanted message methods, which are stored in the "handler mark" attribute.
 
     :param api: The API instance for interacting with the server.
     """
     for _, func in inspect.getmembers(client_handler, predicate=inspect.isroutine):
-        is_registered = False  # indicates whether `func` has been registered for any event
+        is_registered = False  # indicates whether `func` has been registered for any message method
 
         for client_event, handler_mark in _HANDLER_MARKS.items():
             # it makes no sense that a handler handlers both "notification" and "request"
-            # so we do early break once we've registered a handler for any event
+            # so we do early break once we've registered a handler
             if is_registered:
                 break
 
