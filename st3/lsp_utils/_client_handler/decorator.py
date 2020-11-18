@@ -4,7 +4,6 @@ from LSP.plugin.core.typing import Any, Callable, Iterable, List, Union
 import inspect
 
 __all__ = [
-    "HANDLER_MARKS",
     "notification_handler",
     "request_handler",
     "register_decorated_handlers",
@@ -14,7 +13,7 @@ __all__ = [
 T_HANDLER = Callable[[Any, Any], None]
 T_SERVER_EVENTS = Union[str, Iterable[str]]
 
-HANDLER_MARKS = {
+_HANDLER_MARKS = {
     "notification": "__handle_notification_events",
     "request": "__handle_request_events",
 }
@@ -38,7 +37,7 @@ def _create_handler(client_event: str, server_events: T_SERVER_EVENTS) -> Callab
     server_events = [server_events] if isinstance(server_events, str) else list(server_events)
 
     def decorator(func: T_HANDLER) -> T_HANDLER:
-        setattr(func, HANDLER_MARKS[client_event], server_events)
+        setattr(func, _HANDLER_MARKS[client_event], server_events)
         return func
 
     return decorator
@@ -58,7 +57,7 @@ def register_decorated_handlers(client_handler: ClientHandlerInterface, api: Api
     """
     for _, func in inspect.getmembers(client_handler, predicate=inspect.isroutine):
         # client_event is like "notification", "request"
-        for client_event, handler_mark in HANDLER_MARKS.items():
+        for client_event, handler_mark in _HANDLER_MARKS.items():
             event_registrator = getattr(api, "on_" + client_event, None)
             if callable(event_registrator):
                 server_events = getattr(func, handler_mark, [])  # type: List[str]
