@@ -36,9 +36,10 @@ def request_handler(request_methods: MessageMethods) -> Callable[[RequestHandler
     """
     Marks the decorated function as a "request" message handler.
 
-    On server sending the request, the decorated function will be called with two two arguments (`params` and
-    `respond`). The first argument (`params`) is the sent payload and the second function must be used to respond to the
-    request. The response function takes any data that should be sent in response.
+    On server sending the request, the decorated function will be called with two arguments (`params` and `respond`).
+    The first argument (`params`) is the payload of the request and the second argument (`respond`) is the function that
+    must be used to respond to the request. The `respond` function takes any data that should be sent back to the
+    server.
     """
 
     return _create_handler("request", request_methods)
