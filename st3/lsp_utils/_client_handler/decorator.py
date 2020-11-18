@@ -1,6 +1,6 @@
 from ..api_wrapper_interface import ApiWrapperInterface
 from .interface import ClientHandlerInterface
-from LSP.plugin.core.typing import Any, Callable, Iterable, List, Optional, Union
+from LSP.plugin.core.typing import Any, Callable, List, Optional, Union
 import inspect
 
 __all__ = [
@@ -11,7 +11,7 @@ __all__ = [
 
 # the first argument is always "self"
 T_HANDLER = Callable[[Any, Any], None]
-T_SERVER_EVENTS = Union[str, Iterable[str]]
+T_SERVER_EVENTS = Union[str, List[str]]
 
 _HANDLER_MARKS = {
     "notification": "__handle_notification_events",
