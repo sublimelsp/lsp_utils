@@ -49,8 +49,8 @@ def register_decorated_handlers(client_handler: ClientHandlerInterface, api: Api
 
     This method works as following steps:
 
-    1. Scan through all methods of this object.
-    2. If a method is decorated, it will has a "handler mark" attribute which is put by the decorator.
+    1. Scan through all methods of the `client_handler`.
+    2. If a method is decorated, it will has a "handler mark" attribute which is set by a decorator.
     3. Register the method with wanted events, which are stored in the "handler mark" attribute.
 
     :param api: The API instance for interacting with the server.
