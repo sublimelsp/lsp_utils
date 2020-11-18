@@ -2,7 +2,7 @@
 
 Module with LSP-related utilities for Sublime Text
 
-📘 [Documentation](https://github.com/SublimeLSP/lsp_utils/)
+📘 [Documentation](https://sublimelsp.github.io/lsp_utils/)
 
 ## How to use
 
