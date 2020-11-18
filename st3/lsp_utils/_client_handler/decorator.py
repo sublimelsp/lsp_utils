@@ -10,8 +10,8 @@ __all__ = [
 ]
 
 # the first argument is always "self"
-T_Handler = Callable[[Any, Any], None]
-T_MessageMethods = Union[str, List[str]]
+Handler = Callable[[Any, Any], None]
+MessageMethods = Union[str, List[str]]
 
 _HANDLER_MARKS = {
     "notification": "__handle_notification_events",
@@ -19,24 +19,24 @@ _HANDLER_MARKS = {
 }
 
 
-def notification_handler(notification_methods: T_MessageMethods) -> Callable[[T_Handler], T_Handler]:
+def notification_handler(notification_methods: MessageMethods) -> Callable[[Handler], Handler]:
     """ Marks the decorated function as a "notification" message handler. """
 
     return _create_handler("notification", notification_methods)
 
 
-def request_handler(request_methods: T_MessageMethods) -> Callable[[T_Handler], T_Handler]:
+def request_handler(request_methods: MessageMethods) -> Callable[[Handler], Handler]:
     """ Marks the decorated function as a "request" message handler. """
 
     return _create_handler("request", request_methods)
 
 
-def _create_handler(client_event: str, message_methods: T_MessageMethods) -> Callable[[T_Handler], T_Handler]:
+def _create_handler(client_event: str, message_methods: MessageMethods) -> Callable[[Handler], Handler]:
     """ Marks the decorated function as a message handler. """
 
     message_methods = [message_methods] if isinstance(message_methods, str) else message_methods
 
-    def decorator(func: T_Handler) -> T_Handler:
+    def decorator(func: Handler) -> Handler:
         setattr(func, _HANDLER_MARKS[client_event], message_methods)
         return func
 
