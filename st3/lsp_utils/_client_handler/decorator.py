@@ -65,13 +65,12 @@ def register_decorated_handlers(client_handler: ClientHandlerInterface, api: Api
             if is_decorated:
                 break
 
+            server_events = getattr(func, handler_mark, None)  # type: Optional[List[str]]
+            if server_events is None:
+                continue
+
             event_registrator = getattr(api, "on_" + client_event, None)
             if callable(event_registrator):
-                server_events = getattr(func, handler_mark, None)  # type: Optional[List[str]]
-                if server_events is None:
-                    continue
-
                 is_decorated = True
                 for server_event in server_events:
                     event_registrator(server_event, func)
-
