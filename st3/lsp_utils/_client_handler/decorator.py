@@ -34,7 +34,7 @@ def request_handler(request_methods: T_MESSAGE_METHODS) -> Callable[[T_HANDLER],
 def _create_handler(client_event: str, message_methods: T_MESSAGE_METHODS) -> Callable[[T_HANDLER], T_HANDLER]:
     """ Marks the decorated function as a message handler. """
 
-    message_methods = [message_methods] if isinstance(message_methods, str) else list(message_methods)
+    message_methods = [message_methods] if isinstance(message_methods, str) else message_methods
 
     def decorator(func: T_HANDLER) -> T_HANDLER:
         setattr(func, _HANDLER_MARKS[client_event], message_methods)
