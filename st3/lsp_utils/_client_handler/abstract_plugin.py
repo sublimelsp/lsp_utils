@@ -1,5 +1,6 @@
 from ..api_wrapper_interface import ApiWrapperInterface
 from ..server_resource_interface import ServerStatus
+from .api_decorator import register_decorated_handlers
 from .interface import ClientHandlerInterface
 from LSP.plugin import AbstractPlugin
 from LSP.plugin import ClientConfig
@@ -158,4 +159,6 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.on_ready(ApiWrapper(self))
+        api = ApiWrapper(self)
+        register_decorated_handlers(self, api)
+        self.on_ready(api)

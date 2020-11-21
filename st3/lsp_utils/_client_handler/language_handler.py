@@ -1,6 +1,7 @@
 from ..api_wrapper_interface import ApiWrapperInterface
 from ..helpers import log_and_show_message
 from ..server_resource_interface import ServerStatus
+from .api_decorator import register_decorated_handlers
 from .interface import ClientHandlerInterface
 from LSP.plugin import ClientConfig
 from LSP.plugin import LanguageHandler
@@ -84,7 +85,9 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
         return True
 
     def on_initialized(self, client) -> None:
-        self.on_ready(ApiWrapper(client))
+        api = ApiWrapper(client)
+        register_decorated_handlers(self, api)
+        self.on_ready(api)
 
     # --- ClientHandlerInterface --------------------------------------------------------------------------------------
 

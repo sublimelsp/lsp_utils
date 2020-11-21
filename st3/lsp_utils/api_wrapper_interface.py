@@ -4,6 +4,10 @@ from LSP.plugin.core.typing import Any, Callable, Optional
 __all__ = ['ApiWrapperInterface']
 
 
+NotificationHandler = Callable[[Any], None]
+RequestHandler = Callable[[Any, Callable[[Any], None]], None]
+
+
 class ApiWrapperInterface(metaclass=ABCMeta):
     """
     An interface for sending and receiving requests and notifications from and to the server. An implementation of it
@@ -11,14 +15,14 @@ class ApiWrapperInterface(metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def on_notification(self, method: str, handler: Callable[[Any], None]) -> None:
+    def on_notification(self, method: str, handler: NotificationHandler) -> None:
         """
         Registers a handler for given notification name. The handler will be called with optional params.
         """
         ...
 
     @abstractmethod
-    def on_request(self, method: str, handler: Callable[[Any, Callable[[Any], None]], None]) -> None:
+    def on_request(self, method: str, handler: RequestHandler) -> None:
         """
         Registers a handler for given request name. The handler will be called with two arguments - first the params
         sent with the request and second the function that must be used to respond to the request. The response
