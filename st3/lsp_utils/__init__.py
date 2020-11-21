@@ -16,7 +16,6 @@ __all__ = [
     'ServerResourceInterface',
     'ServerStatus'
     'ServerNpmResource',
-    # decorator-related
     'notification_handler',
     'request_handler',
 ]

@@ -1,6 +1,6 @@
 from ..api_wrapper_interface import ApiWrapperInterface
 from ..server_resource_interface import ServerStatus
-from .decorator import register_decorated_handlers
+from .api_decorator import register_decorated_handlers
 from .interface import ClientHandlerInterface
 from LSP.plugin import AbstractPlugin
 from LSP.plugin import ClientConfig
