@@ -4,6 +4,7 @@ from abc import ABCMeta
 from abc import abstractmethod
 from abc import abstractproperty
 from LSP.plugin import ClientConfig
+from LSP.plugin import DottedDict
 from LSP.plugin import WorkspaceFolder
 from LSP.plugin.core.typing import Any, Dict, List, Optional, Tuple
 import sublime
@@ -105,4 +106,8 @@ class ClientHandlerInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def on_ready(self, api: ApiWrapperInterface) -> None:
+        ...
+
+    @abstractmethod
+    def on_settings_changed(self, settings: DottedDict) -> None:
         ...

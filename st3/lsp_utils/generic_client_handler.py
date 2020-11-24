@@ -3,6 +3,7 @@ from .api_wrapper_interface import ApiWrapperInterface
 from .server_resource_interface import ServerResourceInterface
 from abc import ABCMeta
 from LSP.plugin import ClientConfig
+from LSP.plugin import DottedDict
 from LSP.plugin import WorkspaceFolder
 from LSP.plugin.core.typing import Dict, List, Optional, Tuple
 import os
@@ -143,21 +144,23 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
         """
         Called when package settings were read. Receives a `sublime.Settings` object.
 
-        Can be used to change or just read the user settings.
+        It's recommended to use :meth:`on_settings_changed()` instead if you don't need to persistent your changes to
+        the disk.
 
-        :returns: `True` to save modifications back into the settings file. It's not customary to save your changes.
+        :returns: `True` to save modifications back into the settings file.
         """
         return False
 
     @classmethod
     def on_client_configuration_ready(cls, configuration: Dict) -> None:
         """
+        .. deprecated:: 1.8
+           Use :func:`on_settings_changed()` instead.
+
         Called with default configuration object that contains merged default and user settings.
 
         Can be used to alter default configuration before registering it.
 
-        .. deprecated:: 1.8
-           Use :func:`on_settings_read()` instead.
         """
         pass
 
@@ -186,5 +189,14 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
         Called when the instance is ready.
 
         :param api: The API instance for interacting with the server.
+        """
+        pass
+
+    def on_settings_changed(self, settings: DottedDict) -> None:
+        """
+        Override this method to alter the settings that are returned to the server for the
+        workspace/didChangeConfiguration notification and the workspace/configuration requests.
+
+        :param settings: The settings that the server should receive.
         """
         pass
