@@ -94,6 +94,13 @@ pygments_style = 'sphinx'
 
 # -- Options for HTML output -------------------------------------------------
 
+html_context = {
+    'display_github': True,
+    'github_user': 'sublimelsp',
+    'github_repo': 'lsp_utils',
+    'github_version': 'master/docs/source/',
+}
+
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
