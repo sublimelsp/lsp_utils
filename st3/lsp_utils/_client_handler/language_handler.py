@@ -4,6 +4,7 @@ from ..server_resource_interface import ServerStatus
 from .api_decorator import register_decorated_handlers
 from .interface import ClientHandlerInterface
 from LSP.plugin import ClientConfig
+from LSP.plugin import DottedDict
 from LSP.plugin import LanguageHandler
 from LSP.plugin import Notification
 from LSP.plugin import read_client_config
@@ -69,7 +70,9 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
         settings_dict['enabled'] = enabled
         if not settings_dict['command']:
             settings_dict['command'] = self.get_command()
-        return read_client_config(self.name, settings_dict, filepath)
+        client_config = read_client_config(self.name, settings_dict, filepath)
+        self.on_settings_changed(client_config.settings)
+        return client_config
 
     @classmethod
     def on_start(cls, window: sublime.Window) -> bool:
