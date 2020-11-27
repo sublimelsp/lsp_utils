@@ -10,6 +10,7 @@ from LSP.plugin import Notification
 from LSP.plugin import read_client_config
 from LSP.plugin import Request
 from LSP.plugin import Response
+from LSP.plugin import WorkspaceFolder
 from LSP.plugin.core.typing import Any, Callable, Dict, Optional
 from sublime_lib import ActivityIndicator
 import sublime
@@ -81,7 +82,9 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
             if server is None or server.get_status() != ServerStatus.READY:
                 log_and_show_message('{}: Server not ready'.format(cls.get_displayed_name()))
                 return False
-        message = cls.is_allowed_to_start(window)
+        startup_view = window.active_view()
+        workspace_folders = [WorkspaceFolder.from_path(folder) for folder in window.folders()]
+        message = cls.is_allowed_to_start(window, startup_view, workspace_folders)
         if message:
             log_and_show_message('{}: {}'.format(cls.get_displayed_name(), message))
             return False
