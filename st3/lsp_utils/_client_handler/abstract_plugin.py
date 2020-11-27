@@ -12,11 +12,18 @@ from LSP.plugin import Session
 from LSP.plugin import unregister_plugin
 from LSP.plugin import WorkspaceFolder
 from LSP.plugin.core.rpc import method2attr
-from LSP.plugin.core.typing import Any, Callable, Dict, List, Optional, Tuple
+from LSP.plugin.core.typing import Any, Callable, Dict, List, Optional, Tuple, TypedDict
 import sublime
 import weakref
 
 __all__ = ['ClientHandler']
+
+LanguagesDict = TypedDict('LanguagesDict', {
+    'document_selector': Optional[str],
+    'languageId': Optional[str],
+    'scopes': Optional[List[str]],
+    'syntaxes': Optional[List[str]],
+}, total=False)
 
 
 class ApiWrapper(ApiWrapperInterface):
@@ -29,12 +36,12 @@ class ApiWrapper(ApiWrapperInterface):
         setattr(self.__plugin, method2attr(method), lambda params: handler(params))
 
     def on_request(self, method: str, handler: Callable[[Any, Callable[[Any], None]], None]) -> None:
-        def send_response(request_id, result):
+        def send_response(request_id: Any, result: Any) -> None:
             session = self.__plugin.weaksession()
             if session:
                 session.send_response(Response(request_id, result))
 
-        def on_response(params, request_id):
+        def on_response(params: Any, request_id: Any) -> None:
             handler(params, lambda result: send_response(request_id, result))
 
         setattr(self.__plugin, method2attr(method), on_response)
@@ -69,14 +76,14 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface):
         return cls.read_settings()
 
     @classmethod
-    def additional_variables(cls) -> Optional[Dict[str, str]]:
+    def additional_variables(cls) -> Dict[str, str]:
         return cls.get_additional_variables()
 
     @classmethod
     def needs_update_or_installation(cls) -> bool:
         if cls.manages_server():
             server = cls.get_server()
-            return bool(server) and server.needs_installation()
+            return bool(server and server.needs_installation())
         return False
 
     @classmethod
@@ -134,14 +141,14 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface):
     @classmethod
     def on_settings_read_internal(cls, settings: sublime.Settings) -> None:
         settings.set('enabled', True)
-        languages = settings.get('languages', None)  # type: List[Dict[str, Any]]
+        languages = settings.get('languages', None)  # type: Optional[List[LanguagesDict]]
         if languages:
             settings.set('languages', cls._upgrade_languages_list(languages))
 
     # --- Internals ---------------------------------------------------------------------------------------------------
 
     @classmethod
-    def _upgrade_languages_list(cls, languages):
+    def _upgrade_languages_list(cls, languages: List[LanguagesDict]) -> List[LanguagesDict]:
         upgraded_list = []
         for language in languages:
             if 'document_selector' in language:
@@ -151,13 +158,13 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface):
             elif 'scopes' in language:
                 upgraded_list.append({
                     'languageId': language.get('languageId'),
-                    'document_selector': ' | '.join(language.get('scopes')),
+                    'document_selector': ' | '.join(language['scopes'] or []),
                 })
             else:
                 upgraded_list.append(language)
         return upgraded_list
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         api = ApiWrapper(self)
         register_decorated_handlers(self, api)

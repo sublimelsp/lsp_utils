@@ -54,7 +54,7 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
         return self.get_displayed_name().lower()
 
     @classmethod
-    def additional_variables(cls) -> Optional[Dict[str, str]]:
+    def additional_variables(cls) -> Dict[str, str]:
         return cls.get_additional_variables()
 
     @property

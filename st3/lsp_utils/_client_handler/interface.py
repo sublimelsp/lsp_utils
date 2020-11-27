@@ -47,7 +47,7 @@ class ClientHandlerInterface(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def get_additional_variables(cls) -> Optional[Dict[str, str]]:
+    def get_additional_variables(cls) -> Dict[str, str]:
         ...
 
     @classmethod

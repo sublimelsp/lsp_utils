@@ -5,7 +5,7 @@ from abc import ABCMeta
 from LSP.plugin import ClientConfig
 from LSP.plugin import DottedDict
 from LSP.plugin import WorkspaceFolder
-from LSP.plugin.core.typing import Dict, List, Optional, Tuple
+from LSP.plugin.core.typing import Any, Dict, List, Optional, Tuple
 import os
 import shutil
 import sublime
@@ -110,7 +110,7 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
         return (loaded_settings, filepath)
 
     @classmethod
-    def get_additional_variables(cls) -> Optional[Dict[str, str]]:
+    def get_additional_variables(cls) -> Dict[str, str]:
         """
         Override to add more variables here to be expanded when reading settings.
 
@@ -180,7 +180,7 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
         """
         return None
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         # Seems unnecessary to override but it's to hide the original argument from the documentation.
         super().__init__(*args, **kwargs)
 

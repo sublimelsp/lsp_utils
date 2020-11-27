@@ -2,7 +2,7 @@ from .generic_client_handler import GenericClientHandler
 from .server_npm_resource import ServerNpmResource
 from .server_resource_interface import ServerResourceInterface
 from abc import abstractproperty
-from LSP.plugin.core.typing import Dict, List, Optional, Tuple
+from LSP.plugin.core.typing import Any, Dict, List, Optional, Tuple
 import sublime
 
 __all__ = ['NpmClientHandler']
@@ -42,7 +42,7 @@ class NpmClientHandler(GenericClientHandler):
         return (8, 0, 0)
 
     @classmethod
-    def get_additional_variables(cls) -> Optional[Dict[str, str]]:
+    def get_additional_variables(cls) -> Dict[str, str]:
         """
         Overrides :meth:`GenericClientHandler.get_additional_variables`, providing additional variable for use in the
         settings.
@@ -92,6 +92,6 @@ class NpmClientHandler(GenericClientHandler):
             return cls.__server.server_directory_path
         return ''
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         # Seems unnecessary to override but it's to hide the original argument from the documentation.
         super().__init__(*args, **kwargs)
