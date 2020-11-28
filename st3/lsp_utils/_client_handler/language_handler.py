@@ -112,7 +112,7 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
                 if not server.needs_installation():
                     return
             except Exception as exception:
-                log_and_show_message('{}: Error checking if server was installed: {}'.format(name), str(exception))
+                log_and_show_message('{}: Error checking if server was installed: {}'.format(name, str(exception)))
                 return
 
             def perform_install() -> None:
@@ -123,7 +123,7 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
                         server.install_or_update()
                     log_and_show_message('{}: Server installed. Sublime Text restart is required.'.format(name))
                 except Exception as exception:
-                    log_and_show_message('{}: Server installation error: {}'.format(name), str(exception))
+                    log_and_show_message('{}: Server installation error: {}'.format(name, str(exception)))
 
             sublime.set_timeout_async(perform_install)
 
