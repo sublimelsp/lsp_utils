@@ -17,6 +17,7 @@ class ServerPipResource(ServerResourceInterface):
     :param storage_path: The path to the package storage (pass :meth:`lsp_utils.GenericClientHandler.storage_path()`)
     :param package_name: The package name (used as a directory name for storage)
     :param requirements_path: The file path to the requirements.txt file (in format: name==version).
+    :param server_binary_filename: The name of the file used to start the server.
     """
 
     @classmethod
@@ -34,11 +35,12 @@ class ServerPipResource(ServerResourceInterface):
             raise Exception(error)
         return output
 
-    def __init__(self, storage_path: str, package_name: str, requirements_path: str) -> None:
+    def __init__(self, storage_path: str, package_name: str, requirements_path: str,
+                 server_binary_filename: str) -> None:
         self._storage_path = storage_path
         self._package_name = package_name
         self._requirements_path = requirements_path
-        self.requirements = self.parse_requirements(requirements_path)
+        self._server_binary_filename = server_binary_filename
         self._status = ServerStatus.UNINITIALIZED
 
     def parse_requirements(self, requirements_path: str) -> List[Tuple[str, Optional[str]]]:
@@ -61,7 +63,7 @@ class ServerPipResource(ServerResourceInterface):
         return os.path.join(self.basedir(), bin_dir)
 
     def server_exe(self) -> str:
-        return os.path.join(self.bindir(), 'pyls' + self.file_extension())
+        return os.path.join(self.bindir(), self._server_binary_filename + self.file_extension())
 
     def pip_exe(self) -> str:
         return os.path.join(self.bindir(), 'pip' + self.file_extension())
@@ -81,10 +83,10 @@ class ServerPipResource(ServerResourceInterface):
                 return True
             with open(self.python_version(), 'r') as f:
                 if f.readline().strip() != self.run(self.python_exe(), '--version').strip():
-                    print('DFIFF')
                     return True
             for line in self.run(self.pip_exe(), 'freeze').splitlines():
-                for requirement, version in self.requirements:
+                requirements = self.parse_requirements(self._requirements_path)
+                for requirement, version in requirements:
                     if not version:
                         continue
                     prefix = requirement + '=='

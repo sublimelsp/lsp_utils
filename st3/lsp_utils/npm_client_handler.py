@@ -91,7 +91,3 @@ class NpmClientHandler(GenericClientHandler):
         if cls.__server:
             return cls.__server.server_directory_path
         return ''
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        # Seems unnecessary to override but it's to hide the original argument from the documentation.
-        super().__init__(*args, **kwargs)

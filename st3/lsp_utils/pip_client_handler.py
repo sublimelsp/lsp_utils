@@ -1,0 +1,50 @@
+from .generic_client_handler import GenericClientHandler
+from .server_pip_resource import ServerPipResource
+from .server_resource_interface import ServerResourceInterface
+from LSP.plugin.core.typing import Any, Optional
+
+__all__ = ['PipClientHandler']
+
+
+class PipClientHandler(GenericClientHandler):
+    """
+    An implementation of :class:`GenericClientHandler` for handling pip-based LSP plugins.
+
+    Automatically manages a pip-based server by installing and updating dependencies based on provided
+    `requirements.txt` file.
+    """
+    __server = None  # type: Optional[ServerPipResource]
+
+    requirements_txt_path = ''
+    """
+    The full filesystem path to the `requirements.txt` file containing a list of dependencies required by the server.
+
+    The file format is `dependency_name==dependency_version` or just a direct path to the dependency (for example to
+    a github repo). For example:
+
+    .. code::
+
+        pyls==0.1.2
+        colorama==1.2.2
+        git+https://github.com/tomv564/pyls-mypy.git
+
+    :required: Yes
+    """
+
+    server_filename = ''
+    """
+    The file name of the binary used to start the server.
+
+    :required: Yes
+    """
+
+    @classmethod
+    def manages_server(cls) -> bool:
+        return True
+
+    @classmethod
+    def get_server(cls) -> Optional[ServerResourceInterface]:
+        if not cls.__server:
+            cls.__server = ServerPipResource(cls.storage_path(), cls.package_name, cls.requirements_txt_path,
+                                            cls.server_filename)
+        return cls.__server
