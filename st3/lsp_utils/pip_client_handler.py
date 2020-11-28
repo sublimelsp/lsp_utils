@@ -17,7 +17,10 @@ class PipClientHandler(GenericClientHandler):
 
     requirements_txt_path = ''
     """
-    The full filesystem path to the `requirements.txt` file containing a list of dependencies required by the server.
+    The path to the `requirements.txt` file containing a list of dependencies required by the server.
+
+    If the package `LSP-foo` has a `requirements.txt` file at the root then the path will be
+    `Packages/LSP-foo/requirements.txt`.
 
     The file format is `dependency_name==dependency_version` or just a direct path to the dependency (for example to
     a github repo). For example:

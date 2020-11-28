@@ -2,6 +2,7 @@ from .helpers import run_command_sync
 from .server_resource_interface import ServerResourceInterface
 from .server_resource_interface import ServerStatus
 from LSP.plugin.core.typing import Dict, List, Optional, Tuple
+from sublime_lib import ResourcePath
 import os
 import shutil
 import sublime
@@ -16,7 +17,9 @@ class ServerPipResource(ServerResourceInterface):
 
     :param storage_path: The path to the package storage (pass :meth:`lsp_utils.GenericClientHandler.storage_path()`)
     :param package_name: The package name (used as a directory name for storage)
-    :param requirements_path: The file path to the requirements.txt file (in format: name==version).
+    :param requirements_path: The path to the `requirements.txt` file.
+           If the package `LSP-foo` has a `requirements.txt` file at the root then the path will be
+           `Packages/LSP-foo/requirements.txt`.
     :param server_binary_filename: The name of the file used to start the server.
     """
 
@@ -45,14 +48,14 @@ class ServerPipResource(ServerResourceInterface):
 
     def parse_requirements(self, requirements_path: str) -> List[Tuple[str, Optional[str]]]:
         requirements = []  # type: List[Tuple[str, Optional[str]]]
-        with open(requirements_path, 'r') as f:
-            for line in [line.strip() for line in f.readlines()]:
-                if line:
-                    parts = line.split('==')
-                    if len(parts) == 2:
-                        requirements.append(tuple(parts))
-                    elif len(parts) == 1:
-                        requirements.append((parts[0], None))
+        lines = [line.strip() for line in ResourcePath(self._requirements_path).read_text().splitlines()]
+        for line in lines:
+            if line:
+                parts = line.split('==')
+                if len(parts) == 2:
+                    requirements.append(tuple(parts))
+                elif len(parts) == 1:
+                    requirements.append((parts[0], None))
         return requirements
 
     def basedir(self) -> str:
@@ -103,7 +106,9 @@ class ServerPipResource(ServerResourceInterface):
         try:
             os.makedirs(self.basedir(), exist_ok=True)
             self.run(self.python_exe(), '-m', 'venv', self._package_name, cwd=self._storage_path)
-            self.run(self.pip_exe(), 'install', '-r', self._requirements_path, '--disable-pip-version-check')
+            dest_requirements_txt_path = os.path.join(self._storage_path, self._package_name, 'requirements.txt')
+            ResourcePath(self._requirements_path).copy(dest_requirements_txt_path)
+            self.run(self.pip_exe(), 'install', '-r', dest_requirements_txt_path, '--disable-pip-version-check')
             with open(self.python_version(), 'w') as f:
                 f.write(self.run(self.python_exe(), '--version'))
         except Exception:
