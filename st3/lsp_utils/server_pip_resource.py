@@ -17,9 +17,8 @@ class ServerPipResource(ServerResourceInterface):
 
     :param storage_path: The path to the package storage (pass :meth:`lsp_utils.GenericClientHandler.storage_path()`)
     :param package_name: The package name (used as a directory name for storage)
-    :param requirements_path: The path to the `requirements.txt` file.
-           If the package `LSP-foo` has a `requirements.txt` file at the root then the path will be
-           `Packages/LSP-foo/requirements.txt`.
+    :param requirements_path: The path to the `requirements.txt` file, relative to the package directory.
+           If the package `LSP-foo` has a `requirements.txt` file at the root then the path will be `requirements.txt`.
     :param server_binary_filename: The name of the file used to start the server.
     """
 
@@ -42,7 +41,7 @@ class ServerPipResource(ServerResourceInterface):
                  server_binary_filename: str) -> None:
         self._storage_path = storage_path
         self._package_name = package_name
-        self._requirements_path = requirements_path
+        self._requirements_path = 'Packages/{}/{}'.format(self._package_name, requirements_path)
         self._server_binary_filename = server_binary_filename
         self._status = ServerStatus.UNINITIALIZED
 
