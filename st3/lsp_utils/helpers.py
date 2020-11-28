@@ -1,4 +1,4 @@
-from LSP.plugin.core.typing import Callable, List, Optional, Tuple
+from LSP.plugin.core.typing import Any, Callable, List, Optional, Tuple, Union
 import re
 import sublime
 import subprocess
@@ -8,7 +8,7 @@ StringCallback = Callable[[str], None]
 SemanticVersion = Tuple[int, int, int]
 
 
-def run_command_sync(args: List[str]) -> Tuple[str, Optional[str]]:
+def run_command_sync(args: List[str], cwd: Optional[str] = None) -> Tuple[str, Optional[str]]:
     """
     Runs the given command synchronously.
 
@@ -17,14 +17,13 @@ def run_command_sync(args: List[str]) -> Tuple[str, Optional[str]]:
               command has succeeded then the second tuple element will be `None`.
     """
     try:
-        output = subprocess.check_output(
-            args, shell=sublime.platform() == 'windows', stderr=subprocess.STDOUT)
+        output = subprocess.check_output(args, cwd=cwd, shell=sublime.platform() == 'windows', stderr=subprocess.STDOUT)
         return (decode_bytes(output).strip(), None)
     except subprocess.CalledProcessError as error:
         return ('', decode_bytes(error.output).strip())
 
 
-def run_command_async(args: List[str], on_success: StringCallback, on_error: StringCallback) -> None:
+def run_command_async(args: List[str], on_success: StringCallback, on_error: StringCallback, **kwargs: Any) -> None:
     """
     Runs the given command asynchronously.
 
@@ -33,7 +32,7 @@ def run_command_async(args: List[str], on_success: StringCallback, on_error: Str
     """
 
     def execute(on_success, on_error, args):
-        result, error = run_command_sync(args)
+        result, error = run_command_sync(args, **kwargs)
         on_error(error) if error is not None else on_success(result)
 
     thread = threading.Thread(target=execute, args=(on_success, on_error, args))

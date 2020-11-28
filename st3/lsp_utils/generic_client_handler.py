@@ -54,8 +54,19 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
         return cls.package_name
 
     @classmethod
+    def storage_path(cls) -> str:
+        """
+        The storage path. Use this as your base directory to install server files. Its path is '$DATA/Package Storage'.
+        You should have an additional subdirectory preferrably the same name as your plugin. For instance:
+        """
+        return super().storage_path()
+
+    @classmethod
     def package_storage(cls) -> str:
-        return os.path.join(cls.get_storage_path(), cls.package_name)
+        """
+        The storage path for this package. Its path is '$DATA/Package Storage/[Package_Name]'.
+        """
+        return os.path.join(cls.storage_path(), cls.package_name)
 
     @classmethod
     def get_command(cls) -> List[str]:
