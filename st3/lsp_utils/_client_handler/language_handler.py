@@ -117,7 +117,7 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
 
             def perform_install() -> None:
                 try:
-                    message = '{}: Installing server in path: {}'.format(name, cls.get_storage_path())
+                    message = '{}: Installing server in path: {}'.format(name, cls.storage_path())
                     log_and_show_message(message, show_in_status=False)
                     with ActivityIndicator(sublime.active_window(), message):
                         server.install_or_update()
@@ -142,10 +142,6 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
             'languages': [],
             'settings': {},
         }
-
-    @classmethod
-    def get_storage_path(cls) -> str:
-        return cls.storage_path()
 
     # --- Internals ---------------------------------------------------------------------------------------------------
 

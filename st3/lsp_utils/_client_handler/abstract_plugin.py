@@ -135,10 +135,6 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface):
         }
 
     @classmethod
-    def get_storage_path(cls) -> str:
-        return cls.storage_path()
-
-    @classmethod
     def on_settings_read_internal(cls, settings: sublime.Settings) -> None:
         settings.set('enabled', True)
         languages = settings.get('languages', None)  # type: Optional[List[LanguagesDict]]

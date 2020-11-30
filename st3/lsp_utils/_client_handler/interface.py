@@ -42,11 +42,6 @@ class ClientHandlerInterface(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def get_storage_path(cls) -> str:
-        ...
-
-    @classmethod
-    @abstractmethod
     def get_additional_variables(cls) -> Dict[str, str]:
         ...
 

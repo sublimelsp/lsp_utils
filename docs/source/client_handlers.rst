@@ -10,3 +10,8 @@ NpmClientHandler
 ----------------
 
 .. autoclass:: lsp_utils.NpmClientHandler
+
+PipClientHandler
+----------------
+
+.. autoclass:: lsp_utils.PipClientHandler
