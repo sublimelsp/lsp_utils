@@ -136,6 +136,7 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
     def get_default_settings_schema(cls) -> Dict[str, Any]:
         return {
             'command': [],
+            'enabled': True,
             'env': {},
             'experimental_capabilities': {},
             'initializationOptions': {},
