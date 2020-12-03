@@ -14,4 +14,4 @@ NpmClientHandler
 PipClientHandler
 ----------------
 
-.. autoclass:: lsp_utils.PipClientHandler
+.. autoclass:: lsp_utils.pip_client_handler.PipClientHandler
