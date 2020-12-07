@@ -100,7 +100,7 @@ class ActivityIndicator:
         else:
             self._state = True
             self._update()
-            sublime.set_timeout(self._run)
+            self._run()
 
     def stop(self) -> None:
         """
