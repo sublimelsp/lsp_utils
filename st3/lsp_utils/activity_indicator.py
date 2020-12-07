@@ -66,7 +66,7 @@ class ActivityIndicator:
         target: Union[StatusTarget, sublime.View, sublime.Window],
         label: Optional[str] = None,
     ) -> None:
-        self.label = label
+        self._label = label
 
         if isinstance(target, sublime.View):
             self._target = ViewTarget(target)
@@ -99,7 +99,7 @@ class ActivityIndicator:
             raise ValueError('Timer is already running')
         else:
             self._state = True
-            self.update()
+            self._update()
             sublime.set_timeout(self._run)
 
     def stop(self) -> None:
@@ -111,25 +111,29 @@ class ActivityIndicator:
         self._state = False
         self._target.clear()
 
+    def set_label(self, label: str) -> None:
+        self._label = label
+        self._update()
+
     def _run(self) -> None:
         if self._state:
-            sublime.set_timeout(self.tick, self.interval)
+            sublime.set_timeout(self._tick, self.interval)
 
-    def tick(self) -> None:
+    def _tick(self) -> None:
         self._ticks += 1
-        self.update()
+        self._update()
         self._run()
 
-    def update(self) -> None:
-        self._target.set(self.render(self._ticks))
+    def _update(self) -> None:
+        self._target.set(self._render(self._ticks))
 
-    def render(self, ticks: int) -> str:
+    def _render(self, ticks: int) -> str:
         status = ticks % (2 * self.width)
         before = min(status, (2 * self.width) - status)
         after = self.width - before
 
         return "{}[{}={}]".format(
-            self.label + ' ' if self.label else '',
+            self._label + ' ' if self._label else '',
             " " * before,
             " " * after,
         )
