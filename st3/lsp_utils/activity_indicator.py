@@ -54,7 +54,7 @@ class ActivityIndicator:
 
     :class:`ActivityIndicator` can be used as a context manager.
 
-    .. versionadded:: 1.4
+    .. versionadded:: 1.11.0
     """
     width = 10  # type: int
     interval = 100  # type: float
@@ -112,6 +112,11 @@ class ActivityIndicator:
         self._target.clear()
 
     def set_label(self, label: str) -> None:
+        """
+        Updates the label of the indicator.
+
+        :param label: The new label text
+        """
         self._label = label
         self._update()
 
