@@ -130,7 +130,8 @@ class ActivityIndicator:
         self._run()
 
     def _update(self) -> None:
-        self._target.set(self._render(self._ticks))
+        if self._state:
+            self._target.set(self._render(self._ticks))
 
     def _render(self, ticks: int) -> str:
         status = ticks % (2 * self.width)
