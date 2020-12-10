@@ -118,20 +118,20 @@ class ActivityIndicator:
         :param label: The new label text
         """
         self._label = label
-        self._update()
+        if self._state:
+            self._update()
 
     def _run(self) -> None:
-        if self._state:
-            sublime.set_timeout(self._tick, self.interval)
+        sublime.set_timeout(self._tick, self.interval)
 
     def _tick(self) -> None:
-        self._ticks += 1
-        self._update()
-        self._run()
+        if self._state:
+            self._ticks += 1
+            self._update()
+            self._run()
 
     def _update(self) -> None:
-        if self._state:
-            self._target.set(self._render(self._ticks))
+        self._target.set(self._render(self._ticks))
 
     def _render(self, ticks: int) -> str:
         status = ticks % (2 * self.width)
