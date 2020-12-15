@@ -78,6 +78,10 @@ class ActivityIndicator:
         self._ticks = 0
         self._state = False
 
+    def __del__(self) -> None:
+        if self._state:
+            self.stop()
+
     def __enter__(self) -> None:
         self.start()
 
