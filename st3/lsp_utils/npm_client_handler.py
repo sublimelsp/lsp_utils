@@ -2,7 +2,6 @@ from .generic_client_handler import GenericClientHandler
 from .server_npm_resource import ServerNpmResource
 from .server_resource_interface import ServerResourceInterface
 from LSP.plugin.core.typing import Dict, List, Optional, Tuple
-import sublime
 
 __all__ = ['NpmClientHandler']
 
@@ -48,13 +47,16 @@ class NpmClientHandler(GenericClientHandler):
 
         The additional variables are:
 
-        - `${server_path}` - holds filesystem path to the server binary (only
+        - `${node_bin}`: - holds the binary path of currently used Node.js runtime. This can resolve to just `node`
+          when using Node.js runtime from the PATH or to a full filesystem path if using the local Node.js runtime.
+        - `${server_directory_path}` - holds filesystem path to the server directory (only
           when :meth:`GenericClientHandler.manages_server()` is `True`).
 
         Remember to call the super class and merge the results if overriding.
         """
         variables = super().get_additional_variables()
         variables.update({
+            'node_bin': cls._node_bin(),
             'server_directory_path': cls._server_directory_path(),
         })
         return variables
@@ -63,7 +65,7 @@ class NpmClientHandler(GenericClientHandler):
 
     @classmethod
     def get_command(cls) -> List[str]:
-        return ['node', cls.binary_path()] + cls.get_binary_arguments()
+        return [cls._node_bin(), cls.binary_path()] + cls.get_binary_arguments()
 
     @classmethod
     def get_binary_arguments(cls) -> List[str]:
@@ -82,11 +84,21 @@ class NpmClientHandler(GenericClientHandler):
                 'server_binary_path': cls.server_binary_path,
                 'package_storage': cls.package_storage(),
                 'minimum_node_version': cls.minimum_node_version(),
+                'storage_path': cls.storage_path(),
             })
         return cls.__server
+
+    # --- Internal ----------------------------------------------------------------------------------------------------
 
     @classmethod
     def _server_directory_path(cls) -> str:
         if cls.__server:
             return cls.__server.server_directory_path
         return ''
+
+    @classmethod
+    def _node_bin(cls) -> str:
+        if cls.__server:
+            return cls.__server.node_bin
+        return ''
+
