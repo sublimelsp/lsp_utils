@@ -55,6 +55,7 @@ class NpmClientHandler(GenericClientHandler):
         """
         variables = super().get_additional_variables()
         variables.update({
+            'node_bin': cls._node_bin(),
             'server_directory_path': cls._server_directory_path(),
         })
         return variables
@@ -63,7 +64,7 @@ class NpmClientHandler(GenericClientHandler):
 
     @classmethod
     def get_command(cls) -> List[str]:
-        return ['node', cls.binary_path()] + cls.get_binary_arguments()
+        return [cls._node_bin(), cls.binary_path()] + cls.get_binary_arguments()
 
     @classmethod
     def get_binary_arguments(cls) -> List[str]:
@@ -82,11 +83,21 @@ class NpmClientHandler(GenericClientHandler):
                 'server_binary_path': cls.server_binary_path,
                 'package_storage': cls.package_storage(),
                 'minimum_node_version': cls.minimum_node_version(),
+                'storage_path': cls.storage_path(),
             })
         return cls.__server
+
+    # --- Internal ----------------------------------------------------------------------------------------------------
 
     @classmethod
     def _server_directory_path(cls) -> str:
         if cls.__server:
             return cls.__server.server_directory_path
         return ''
+
+    @classmethod
+    def _node_bin(cls) -> str:
+        if cls.__server:
+            return cls.__server.node_bin
+        return ''
+
