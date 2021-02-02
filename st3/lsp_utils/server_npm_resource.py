@@ -32,38 +32,55 @@ class ServerNpmResource(ServerResourceInterface):
         package_storage = options['package_storage']
         minimum_node_version = options['minimum_node_version']
         storage_path = options['storage_path']
+        node_distribution = cls.resolve_node_distribution(package_name, minimum_node_version, storage_path)
+        if node_distribution:
+            return ServerNpmResource(
+                package_name, server_directory, server_binary_path, package_storage, node_distribution)
+
+    @classmethod
+    def resolve_node_distribution(
+            cls, package_name: str, minimum_node_version: str, storage_path: str) -> Optional[NodeDistribution]:
+        # Try with node on the PATH first.
         node_distribution = NodeDistributionPATH()
+        node_version = None
+        if node_distribution.node_exists():
+            try:
+                cls.check_node_version(node_distribution, minimum_node_version)
+                return node_distribution
+            except Exception as ex:
+                message = 'Ignoring Node from PATH due to an error. {}'.format(ex)
+                log_and_show_message('{}: Warning: {}'.format(package_name, message))
+        # Failed resolving Node on the PATH. Falling back to local Node.
+        node_distribution = NodeDistributionLocal(path.join(storage_path, 'lsp_utils', 'node-dist'))
         if not node_distribution.node_exists():
-            # Node binary not found on the PATH. Falling back to local Node.
-            node_distribution = NodeDistributionLocal(path.join(storage_path, 'lsp_utils', 'node-dist'))
-            if not node_distribution.node_exists():
-                try:
-                    node_distribution.install_node()
-                except Exception as error:
-                    log_and_show_message('{}: Error: Failed installing local Node.'.format(package_name))
-                    print(error)
-                    return
-            if not node_distribution.node_exists():
+            try:
+                node_distribution.install_node()
+            except Exception as ex:
+                log_and_show_message('{}: Error: Failed installing a local Node:\n{}'.format(package_name, ex))
                 return
-        installed_node_version = node_distribution.resolve_version()
-        if not installed_node_version:
-            log_and_show_message('{}: Node not found'.format(package_name))
-            return
-        if installed_node_version < minimum_node_version:
-            error = 'Installed node version ({}) is lower than required version ({})'.format(
-                version_to_string(installed_node_version), version_to_string(minimum_node_version))
-            log_and_show_message('{}: Error:'.format(package_name), error)
-            return
-        return ServerNpmResource(package_name, server_directory, server_binary_path, package_storage,
-                                 version_to_string(installed_node_version), node_distribution)
+        if node_distribution.node_exists():
+            try:
+                cls.check_node_version(node_distribution, minimum_node_version)
+                return node_distribution
+            except Exception as ex:
+                error = 'Ignoring local Node due to an error. {}'.format(ex)
+                log_and_show_message('{}: Error: {}'.format(package_name, error))
+
+    @classmethod
+    def check_node_version(cls, node_distribution: NodeDistribution, minimum_node_version: str) -> None:
+        node_version = node_distribution.resolve_version()
+        if node_version < minimum_node_version:
+            raise Exception('Node version requirement failed. Expected minimum: {}, got {}.'.format(
+                version_to_string(minimum_node_version), version_to_string(node_version)))
 
     def __init__(self, package_name: str, server_directory: str, server_binary_path: str,
-                 package_storage: str, node_version: str, node_distribution: NodeDistribution) -> None:
+                 package_storage: str, node_distribution: NodeDistribution) -> None:
         if not package_name or not server_directory or not server_binary_path or not node_distribution:
             raise Exception('ServerNpmResource could not initialize due to wrong input')
         self._status = ServerStatus.UNINITIALIZED
         self._package_name = package_name
         self._server_src = 'Packages/{}/{}/'.format(self._package_name, server_directory)
+        node_version = version_to_string(node_distribution.resolve_version())
         self._server_dest = path.join(package_storage, node_version, server_directory)
         self._binary_path = path.join(package_storage, node_version, server_binary_path)
         self._node_distribution = node_distribution

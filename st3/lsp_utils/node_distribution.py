@@ -36,7 +36,7 @@ class NodeDistribution:
         if error is None:
             self._version = parse_version(version)
         else:
-            raise Exception('Error resolving node version: {}'.format(error))
+            raise Exception('Error resolving node version:\n{}'.format(error))
         return self._version
 
     def npm_command(self) -> str:
@@ -50,6 +50,7 @@ class NodeDistribution:
         if not self._node:
             raise Exception('Node not installed. Use InstallNode command first.')
         args = [
+            self.node_bin(),
             self.npm_command(),
             'ci' if use_ci else 'install',
             '--scripts-prepend-node-path',
@@ -138,7 +139,7 @@ class InstallNode:
             archive = 'zip'
         elif platform == 'linux' and arch == 'x64':
             node_os = 'linux'
-            archive = 'tar.xz'
+            archive = 'tar.gz'
         elif platform == 'osx' and arch == 'x64':
             node_os = 'darwin'
             archive = 'tar.gz'
