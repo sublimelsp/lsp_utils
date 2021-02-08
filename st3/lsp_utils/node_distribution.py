@@ -14,6 +14,8 @@ import zipfile
 
 __all__ = ['NodeDistribution', 'NodeDistributionPATH', 'NodeDistributionLocal']
 
+NODE_VERSION = '14.15.4'
+
 
 class NodeDistribution:
     def __init__(self) -> None:
@@ -72,9 +74,10 @@ class NodeDistributionPATH(NodeDistribution):
 
 
 class NodeDistributionLocal(NodeDistribution):
-    def __init__(self, base_dir: str):
+    def __init__(self, base_dir: str, node_version: str = NODE_VERSION):
         super().__init__()
-        self._base_dir = path.abspath(base_dir)
+        self._base_dir = path.abspath(path.join(base_dir, node_version))
+        self._node_version = node_version
         self._node_dir = path.join(self._base_dir, 'node')
         self.resolve_paths()
 
@@ -104,7 +107,7 @@ class NodeDistributionLocal(NodeDistribution):
 
     def install_node(self) -> None:
         with ActivityIndicator(sublime.active_window(), 'Installing Node'):
-            install_node = InstallNode(self._base_dir)
+            install_node = InstallNode(self._base_dir, self._node_version)
             install_node.run()
             self.resolve_paths()
 
@@ -112,11 +115,11 @@ class NodeDistributionLocal(NodeDistribution):
 class InstallNode:
     '''Command to install a local copy of Node'''
 
-    def __init__(self, base_dir: str, node_version: str = '14.15.4',
+    def __init__(self, base_dir: str, node_version: str = NODE_VERSION,
                  node_dist_url = 'https://nodejs.org/dist/') -> None:
         """
         :param base_dir: The base directory for storing given node version and distribution files
-        :param node_version: Directory to cache Node distribution files
+        :param node_version: The Node version to install
         :param node_dist_url: Base URL to fetch Node from
         """
         self._base_dir = base_dir
