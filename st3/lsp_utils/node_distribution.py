@@ -3,7 +3,7 @@ from .helpers import parse_version
 from .helpers import run_command_sync
 from .helpers import SemanticVersion
 from contextlib import contextmanager
-from LSP.plugin.core.typing import Optional, Tuple
+from LSP.plugin.core.typing import List, Optional, Tuple
 from os import path
 import os
 import shutil
@@ -29,7 +29,7 @@ class NodeDistribution:
     def node_bin(self) -> Optional[str]:
         return self._node
 
-    def resolve_version(self) -> Optional[SemanticVersion]:
+    def resolve_version(self) -> SemanticVersion:
         if self._version:
             return self._version
         if not self._node:
@@ -41,19 +41,17 @@ class NodeDistribution:
             raise Exception('Error resolving node version:\n{}'.format(error))
         return self._version
 
-    def npm_command(self) -> str:
+    def npm_command(self) -> List[str]:
         if self._npm is None:
             raise Exception('Npm command not initialized')
-        return self._npm
+        return [self._npm]
 
     def npm_install(self, package_dir: str, use_ci: bool = True) -> None:
         if not path.isdir(package_dir):
             raise Exception('Specified package_dir path "{}" does not exist'.format(package_dir))
         if not self._node:
             raise Exception('Node not installed. Use InstallNode command first.')
-        args = [
-            self.node_bin(),
-            self.npm_command(),
+        args = self.npm_command() + [
             'ci' if use_ci else 'install',
             '--scripts-prepend-node-path',
             '--verbose',
@@ -100,10 +98,10 @@ class NodeDistributionLocal(NodeDistribution):
             lib_path = path.join(self._node_dir, 'node_modules')
         return lib_path
 
-    def npm_command(self) -> str:
+    def npm_command(self) -> List[str]:
         if not self._node or not self._npm:
             raise Exception('Node or Npm command not initialized')
-        return path.join(self._node, self._npm)
+        return [self._node, self._npm]
 
     def install_node(self) -> None:
         with ActivityIndicator(sublime.active_window(), 'Installing Node'):

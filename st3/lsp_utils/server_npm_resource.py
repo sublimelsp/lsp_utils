@@ -39,7 +39,8 @@ class ServerNpmResource(ServerResourceInterface):
 
     @classmethod
     def resolve_node_distribution(
-            cls, package_name: str, minimum_node_version: str, storage_path: str) -> Optional[NodeDistribution]:
+        cls, package_name: str, minimum_node_version: SemanticVersion, storage_path: str
+    ) -> Optional[NodeDistribution]:
         # Try with node on the PATH first.
         node_distribution = NodeDistributionPATH()
         node_version = None
@@ -48,7 +49,7 @@ class ServerNpmResource(ServerResourceInterface):
                 cls.check_node_version(node_distribution, minimum_node_version)
                 return node_distribution
             except Exception as ex:
-                message = 'Ignoring Node from PATH due to an error. {}'.format(ex)
+                message = 'Ignoring Node on PATH due to an error. {}'.format(ex)
                 log_and_show_message('{}: Warning: {}'.format(package_name, message))
         # Failed resolving Node on the PATH. Falling back to local Node.
         node_distribution = NodeDistributionLocal(path.join(storage_path, 'lsp_utils', 'node-dist'))
@@ -67,7 +68,7 @@ class ServerNpmResource(ServerResourceInterface):
                 log_and_show_message('{}: Error: {}'.format(package_name, error))
 
     @classmethod
-    def check_node_version(cls, node_distribution: NodeDistribution, minimum_node_version: str) -> None:
+    def check_node_version(cls, node_distribution: NodeDistribution, minimum_node_version: SemanticVersion) -> None:
         node_version = node_distribution.resolve_version()
         if node_version < minimum_node_version:
             raise Exception('Node version requirement failed. Expected minimum: {}, got {}.'.format(
