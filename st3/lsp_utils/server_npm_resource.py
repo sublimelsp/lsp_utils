@@ -17,6 +17,10 @@ import sublime
 
 __all__ = ['ServerNpmResource']
 
+NO_NODE_FOUND_MESSAGE = 'Can not start the {package_name} due to not being able to find Node \
+installation on the PATH. You can press the "Install node" button to install Node automatically. \
+That installation will be local to the LSP package and not affect your system otherwise.'
+
 
 class ServerNpmResource(ServerResourceInterface):
     """
@@ -24,6 +28,7 @@ class ServerNpmResource(ServerResourceInterface):
     npm-based severs. Handles installation and updates of the server in package storage.
     """
 
+    _node_distribution_resolved = False
     _node_distribution = None  # Optional[NodeDistribution]
     """
     The cached instance of resolved Node distribution instance. This is only done once to avoid IO as
@@ -38,8 +43,9 @@ class ServerNpmResource(ServerResourceInterface):
         package_storage = options['package_storage']
         minimum_node_version = options['minimum_node_version']
         storage_path = options['storage_path']
-        if not cls._node_distribution:
+        if not cls._node_distribution_resolved:
             cls._node_distribution = cls.resolve_node_distribution(package_name, minimum_node_version, storage_path)
+            cls._node_distribution_resolved = True
         if cls._node_distribution:
             return ServerNpmResource(
                 package_name, server_directory, server_binary_path, package_storage, cls._node_distribution)
@@ -61,6 +67,8 @@ class ServerNpmResource(ServerResourceInterface):
         # Failed resolving Node on the PATH. Falling back to local Node.
         node_distribution = NodeDistributionLocal(path.join(storage_path, 'lsp_utils', 'node-dist'))
         if not node_distribution.node_exists():
+            if not sublime.ok_cancel_dialog(NO_NODE_FOUND_MESSAGE.format(package_name=package_name), 'Install Node'):
+                return
             try:
                 node_distribution.install_node()
             except Exception as ex:
