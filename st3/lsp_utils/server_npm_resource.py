@@ -24,6 +24,12 @@ class ServerNpmResource(ServerResourceInterface):
     npm-based severs. Handles installation and updates of the server in package storage.
     """
 
+    _node_distribution = None  # Optional[NodeDistribution]
+    """
+    The cached instance of resolved Node distribution instance. This is only done once to avoid IO as
+    much as possible.
+    """
+
     @classmethod
     def create(cls, options: Dict) -> Optional['ServerNpmResource']:
         package_name = options['package_name']
@@ -32,10 +38,11 @@ class ServerNpmResource(ServerResourceInterface):
         package_storage = options['package_storage']
         minimum_node_version = options['minimum_node_version']
         storage_path = options['storage_path']
-        node_distribution = cls.resolve_node_distribution(package_name, minimum_node_version, storage_path)
-        if node_distribution:
+        if not cls._node_distribution:
+            cls._node_distribution = cls.resolve_node_distribution(package_name, minimum_node_version, storage_path)
+        if cls._node_distribution:
             return ServerNpmResource(
-                package_name, server_directory, server_binary_path, package_storage, node_distribution)
+                package_name, server_directory, server_binary_path, package_storage, cls._node_distribution)
 
     @classmethod
     def resolve_node_distribution(
