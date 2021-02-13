@@ -14,7 +14,7 @@ import zipfile
 
 __all__ = ['NodeDistribution', 'NodeDistributionPATH', 'NodeDistributionLocal']
 
-NODE_VERSION = '12.20.1'
+NODE_VERSION = '12.20.2'
 
 
 class NodeDistribution:
