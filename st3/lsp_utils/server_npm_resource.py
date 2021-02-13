@@ -31,8 +31,7 @@ class ServerNpmResource(ServerResourceInterface):
     _node_distribution_resolved = False
     _node_distribution = None  # Optional[NodeDistribution]
     """
-    The cached instance of resolved Node distribution instance. This is only done once to avoid IO as
-    much as possible.
+    Cached instance of resolved Node distribution. This is only done once per-session to avoid unnecessary IO.
     """
 
     @classmethod
