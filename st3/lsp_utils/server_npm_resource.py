@@ -1,6 +1,4 @@
 from .helpers import log_and_show_message
-from .helpers import parse_version
-from .helpers import run_command_sync
 from .helpers import SemanticVersion
 from .helpers import version_to_string
 from .node_distribution import NodeDistribution
@@ -53,33 +51,34 @@ class ServerNpmResource(ServerResourceInterface):
     def resolve_node_distribution(
         cls, package_name: str, minimum_node_version: SemanticVersion, storage_path: str
     ) -> Optional[NodeDistribution]:
-        # Try with node on the PATH first.
-        node_distribution = NodeDistributionPATH()
-        node_version = None
-        if node_distribution.node_exists():
-            try:
-                cls.check_node_version(node_distribution, minimum_node_version)
-                return node_distribution
-            except Exception as ex:
-                message = 'Ignoring Node on PATH due to an error. {}'.format(ex)
-                log_and_show_message('{}: Warning: {}'.format(package_name, message))
-        # Failed resolving Node on the PATH. Falling back to local Node.
-        node_distribution = NodeDistributionLocal(path.join(storage_path, 'lsp_utils', 'node-dist'))
-        if not node_distribution.node_exists():
-            if not sublime.ok_cancel_dialog(NO_NODE_FOUND_MESSAGE.format(package_name=package_name), 'Install Node'):
-                return
-            try:
-                node_distribution.install_node()
-            except Exception as ex:
-                log_and_show_message('{}: Error: Failed installing a local Node:\n{}'.format(package_name, ex))
-                return
-        if node_distribution.node_exists():
-            try:
-                cls.check_node_version(node_distribution, minimum_node_version)
-                return node_distribution
-            except Exception as ex:
-                error = 'Ignoring local Node due to an error. {}'.format(ex)
-                log_and_show_message('{}: Error: {}'.format(package_name, error))
+        selected_distributions = sublime.load_settings('lsp_utils.sublime-settings').get('node_distributions')
+        for distribution in selected_distributions:
+            if distribution == 'system':
+                node_distribution = NodeDistributionPATH()
+                if node_distribution.node_exists():
+                    try:
+                        cls.check_node_version(node_distribution, minimum_node_version)
+                        return node_distribution
+                    except Exception as ex:
+                        message = 'Ignoring system Node due to an error. {}'.format(ex)
+                        log_and_show_message('{}: Error: {}'.format(package_name, message))
+            elif distribution == 'local':
+                node_distribution = NodeDistributionLocal(path.join(storage_path, 'lsp_utils', 'node-dist'))
+                if not node_distribution.node_exists():
+                    if not sublime.ok_cancel_dialog(NO_NODE_FOUND_MESSAGE.format(package_name=package_name), 'Install Node'):
+                        return
+                    try:
+                        node_distribution.install_node()
+                    except Exception as ex:
+                        log_and_show_message('{}: Error: Failed installing a local Node:\n{}'.format(package_name, ex))
+                        return
+                if node_distribution.node_exists():
+                    try:
+                        cls.check_node_version(node_distribution, minimum_node_version)
+                        return node_distribution
+                    except Exception as ex:
+                        error = 'Ignoring local Node due to an error. {}'.format(ex)
+                        log_and_show_message('{}: Error: {}'.format(package_name, error))
 
     @classmethod
     def check_node_version(cls, node_distribution: NodeDistribution, minimum_node_version: SemanticVersion) -> None:

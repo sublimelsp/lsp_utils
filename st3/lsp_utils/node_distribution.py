@@ -59,7 +59,7 @@ class NodeDistribution:
             '--prefix', package_dir,
             package_dir
         ]
-        output, error = run_command_sync(args)
+        _, error = run_command_sync(args)
         if error is not None:
             raise Exception('Failed to run npm command "{}":\n{}'.format(' '.join(args), error))
 
