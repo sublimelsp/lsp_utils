@@ -104,7 +104,7 @@ class NodeDistributionLocal(NodeDistribution):
         return [self._node, self._npm]
 
     def install_node(self) -> None:
-        with ActivityIndicator(sublime.active_window(), 'Installing Node'):
+        with ActivityIndicator(sublime.active_window(), 'Installing Node.js'):
             install_node = InstallNode(self._base_dir, self._node_version)
             install_node.run()
             self.resolve_paths()
@@ -114,7 +114,7 @@ class InstallNode:
     '''Command to install a local copy of Node'''
 
     def __init__(self, base_dir: str, node_version: str = NODE_VERSION,
-                 node_dist_url = 'https://nodejs.org/dist/') -> None:
+                 node_dist_url='https://nodejs.org/dist/') -> None:
         """
         :param base_dir: The base directory for storing given node version and distribution files
         :param node_version: The Node version to install
@@ -126,7 +126,7 @@ class InstallNode:
         self._node_dist_url = node_dist_url
 
     def run(self) -> None:
-        print('Installing Node {}'.format(self._node_version))
+        print('Installing Node.js {}'.format(self._node_version))
         archive, url = self._node_archive()
         if not self._node_archive_exists(archive):
             self._download_node(url, archive)
@@ -186,5 +186,3 @@ def chdir(new_dir: str):
         yield
     finally:
         os.chdir(cur_dir)
-
-

@@ -15,9 +15,9 @@ import sublime
 
 __all__ = ['ServerNpmResource']
 
-NO_NODE_FOUND_MESSAGE = 'Can not start the {package_name} due to not being able to find Node \
-installation on the PATH. You can press the "Install node" button to install Node automatically. \
-That installation will be local to the LSP package and not affect your system otherwise.'
+NO_NODE_FOUND_MESSAGE = 'Could not start {package_name} due to not being able to find Node.js \
+runtime on the PATH. Press the "Install Node.js" button to install Node.js automatically \
+(note that it will be installed locally for LSP and will not affect your system otherwise).'
 
 
 class ServerNpmResource(ServerResourceInterface):
@@ -65,7 +65,8 @@ class ServerNpmResource(ServerResourceInterface):
             elif distribution == 'local':
                 node_distribution = NodeDistributionLocal(path.join(storage_path, 'lsp_utils', 'node-dist'))
                 if not node_distribution.node_exists():
-                    if not sublime.ok_cancel_dialog(NO_NODE_FOUND_MESSAGE.format(package_name=package_name), 'Install Node'):
+                    if not sublime.ok_cancel_dialog(NO_NODE_FOUND_MESSAGE.format(package_name=package_name),
+                                                    'Install Node.js'):
                         return
                     try:
                         node_distribution.install_node()
