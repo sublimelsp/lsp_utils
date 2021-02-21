@@ -12,12 +12,12 @@ import tarfile
 import urllib.request
 import zipfile
 
-__all__ = ['NodeDistribution', 'NodeDistributionPATH', 'NodeDistributionLocal']
+__all__ = ['NodeRuntime', 'NodeRuntimePATH', 'NodeRuntimeLocal']
 
 NODE_VERSION = '12.20.2'
 
 
-class NodeDistribution:
+class NodeRuntime:
     def __init__(self) -> None:
         self._node = None  # type: Optional[str]
         self._npm = None  # type: Optional[str]
@@ -33,7 +33,7 @@ class NodeDistribution:
         if self._version:
             return self._version
         if not self._node:
-            raise Exception('Node not initialized')
+            raise Exception('Node.js not initialized')
         version, error = run_command_sync([self._node, '--version'])
         if error is None:
             self._version = parse_version(version)
@@ -50,7 +50,7 @@ class NodeDistribution:
         if not path.isdir(package_dir):
             raise Exception('Specified package_dir path "{}" does not exist'.format(package_dir))
         if not self._node:
-            raise Exception('Node not installed. Use InstallNode command first.')
+            raise Exception('Node.js not installed. Use InstallNode command first.')
         args = self.npm_command() + [
             'ci' if use_ci else 'install',
             '--scripts-prepend-node-path',
@@ -64,14 +64,14 @@ class NodeDistribution:
             raise Exception('Failed to run npm command "{}":\n{}'.format(' '.join(args), error))
 
 
-class NodeDistributionPATH(NodeDistribution):
+class NodeRuntimePATH(NodeRuntime):
     def __init__(self) -> None:
         super().__init__()
         self._node = shutil.which('node')
         self._npm = 'npm'
 
 
-class NodeDistributionLocal(NodeDistribution):
+class NodeRuntimeLocal(NodeRuntime):
     def __init__(self, base_dir: str, node_version: str = NODE_VERSION):
         super().__init__()
         self._base_dir = path.abspath(path.join(base_dir, node_version))
@@ -100,7 +100,7 @@ class NodeDistributionLocal(NodeDistribution):
 
     def npm_command(self) -> List[str]:
         if not self._node or not self._npm:
-            raise Exception('Node or Npm command not initialized')
+            raise Exception('Node.js or Npm command not initialized')
         return [self._node, self._npm]
 
     def install_node(self) -> None:
@@ -111,14 +111,14 @@ class NodeDistributionLocal(NodeDistribution):
 
 
 class InstallNode:
-    '''Command to install a local copy of Node'''
+    '''Command to install a local copy of Node.js'''
 
     def __init__(self, base_dir: str, node_version: str = NODE_VERSION,
                  node_dist_url='https://nodejs.org/dist/') -> None:
         """
-        :param base_dir: The base directory for storing given node version and distribution files
-        :param node_version: The Node version to install
-        :param node_dist_url: Base URL to fetch Node from
+        :param base_dir: The base directory for storing given Node.js runtime version
+        :param node_version: The Node.js version to install
+        :param node_dist_url: Base URL to fetch Node.js from
         """
         self._base_dir = base_dir
         self._node_version = node_version
