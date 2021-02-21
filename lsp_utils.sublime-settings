@@ -1,9 +1,9 @@
 {
     // Specifies the type and priority of the Node installation that should be used for Node-based servers.
-    // The array allows values:
+    // The allowed values are:
     //  - 'system' - a Node distribution found on the PATH
     //  - 'local' - a Node distribution managed by LSP that doesn't affect the system
-    // The order in which the values are specifies determines which one is tried first,
+    // The order in which the values are specified determines which one is tried first,
     // with the later one being used as a fallback.
     // You can also specify just a single value to disable the fallback.
     "node_distributions": ["system", "local"],

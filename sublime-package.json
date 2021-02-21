@@ -10,7 +10,7 @@
           "properties": {
             "node_distributions": {
               "type": "array",
-              "markdownDescription": "Specifies the type and priority of the Node installation that should be used for Node-based servers.\n\nThe array allows values:\n\n- `system` - a Node distribution found on the PATH\n- `local` - a Node distribution managed by LSP that doesn't affect the system\n\nThe order in which the values are specifies determines which one is tried first,\nwith the later one being used as a fallback.\nYou can also specify just a single value to disable the fallback.",
+              "markdownDescription": "Specifies the type and priority of the Node installation that should be used for Node-based servers.\n\nThe allowed values are:\n\n- `system` - a Node distribution found on the PATH\n- `local` - a Node distribution managed by LSP that doesn't affect the system\n\nThe order in which the values are specified determines which one is tried first,\nwith the later one being used as a fallback.\nYou can also specify just a single value to disable the fallback.",
               "default": [
                 "system",
                 "local",
