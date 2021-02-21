@@ -2,7 +2,6 @@ from .generic_client_handler import GenericClientHandler
 from .server_npm_resource import ServerNpmResource
 from .server_resource_interface import ServerResourceInterface
 from LSP.plugin.core.typing import Dict, List, Optional, Tuple
-import sublime
 
 __all__ = ['NpmClientHandler']
 
@@ -48,7 +47,9 @@ class NpmClientHandler(GenericClientHandler):
 
         The additional variables are:
 
-        - `${server_path}` - holds filesystem path to the server binary (only
+        - `${node_bin}`: - holds the binary path of currently used Node.js runtime. This can resolve to just `node`
+          when using Node.js runtime from the PATH or to a full filesystem path if using the local Node.js runtime.
+        - `${server_directory_path}` - holds filesystem path to the server directory (only
           when :meth:`GenericClientHandler.manages_server()` is `True`).
 
         Remember to call the super class and merge the results if overriding.
