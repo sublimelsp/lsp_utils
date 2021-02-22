@@ -2,7 +2,6 @@ from ..api_wrapper_interface import ApiWrapperInterface
 from ..server_resource_interface import ServerResourceInterface
 from abc import ABCMeta
 from abc import abstractmethod
-from abc import abstractproperty
 from LSP.plugin import ClientConfig
 from LSP.plugin import DottedDict
 from LSP.plugin import WorkspaceFolder

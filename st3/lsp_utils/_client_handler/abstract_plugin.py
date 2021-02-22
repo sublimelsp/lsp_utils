@@ -8,13 +8,11 @@ from LSP.plugin import Notification
 from LSP.plugin import register_plugin
 from LSP.plugin import Request
 from LSP.plugin import Response
-from LSP.plugin import Session
 from LSP.plugin import unregister_plugin
 from LSP.plugin import WorkspaceFolder
 from LSP.plugin.core.rpc import method2attr
 from LSP.plugin.core.typing import Any, Callable, Dict, List, Optional, Tuple, TypedDict
 import sublime
-import weakref
 
 __all__ = ['ClientHandler']
 

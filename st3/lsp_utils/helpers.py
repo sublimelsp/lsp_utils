@@ -1,4 +1,4 @@
-from LSP.plugin.core.typing import Any, Callable, List, Optional, Tuple, Union
+from LSP.plugin.core.typing import Any, Callable, List, Optional, Tuple
 import re
 import sublime
 import subprocess

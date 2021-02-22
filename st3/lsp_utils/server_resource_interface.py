@@ -1,8 +1,6 @@
-from .helpers import SemanticVersion
 from abc import ABCMeta
 from abc import abstractmethod
 from abc import abstractproperty
-from LSP.plugin.core.typing import Dict
 
 __all__ = ['ServerStatus', 'ServerResourceInterface']
 

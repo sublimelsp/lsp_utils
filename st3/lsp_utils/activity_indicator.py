@@ -61,11 +61,7 @@ class ActivityIndicator:
 
     _target = None  # type: Optional[StatusTarget]
 
-    def __init__(
-        self,
-        target: Union[StatusTarget, sublime.View, sublime.Window],
-        label: Optional[str] = None,
-    ) -> None:
+    def __init__(self, target: Union[StatusTarget, sublime.View, sublime.Window], label: Optional[str] = None) -> None:
         self._label = label
 
         if isinstance(target, sublime.View):
@@ -85,12 +81,7 @@ class ActivityIndicator:
     def __enter__(self) -> None:
         self.start()
 
-    def __exit__(
-        self,
-        exc_type: type,
-        exc_value: Exception,
-        traceback: TracebackType
-    ) -> None:
+    def __exit__(self, exc_type: type, exc_value: Exception, traceback: TracebackType) -> None:
         self.stop()
 
     def start(self) -> None:
@@ -142,8 +133,4 @@ class ActivityIndicator:
         before = min(status, (2 * self.width) - status)
         after = self.width - before
 
-        return "{}[{}={}]".format(
-            self._label + ' ' if self._label else '',
-            " " * before,
-            " " * after,
-        )
+        return "{}[{}={}]".format(self._label + ' ' if self._label else '', " " * before, " " * after)

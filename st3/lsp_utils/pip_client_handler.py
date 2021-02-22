@@ -1,7 +1,7 @@
 from .generic_client_handler import GenericClientHandler
 from .server_pip_resource import ServerPipResource
 from .server_resource_interface import ServerResourceInterface
-from LSP.plugin.core.typing import Any, Optional
+from LSP.plugin.core.typing import Optional
 
 __all__ = ['PipClientHandler']
 

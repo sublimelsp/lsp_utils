@@ -1,7 +1,7 @@
 from .helpers import run_command_sync
 from .server_resource_interface import ServerResourceInterface
 from .server_resource_interface import ServerStatus
-from LSP.plugin.core.typing import Dict, List, Optional, Tuple
+from LSP.plugin.core.typing import List, Optional, Tuple
 from sublime_lib import ResourcePath
 import os
 import shutil

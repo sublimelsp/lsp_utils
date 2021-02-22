@@ -5,14 +5,13 @@ from ..server_resource_interface import ServerStatus
 from .api_decorator import register_decorated_handlers
 from .interface import ClientHandlerInterface
 from LSP.plugin import ClientConfig
-from LSP.plugin import DottedDict
 from LSP.plugin import LanguageHandler
 from LSP.plugin import Notification
 from LSP.plugin import read_client_config
 from LSP.plugin import Request
 from LSP.plugin import Response
 from LSP.plugin import WorkspaceFolder
-from LSP.plugin.core.typing import Any, Callable, Dict, Optional
+from LSP.plugin.core.typing import Any, Callable, Dict
 import sublime
 
 __all__ = ['ClientHandler']
