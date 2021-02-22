@@ -115,8 +115,8 @@ class ServerNpmResource(ServerResourceInterface):
         if dependencies_installed:
             self._status = ServerStatus.READY
         else:
-            args = ["npm", "install", "--verbose", "--production", "--prefix", self._server_dest, self._server_dest]
-            output, error = run_command_sync(args)
+            args = ["npm", "install", "--verbose", "--production"]
+            output, error = run_command_sync(args, cwd=self._server_dest)
             if error is not None:
                 self._status = ServerStatus.ERROR
                 raise Exception(error)
