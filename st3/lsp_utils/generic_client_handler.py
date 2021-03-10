@@ -170,7 +170,6 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
         Called with default configuration object that contains merged default and user settings.
 
         Can be used to alter default configuration before registering it.
-
         """
         pass
 
