@@ -56,8 +56,6 @@ class NodeRuntime:
             '--scripts-prepend-node-path',
             '--verbose',
             '--production',
-            '--prefix', package_dir,
-            package_dir
         ]
         _, error = run_command_sync(args, cwd=package_dir)
         if error is not None:
