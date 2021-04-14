@@ -53,11 +53,14 @@ class NodeRuntime:
             raise Exception('Node.js not installed. Use InstallNode command first.')
         args = self.npm_command() + [
             'ci' if use_ci else 'install',
-            '--scripts-prepend-node-path',
+            '--scripts-prepend-node-path=true',
             '--verbose',
             '--production',
         ]
-        _, error = run_command_sync(args, cwd=package_dir)
+        stdout, error = run_command_sync(args, cwd=package_dir)
+        print('[lsp_utils] START output of command: "{}"'.format(''.join(args)))
+        print(stdout)
+        print('[lsp_utils] Command output END')
         if error is not None:
             raise Exception('Failed to run npm command "{}":\n{}'.format(' '.join(args), error))
 
