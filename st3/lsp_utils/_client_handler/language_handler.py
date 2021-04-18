@@ -18,6 +18,7 @@ import sublime
 
 __all__ = ['ClientHandler']
 
+ApiNotificationHandler = Callable[[Any], None]
 ApiRequestHandler = Callable[[Any, Callable[[Any], None]], None]
 
 
@@ -28,9 +29,14 @@ class ApiWrapper(ApiWrapperInterface):
     # --- ApiWrapperInterface -----------------------------------------------------------------------------------------
 
     def on_notification(self, method: str, handler: Callable[[Any], None]) -> None:
+        def handle_notification(handler_ref: 'ref[ApiNotificationHandler]', params: Any) -> None:
+            handler = handler_ref()
+            if handler:
+                handler(params)
+
         client = self.__client()
         if client:
-            client.on_notification(method, handler)
+            client.on_notification(method, partial(ref(handler), handle_notification))
 
     def on_request(self, method: str, handler: ApiRequestHandler) -> None:
         def on_response(handler_ref: 'ref[ApiRequestHandler]', params, request_id):

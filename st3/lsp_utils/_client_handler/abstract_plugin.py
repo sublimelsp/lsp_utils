@@ -24,6 +24,7 @@ LanguagesDict = TypedDict('LanguagesDict', {
     'scopes': Optional[List[str]],
     'syntaxes': Optional[List[str]],
 }, total=False)
+ApiNotificationHandler = Callable[[Any], None]
 ApiRequestHandler = Callable[[Any, Callable[[Any], None]], None]
 
 
@@ -37,10 +38,15 @@ class ApiWrapper(ApiWrapperInterface):
 
     # --- ApiWrapperInterface -----------------------------------------------------------------------------------------
 
-    def on_notification(self, method: str, handler: Callable[[Any], None]) -> None:
+    def on_notification(self, method: str, handler: ApiNotificationHandler) -> None:
+        def handle_notification(handler_ref: 'ref[ApiNotificationHandler]', params: Any) -> None:
+            handler = handler_ref()
+            if handler:
+                handler(params)
+
         plugin = self.__plugin()
         if plugin:
-            setattr(plugin, method2attr(method), lambda params: handler(params))
+            setattr(plugin, method2attr(method), partial(ref(handler), handle_notification))
 
     def on_request(self, method: str, handler: ApiRequestHandler) -> None:
         def send_response(request_id: Any, result: Any) -> None:
