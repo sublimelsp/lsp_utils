@@ -1,3 +1,4 @@
+from .._util import weak_method
 from ..api_wrapper_interface import ApiWrapperInterface
 from ..server_resource_interface import ServerStatus
 from .api_decorator import register_decorated_handlers
@@ -9,6 +10,7 @@ from LSP.plugin import Notification
 from LSP.plugin import register_plugin
 from LSP.plugin import Request
 from LSP.plugin import Response
+from LSP.plugin import Session
 from LSP.plugin import unregister_plugin
 from LSP.plugin import WorkspaceFolder
 from LSP.plugin.core.rpc import method2attr
@@ -32,21 +34,19 @@ class ApiWrapper(ApiWrapperInterface):
     def __init__(self, plugin: 'ref[AbstractPlugin]'):
         self.__plugin = plugin
 
-    def __session(self):
+    def __session(self) -> Optional[Session]:
         plugin = self.__plugin()
         return plugin.weaksession() if plugin else None
 
     # --- ApiWrapperInterface -----------------------------------------------------------------------------------------
 
     def on_notification(self, method: str, handler: ApiNotificationHandler) -> None:
-        def handle_notification(handler_ref: 'ref[ApiNotificationHandler]', params: Any) -> None:
-            handler = handler_ref()
-            if handler:
-                handler(params)
+        def handle_notification(weak_handler: ApiNotificationHandler, params: Any) -> None:
+            weak_handler(params)
 
         plugin = self.__plugin()
         if plugin:
-            setattr(plugin, method2attr(method), partial(ref(handler), handle_notification))
+            setattr(plugin, method2attr(method), partial(handle_notification, weak_method(handler)))
 
     def on_request(self, method: str, handler: ApiRequestHandler) -> None:
         def send_response(request_id: Any, result: Any) -> None:
@@ -54,14 +54,12 @@ class ApiWrapper(ApiWrapperInterface):
             if session:
                 session.send_response(Response(request_id, result))
 
-        def on_response(handler_ref: 'ref[ApiRequestHandler]', params: Any, request_id: Any) -> None:
-            handler = handler_ref()
-            if handler:
-                handler(params, lambda result: send_response(request_id, result))
+        def on_response(weak_handler: ApiRequestHandler, params: Any, request_id: Any) -> None:
+            weak_handler(params, lambda result: send_response(request_id, result))
 
         plugin = self.__plugin()
         if plugin:
-            setattr(plugin, method2attr(method), partial(on_response, ref(handler)))
+            setattr(plugin, method2attr(method), partial(on_response, weak_method(handler)))
 
     def send_notification(self, method: str, params: Any) -> None:
         session = self.__session()
