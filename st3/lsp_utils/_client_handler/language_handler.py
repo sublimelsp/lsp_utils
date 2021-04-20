@@ -1,3 +1,4 @@
+from .._util import weak_method
 from ..activity_indicator import ActivityIndicator
 from ..api_wrapper_interface import ApiWrapperInterface
 from ..helpers import log_and_show_message
@@ -29,20 +30,16 @@ class ApiWrapper(ApiWrapperInterface):
     # --- ApiWrapperInterface -----------------------------------------------------------------------------------------
 
     def on_notification(self, method: str, handler: Callable[[Any], None]) -> None:
-        def handle_notification(handler_ref: 'ref[ApiNotificationHandler]', params: Any) -> None:
-            handler = handler_ref()
-            if handler:
-                handler(params)
+        def handle_notification(weak_handler: ApiNotificationHandler, params: Any) -> None:
+            weak_handler(params)
 
         client = self.__client()
         if client:
-            client.on_notification(method, partial(ref(handler), handle_notification))
+            client.on_notification(method, partial(handle_notification, weak_method(handler)))
 
     def on_request(self, method: str, handler: ApiRequestHandler) -> None:
-        def on_response(handler_ref: 'ref[ApiRequestHandler]', params, request_id):
-            handler = handler_ref()
-            if handler:
-                handler(params, lambda result: send_response(request_id, result))
+        def on_response(weak_handler: ApiRequestHandler, params: Any, request_id: Any) -> None:
+            weak_handler(params, lambda result: send_response(request_id, result))
 
         def send_response(request_id, result):
             client = self.__client()
@@ -51,7 +48,7 @@ class ApiWrapper(ApiWrapperInterface):
 
         client = self.__client()
         if client:
-            client.on_request(method, partial(ref(handler), on_response))
+            client.on_request(method, partial(on_response, weak_method(handler)))
 
     def send_notification(self, method: str, params: Any) -> None:
         client = self.__client()
