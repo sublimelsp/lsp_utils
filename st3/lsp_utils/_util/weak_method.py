@@ -26,7 +26,9 @@ def weak_method(method: Callable) -> Callable:
     def wrapped(*args: Any, **kwargs: Any) -> Any:
         self = self_ref()
         function = function_ref()
-        if self is not None and function is not None:
-            return function(self, *args, **kwargs)
+        if self is None or function is None:
+            print('[lsp_utils] Error: weak_method not called due to a deleted reference', [self, function])
+            return
+        return function(self, *args, **kwargs)
 
     return wrapped
