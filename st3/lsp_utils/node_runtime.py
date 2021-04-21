@@ -193,7 +193,7 @@ class InstallNode:
         self._node_dist_url = node_dist_url
 
     def run(self) -> None:
-        print('Installing Node.js {}'.format(self._node_version))
+        print('[lsp_utils] Installing Node.js {}'.format(self._node_version))
         archive, url = self._node_archive()
         if not self._node_archive_exists(archive):
             self._download_node(url, archive)
