@@ -4,6 +4,7 @@ from ._client_handler import request_handler
 from .activity_indicator import ActivityIndicator
 from .api_wrapper_interface import ApiWrapperInterface
 from .generic_client_handler import GenericClientHandler
+from .node_runtime import NodeRuntime
 from .npm_client_handler import NpmClientHandler
 from .server_npm_resource import ServerNpmResource
 from .server_pip_resource import ServerPipResource
@@ -15,6 +16,7 @@ __all__ = [
     'ApiWrapperInterface',
     'ClientHandler',
     'GenericClientHandler',
+    'NodeRuntime',
     'NpmClientHandler',
     'ServerResourceInterface',
     'ServerStatus',
