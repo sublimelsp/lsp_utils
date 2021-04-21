@@ -1,7 +1,9 @@
 from .activity_indicator import ActivityIndicator
+from .helpers import log_and_show_message
 from .helpers import parse_version
 from .helpers import run_command_sync
 from .helpers import SemanticVersion
+from .helpers import version_to_string
 from contextlib import contextmanager
 from LSP.plugin.core.typing import List, Optional, Tuple
 from os import path
@@ -14,10 +16,74 @@ import zipfile
 
 __all__ = ['NodeRuntime', 'NodeRuntimePATH', 'NodeRuntimeLocal']
 
-NODE_VERSION = '12.20.2'
+DEFAULT_NODE_VERSION = '12.20.2'
+DEFAULT_NODE_VERSION_TUPLE = parse_version(DEFAULT_NODE_VERSION)
+NO_NODE_FOUND_MESSAGE = 'Could not start {package_name} due to not being able to find Node.js \
+runtime on the PATH. Press the "Install Node.js" button to install Node.js automatically \
+(note that it will be installed locally for LSP and will not affect your system otherwise).'
 
 
 class NodeRuntime:
+    _node_runtime_resolved = False
+    _node_runtime = None  # Optional[NodeRuntime]
+    """
+    Cached instance of resolved Node.js runtime. This is only done once per-session to avoid unnecessary IO.
+    """
+
+    @classmethod
+    def get(
+        cls, package_name: str, storage_path: str, minimum_version: SemanticVersion = DEFAULT_NODE_VERSION_TUPLE
+    ) -> Optional['NodeRuntime']:
+        if cls._node_runtime_resolved:
+            if cls._node_runtime:
+                cls._check_node_version(cls._node_runtime, minimum_version)
+            return cls._node_runtime
+        cls._node_runtime_resolved = True
+        cls._node_runtime = cls._resolve_node_runtime(package_name, storage_path, minimum_version)
+        return cls._node_runtime
+
+    @classmethod
+    def _resolve_node_runtime(
+        cls, package_name: str, storage_path: str, minimum_version: SemanticVersion
+    ) -> Optional['NodeRuntime']:
+        selected_runtimes = sublime.load_settings('lsp_utils.sublime-settings').get('nodejs_runtime')
+        for runtime in selected_runtimes:
+            if runtime == 'system':
+                node_runtime = NodeRuntimePATH()
+                if node_runtime.node_exists():
+                    try:
+                        cls._check_node_version(node_runtime, minimum_version)
+                        return node_runtime
+                    except Exception as ex:
+                        message = 'Ignoring system Node.js runtime due to an error. {}'.format(ex)
+                        log_and_show_message('{}: Error: {}'.format(package_name, message))
+            elif runtime == 'local':
+                node_runtime = NodeRuntimeLocal(path.join(storage_path, 'lsp_utils', 'node-runtime'))
+                if not node_runtime.node_exists():
+                    if not sublime.ok_cancel_dialog(NO_NODE_FOUND_MESSAGE.format(package_name=package_name),
+                                                    'Install Node.js'):
+                        return
+                    try:
+                        node_runtime.install_node()
+                    except Exception as ex:
+                        log_and_show_message('{}: Error: Failed installing a local Node.js runtime:\n{}'.format(
+                            package_name, ex))
+                        return
+                if node_runtime.node_exists():
+                    try:
+                        cls._check_node_version(node_runtime, minimum_version)
+                        return node_runtime
+                    except Exception as ex:
+                        error = 'Ignoring local Node.js runtime due to an error. {}'.format(ex)
+                        log_and_show_message('{}: Error: {}'.format(package_name, error))
+
+    @classmethod
+    def _check_node_version(cls, node_runtime: 'NodeRuntime', minimum_version: SemanticVersion) -> None:
+        node_version = node_runtime.resolve_version()
+        if node_version < minimum_version:
+            raise Exception('Node.js version requirement failed. Expected minimum: {}, got {}.'.format(
+                version_to_string(minimum_version), version_to_string(node_version)))
+
     def __init__(self) -> None:
         self._node = None  # type: Optional[str]
         self._npm = None  # type: Optional[str]
@@ -73,7 +139,7 @@ class NodeRuntimePATH(NodeRuntime):
 
 
 class NodeRuntimeLocal(NodeRuntime):
-    def __init__(self, base_dir: str, node_version: str = NODE_VERSION):
+    def __init__(self, base_dir: str, node_version: str = DEFAULT_NODE_VERSION):
         super().__init__()
         self._base_dir = path.abspath(path.join(base_dir, node_version))
         self._node_version = node_version
@@ -114,7 +180,7 @@ class NodeRuntimeLocal(NodeRuntime):
 class InstallNode:
     '''Command to install a local copy of Node.js'''
 
-    def __init__(self, base_dir: str, node_version: str = NODE_VERSION,
+    def __init__(self, base_dir: str, node_version: str = DEFAULT_NODE_VERSION,
                  node_dist_url='https://nodejs.org/dist/') -> None:
         """
         :param base_dir: The base directory for storing given Node.js runtime version
@@ -127,7 +193,7 @@ class InstallNode:
         self._node_dist_url = node_dist_url
 
     def run(self) -> None:
-        print('Installing Node.js {}'.format(self._node_version))
+        print('[lsp_utils] Installing Node.js {}'.format(self._node_version))
         archive, url = self._node_archive()
         if not self._node_archive_exists(archive):
             self._download_node(url, archive)
