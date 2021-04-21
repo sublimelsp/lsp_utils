@@ -1,17 +1,21 @@
+from .._util import weak_method
 from ..api_wrapper_interface import ApiWrapperInterface
 from ..server_resource_interface import ServerStatus
 from .api_decorator import register_decorated_handlers
 from .interface import ClientHandlerInterface
+from functools import partial
 from LSP.plugin import AbstractPlugin
 from LSP.plugin import ClientConfig
 from LSP.plugin import Notification
 from LSP.plugin import register_plugin
 from LSP.plugin import Request
 from LSP.plugin import Response
+from LSP.plugin import Session
 from LSP.plugin import unregister_plugin
 from LSP.plugin import WorkspaceFolder
 from LSP.plugin.core.rpc import method2attr
 from LSP.plugin.core.typing import Any, Callable, Dict, List, Optional, Tuple, TypedDict
+from weakref import ref
 import sublime
 
 __all__ = ['ClientHandler']
@@ -22,35 +26,48 @@ LanguagesDict = TypedDict('LanguagesDict', {
     'scopes': Optional[List[str]],
     'syntaxes': Optional[List[str]],
 }, total=False)
+ApiNotificationHandler = Callable[[Any], None]
+ApiRequestHandler = Callable[[Any, Callable[[Any], None]], None]
 
 
 class ApiWrapper(ApiWrapperInterface):
-    def __init__(self, plugin: AbstractPlugin):
+    def __init__(self, plugin: 'ref[AbstractPlugin]'):
         self.__plugin = plugin
+
+    def __session(self) -> Optional[Session]:
+        plugin = self.__plugin()
+        return plugin.weaksession() if plugin else None
 
     # --- ApiWrapperInterface -----------------------------------------------------------------------------------------
 
-    def on_notification(self, method: str, handler: Callable[[Any], None]) -> None:
-        setattr(self.__plugin, method2attr(method), lambda params: handler(params))
+    def on_notification(self, method: str, handler: ApiNotificationHandler) -> None:
+        def handle_notification(weak_handler: ApiNotificationHandler, params: Any) -> None:
+            weak_handler(params)
 
-    def on_request(self, method: str, handler: Callable[[Any, Callable[[Any], None]], None]) -> None:
+        plugin = self.__plugin()
+        if plugin:
+            setattr(plugin, method2attr(method), partial(handle_notification, weak_method(handler)))
+
+    def on_request(self, method: str, handler: ApiRequestHandler) -> None:
         def send_response(request_id: Any, result: Any) -> None:
-            session = self.__plugin.weaksession()
+            session = self.__session()
             if session:
                 session.send_response(Response(request_id, result))
 
-        def on_response(params: Any, request_id: Any) -> None:
-            handler(params, lambda result: send_response(request_id, result))
+        def on_response(weak_handler: ApiRequestHandler, params: Any, request_id: Any) -> None:
+            weak_handler(params, lambda result: send_response(request_id, result))
 
-        setattr(self.__plugin, method2attr(method), on_response)
+        plugin = self.__plugin()
+        if plugin:
+            setattr(plugin, method2attr(method), partial(on_response, weak_method(handler)))
 
     def send_notification(self, method: str, params: Any) -> None:
-        session = self.__plugin.weaksession()
+        session = self.__session()
         if session:
             session.send_notification(Notification(method, params))
 
     def send_request(self, method: str, params: Any, handler: Callable[[Any, bool], None]) -> None:
-        session = self.__plugin.weaksession()
+        session = self.__session()
         if session:
             session.send_request(
                 Request(method, params), lambda result: handler(result, False), lambda result: handler(result, True))
@@ -160,6 +177,6 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        api = ApiWrapper(self)
+        api = ApiWrapper(ref(self))
         register_decorated_handlers(self, api)
         self.on_ready(api)

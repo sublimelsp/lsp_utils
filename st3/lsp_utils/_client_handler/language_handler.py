@@ -1,9 +1,11 @@
+from .._util import weak_method
 from ..activity_indicator import ActivityIndicator
 from ..api_wrapper_interface import ApiWrapperInterface
 from ..helpers import log_and_show_message
 from ..server_resource_interface import ServerStatus
 from .api_decorator import register_decorated_handlers
 from .interface import ClientHandlerInterface
+from functools import partial
 from LSP.plugin import ClientConfig
 from LSP.plugin import LanguageHandler
 from LSP.plugin import Notification
@@ -12,35 +14,52 @@ from LSP.plugin import Request
 from LSP.plugin import Response
 from LSP.plugin import WorkspaceFolder
 from LSP.plugin.core.typing import Any, Callable, Dict
+from weakref import ref
 import sublime
 
 __all__ = ['ClientHandler']
 
+ApiNotificationHandler = Callable[[Any], None]
+ApiRequestHandler = Callable[[Any, Callable[[Any], None]], None]
+
 
 class ApiWrapper(ApiWrapperInterface):
-    def __init__(self, client):
+    def __init__(self, client: 'ref[LanguageHandler]'):
         self.__client = client
 
     # --- ApiWrapperInterface -----------------------------------------------------------------------------------------
 
     def on_notification(self, method: str, handler: Callable[[Any], None]) -> None:
-        self.__client.on_notification(method, handler)
+        def handle_notification(weak_handler: ApiNotificationHandler, params: Any) -> None:
+            weak_handler(params)
 
-    def on_request(self, method: str, handler: Callable[[Any, Callable[[Any], None]], None]) -> None:
-        def on_response(params, request_id):
-            handler(params, lambda result: send_response(request_id, result))
+        client = self.__client()
+        if client:
+            client.on_notification(method, partial(handle_notification, weak_method(handler)))
+
+    def on_request(self, method: str, handler: ApiRequestHandler) -> None:
+        def on_response(weak_handler: ApiRequestHandler, params: Any, request_id: Any) -> None:
+            weak_handler(params, lambda result: send_response(request_id, result))
 
         def send_response(request_id, result):
-            self.__client.send_response(Response(request_id, result))
+            client = self.__client()
+            if client:
+                client.send_response(Response(request_id, result))
 
-        self.__client.on_request(method, on_response)
+        client = self.__client()
+        if client:
+            client.on_request(method, partial(on_response, weak_method(handler)))
 
     def send_notification(self, method: str, params: Any) -> None:
-        self.__client.send_notification(Notification(method, params))
+        client = self.__client()
+        if client:
+            client.send_notification(Notification(method, params))
 
     def send_request(self, method: str, params: Any, handler: Callable[[Any, bool], None]) -> None:
-        self.__client.send_request(
-            Request(method, params), lambda result: handler(result, False), lambda result: handler(result, True))
+        client = self.__client()
+        if client:
+            client.send_request(
+                Request(method, params), lambda result: handler(result, False), lambda result: handler(result, True))
 
 
 class ClientHandler(LanguageHandler, ClientHandlerInterface):
@@ -90,7 +109,7 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
         return True
 
     def on_initialized(self, client) -> None:
-        api = ApiWrapper(client)
+        api = ApiWrapper(ref(client))
         register_decorated_handlers(self, api)
         self.on_ready(api)
 
