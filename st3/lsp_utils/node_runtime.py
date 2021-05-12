@@ -232,16 +232,20 @@ class InstallNode:
     def _install_node(self, filename: str) -> None:
         archive = path.join(self._cache_dir, filename)
         opener = zipfile.ZipFile if filename.endswith('.zip') else tarfile.open
-        with opener(archive) as f:
-            names = f.namelist() if hasattr(f, 'namelist') else f.getnames()
-            install_dir, _ = next(x for x in names if '/' in x).split('/', 1)
-            bad_members = [x for x in names if x.startswith('/') or x.startswith('..')]
-            if bad_members:
-                raise Exception('{} appears to be malicious, bad filenames: {}'.format(filename, bad_members))
-            f.extractall(self._base_dir)
-            with chdir(self._base_dir):
-                os.rename(install_dir, 'node')
-        os.remove(archive)
+        try:
+            with opener(archive) as f:
+                names = f.namelist() if hasattr(f, 'namelist') else f.getnames()
+                install_dir, _ = next(x for x in names if '/' in x).split('/', 1)
+                bad_members = [x for x in names if x.startswith('/') or x.startswith('..')]
+                if bad_members:
+                    raise Exception('{} appears to be malicious, bad filenames: {}'.format(filename, bad_members))
+                f.extractall(self._base_dir)
+                with chdir(self._base_dir):
+                    os.rename(install_dir, 'node')
+        except Exception as ex:
+            raise ex
+        finally:
+            os.remove(archive)
 
 
 @contextmanager
