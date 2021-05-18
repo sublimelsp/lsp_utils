@@ -10,13 +10,21 @@ from os import path
 import os
 import shutil
 import sublime
+import sys
 import tarfile
 import urllib.request
 import zipfile
 
 __all__ = ['NodeRuntime', 'NodeRuntimePATH', 'NodeRuntimeLocal']
 
-DEFAULT_NODE_VERSION = '12.20.2'
+# the last Node runtime supports Windows 7 is v12
+if sys.platform == 'win32' and sys.getwindowsversion() <= (6, 1):
+    # see https://nodejs.org/dist/latest-v12.x/
+    DEFAULT_NODE_VERSION = '12.22.1'
+else:
+    # see https://nodejs.org/dist/
+    DEFAULT_NODE_VERSION = '14.17.0'
+
 DEFAULT_NODE_VERSION_TUPLE = parse_version(DEFAULT_NODE_VERSION)
 NO_NODE_FOUND_MESSAGE = 'Could not start {package_name} due to not being able to find Node.js \
 runtime on the PATH. Press the "Install Node.js" button to install Node.js automatically \
