@@ -25,7 +25,7 @@ class ServerNpmResource(ServerResourceInterface):
         package_storage = options['package_storage']
         storage_path = options['storage_path']
         minimum_node_version = options['minimum_node_version']
-        node_runtime = NodeRuntime.get(package_name, storage_path, minimum_node_version,)
+        node_runtime = NodeRuntime.get(package_name, storage_path, minimum_node_version)
         if node_runtime:
             return ServerNpmResource(package_name, server_directory, server_binary_path, package_storage, node_runtime)
 
