@@ -18,7 +18,6 @@ __all__ = ['NodeRuntime', 'NodeRuntimePATH', 'NodeRuntimeLocal']
 
 IS_MAC_ARM = sublime.platform() == 'osx' and sublime.arch() == 'arm64'
 DEFAULT_NODE_VERSION = '16.2.0' if IS_MAC_ARM else '12.20.2'
-DEFAULT_MAC_ARM_NODE_VERSION = '16.2.0'
 NODE_DIST_URL = 'https://nodejs.org/dist/v{version}/{filename}'
 NO_NODE_FOUND_MESSAGE = 'Could not start {package_name} due to not being able to find Node.js \
 runtime on the PATH. Press the "Install Node.js" button to install Node.js automatically \
