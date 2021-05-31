@@ -16,8 +16,9 @@ import zipfile
 
 __all__ = ['NodeRuntime', 'NodeRuntimePATH', 'NodeRuntimeLocal']
 
-DEFAULT_NODE_VERSION = '12.20.2'
-DEFAULT_NODE_VERSION_TUPLE = parse_version(DEFAULT_NODE_VERSION)
+IS_MAC_ARM = sublime.platform() == 'osx' and sublime.arch() == 'arm64'
+DEFAULT_NODE_VERSION = '16.2.0' if IS_MAC_ARM else '12.20.2'
+NODE_DIST_URL = 'https://nodejs.org/dist/v{version}/{filename}'
 NO_NODE_FOUND_MESSAGE = 'Could not start {package_name} due to not being able to find Node.js \
 runtime on the PATH. Press the "Install Node.js" button to install Node.js automatically \
 (note that it will be installed locally for LSP and will not affect your system otherwise).'
@@ -31,9 +32,7 @@ class NodeRuntime:
     """
 
     @classmethod
-    def get(
-        cls, package_name: str, storage_path: str, minimum_version: SemanticVersion = DEFAULT_NODE_VERSION_TUPLE
-    ) -> Optional['NodeRuntime']:
+    def get(cls, package_name: str, storage_path: str, minimum_version: SemanticVersion) -> Optional['NodeRuntime']:
         if cls._node_runtime_resolved:
             if cls._node_runtime:
                 cls._check_node_version(cls._node_runtime, minimum_version)
@@ -180,17 +179,14 @@ class NodeRuntimeLocal(NodeRuntime):
 class InstallNode:
     '''Command to install a local copy of Node.js'''
 
-    def __init__(self, base_dir: str, node_version: str = DEFAULT_NODE_VERSION,
-                 node_dist_url='https://nodejs.org/dist/') -> None:
+    def __init__(self, base_dir: str, node_version: str = DEFAULT_NODE_VERSION) -> None:
         """
         :param base_dir: The base directory for storing given Node.js runtime version
         :param node_version: The Node.js version to install
-        :param node_dist_url: Base URL to fetch Node.js from
         """
         self._base_dir = base_dir
         self._node_version = node_version
         self._cache_dir = path.join(self._base_dir, 'cache')
-        self._node_dist_url = node_dist_url
 
     def run(self) -> None:
         print('[lsp_utils] Installing Node.js {}'.format(self._node_version))
@@ -205,16 +201,16 @@ class InstallNode:
         if platform == 'windows' and arch == 'x64':
             node_os = 'win'
             archive = 'zip'
-        elif platform == 'linux' and arch == 'x64':
+        elif platform == 'linux':
             node_os = 'linux'
             archive = 'tar.gz'
-        elif platform == 'osx' and arch == 'x64':
+        elif platform == 'osx':
             node_os = 'darwin'
             archive = 'tar.gz'
         else:
             raise Exception('{} {} is not supported'.format(arch, platform))
         filename = 'node-v{}-{}-{}.{}'.format(self._node_version, node_os, arch, archive)
-        dist_url = '{}v{}/{}'.format(self._node_dist_url, self._node_version, filename)
+        dist_url = NODE_DIST_URL.format(version=self._node_version, filename=filename)
         return filename, dist_url
 
     def _node_archive_exists(self, filename: str) -> bool:
