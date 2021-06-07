@@ -85,8 +85,7 @@ class ServerNpmResource(ServerResourceInterface):
     def install_or_update(self) -> None:
         try:
             makedirs(path.dirname(self._installation_marker_file), exist_ok=True)
-            with open(self._installation_marker_file, 'a'):
-                pass
+            open(self._installation_marker_file, 'a').close()
             if path.isdir(self._server_dest):
                 shutil.rmtree(self._server_dest)
             ResourcePath(self._server_src).copytree(self._server_dest, exist_ok=True)

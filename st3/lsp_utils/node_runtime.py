@@ -175,9 +175,8 @@ class NodeRuntimeLocal(NodeRuntime):
         return [self._node, self._npm]
 
     def install_node(self) -> None:
-        os.makedirs(self._base_dir)
-        with open(self._install_in_progress_marker_file, 'a'):
-            pass
+        os.makedirs(os.path.dirname(self._install_in_progress_marker_file), exist_ok=True)
+        open(self._install_in_progress_marker_file, 'a').close()
         with ActivityIndicator(sublime.active_window(), 'Installing Node.js'):
             install_node = InstallNode(self._base_dir, self._node_version)
             install_node.run()
