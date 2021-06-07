@@ -84,7 +84,7 @@ class ServerNpmResource(ServerResourceInterface):
 
     def install_or_update(self) -> None:
         try:
-            makedirs(self._server_dest, exist_ok=True)
+            makedirs(path.dirname(self._installation_marker_file), exist_ok=True)
             with open(self._installation_marker_file, 'a'):
                 pass
             if path.isdir(self._server_dest):
