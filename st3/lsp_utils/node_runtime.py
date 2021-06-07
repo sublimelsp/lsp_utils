@@ -49,7 +49,7 @@ class NodeRuntime:
         for runtime in selected_runtimes:
             if runtime == 'system':
                 node_runtime = NodeRuntimePATH()
-                if node_runtime.node_exists():
+                if node_runtime.meets_requirements():
                     try:
                         cls._check_node_version(node_runtime, minimum_version)
                         return node_runtime
@@ -58,7 +58,7 @@ class NodeRuntime:
                         log_and_show_message('{}: Error: {}'.format(package_name, message))
             elif runtime == 'local':
                 node_runtime = NodeRuntimeLocal(path.join(storage_path, 'lsp_utils', 'node-runtime'))
-                if not node_runtime.node_exists():
+                if not node_runtime.meets_requirements():
                     if not sublime.ok_cancel_dialog(NO_NODE_FOUND_MESSAGE.format(package_name=package_name),
                                                     'Install Node.js'):
                         return
@@ -68,7 +68,7 @@ class NodeRuntime:
                         log_and_show_message('{}: Error: Failed installing a local Node.js runtime:\n{}'.format(
                             package_name, ex))
                         return
-                if node_runtime.node_exists():
+                if node_runtime.meets_requirements():
                     try:
                         cls._check_node_version(node_runtime, minimum_version)
                         return node_runtime
@@ -88,8 +88,8 @@ class NodeRuntime:
         self._npm = None  # type: Optional[str]
         self._version = None  # type: Optional[SemanticVersion]
 
-    def node_exists(self) -> bool:
-        return self._node is not None
+    def meets_requirements(self) -> bool:
+        return self._node is not None and self._npm is not None
 
     def node_bin(self) -> Optional[str]:
         return self._node
@@ -134,7 +134,7 @@ class NodeRuntimePATH(NodeRuntime):
     def __init__(self) -> None:
         super().__init__()
         self._node = shutil.which('node')
-        self._npm = 'npm'
+        self._npm = shutil.which('npm')
 
 
 class NodeRuntimeLocal(NodeRuntime):
