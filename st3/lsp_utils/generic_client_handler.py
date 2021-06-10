@@ -6,6 +6,7 @@ from LSP.plugin import ClientConfig
 from LSP.plugin import DottedDict
 from LSP.plugin import WorkspaceFolder
 from LSP.plugin.core.typing import Any, Dict, List, Optional, Tuple
+from package_control import events
 import os
 import shutil
 import sublime
@@ -40,9 +41,14 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
 
     @classmethod
     def cleanup(cls) -> None:
+
+        def run_async() -> None:
+            if os.path.isdir(cls.package_storage()):
+                shutil.rmtree(cls.package_storage())
+
+        if events.remove(cls.package_name):
+            sublime.set_timeout_async(run_async, 1000)
         super().cleanup()
-        if os.path.isdir(cls.package_storage()):
-            shutil.rmtree(cls.package_storage())
 
     @classmethod
     def get_displayed_name(cls) -> str:
