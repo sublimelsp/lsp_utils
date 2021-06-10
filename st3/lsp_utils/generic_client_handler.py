@@ -40,9 +40,9 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
 
     @classmethod
     def cleanup(cls) -> None:
+        super().cleanup()
         if os.path.isdir(cls.package_storage()):
             shutil.rmtree(cls.package_storage())
-        super().cleanup()
 
     @classmethod
     def get_displayed_name(cls) -> str:
