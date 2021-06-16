@@ -46,6 +46,11 @@ class ClientHandlerInterface(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
+    def get_additional_paths(cls) -> List[str]:
+        ...
+
+    @classmethod
+    @abstractmethod
     def manages_server(cls) -> bool:
         ...
 

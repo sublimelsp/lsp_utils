@@ -140,6 +140,10 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
         }
 
     @classmethod
+    def get_additional_paths(cls) -> List[str]:
+        return []
+
+    @classmethod
     def manages_server(cls) -> bool:
         """
         Whether this handler manages a server. If the response is `True` then the :meth:`get_server()` should also be
