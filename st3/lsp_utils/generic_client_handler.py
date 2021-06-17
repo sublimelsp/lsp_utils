@@ -141,6 +141,11 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
 
     @classmethod
     def get_additional_paths(cls) -> List[str]:
+        """
+        Override to prepend additional paths to the default PATH environment variable.
+
+        Remember to call the super class and merge the results if overriding.
+        """
         return []
 
     @classmethod
