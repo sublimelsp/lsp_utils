@@ -106,4 +106,3 @@ class NpmClientHandler(GenericClientHandler):
         if cls.__server:
             return cls.__server.node_bin
         return ''
-
