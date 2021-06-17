@@ -1,7 +1,8 @@
 from .generic_client_handler import GenericClientHandler
 from .server_pip_resource import ServerPipResource
 from .server_resource_interface import ServerResourceInterface
-from LSP.plugin.core.typing import Optional
+from LSP.plugin.core.typing import List, Optional
+from os import path
 
 __all__ = ['PipClientHandler']
 
@@ -40,6 +41,8 @@ class PipClientHandler(GenericClientHandler):
     :required: Yes
     """
 
+    # --- GenericClientHandler handlers -------------------------------------------------------------------------------
+
     @classmethod
     def manages_server(cls) -> bool:
         return True
@@ -48,5 +51,12 @@ class PipClientHandler(GenericClientHandler):
     def get_server(cls) -> Optional[ServerResourceInterface]:
         if not cls.__server:
             cls.__server = ServerPipResource(cls.storage_path(), cls.package_name, cls.requirements_txt_path,
-                                            cls.server_filename)
+                                             cls.server_filename)
         return cls.__server
+
+    @classmethod
+    def get_additional_paths(cls) -> List[str]:
+        server = cls.get_server()
+        if server:
+            return [path.dirname(server.binary_path)]
+        return []

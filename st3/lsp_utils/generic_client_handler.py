@@ -140,6 +140,15 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
         }
 
     @classmethod
+    def get_additional_paths(cls) -> List[str]:
+        """
+        Override to prepend additional paths to the default PATH environment variable.
+
+        Remember to call the super class and merge the results if overriding.
+        """
+        return []
+
+    @classmethod
     def manages_server(cls) -> bool:
         """
         Whether this handler manages a server. If the response is `True` then the :meth:`get_server()` should also be

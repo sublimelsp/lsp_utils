@@ -124,6 +124,15 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface):
             configuration.command = cls.get_command()
         return None
 
+    @classmethod
+    def on_pre_start(cls, window: sublime.Window, initiating_view: sublime.View,
+                     workspace_folders: List[WorkspaceFolder], configuration: ClientConfig) -> Optional[str]:
+        extra_paths = path.pathsep.join(cls.get_additional_paths())
+        if extra_paths:
+            original_path = configuration.env.get('PATH') or ''
+            configuration.env['PATH'] = path.pathsep.join([extra_paths, original_path])
+        return None
+
     # --- ClientHandlerInterface --------------------------------------------------------------------------------------
 
     @classmethod

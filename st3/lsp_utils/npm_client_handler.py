@@ -2,6 +2,7 @@ from .generic_client_handler import GenericClientHandler
 from .server_npm_resource import ServerNpmResource
 from .server_resource_interface import ServerResourceInterface
 from LSP.plugin.core.typing import Dict, List, Optional, Tuple
+from os import path
 
 __all__ = ['NpmClientHandler']
 
@@ -61,6 +62,10 @@ class NpmClientHandler(GenericClientHandler):
         })
         return variables
 
+    @classmethod
+    def get_additional_paths(cls) -> List[str]:
+        return [path.dirname(cls._node_bin())]
+
     # --- GenericClientHandler handlers -------------------------------------------------------------------------------
 
     @classmethod
@@ -101,4 +106,3 @@ class NpmClientHandler(GenericClientHandler):
         if cls.__server:
             return cls.__server.node_bin
         return ''
-
