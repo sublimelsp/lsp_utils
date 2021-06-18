@@ -66,7 +66,10 @@ jobs:
       - run: sudo apt install --no-install-recommends -y x11-xserver-utils
       - run: pip3 install mypy==0.790 flake8==3.8.3 yapf==0.30.0 --user
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - run: pwd
+      - run: ls -la
       - run: cd ..
+      - run: pwd
       - run: ls -la
       - run: git clone https://github.com/sublimelsp/LSP.git && touch ./LSP/__init__.py
       - run: git clone https://github.com/SublimeText/sublime_lib.git
