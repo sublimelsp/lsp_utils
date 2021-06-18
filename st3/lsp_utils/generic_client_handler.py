@@ -6,7 +6,7 @@ from LSP.plugin import ClientConfig
 from LSP.plugin import DottedDict
 from LSP.plugin import WorkspaceFolder
 from LSP.plugin.core.typing import Any, Dict, List, Optional, Tuple
-from package_control import events
+from package_control import events  # type: ignore
 import os
 import shutil
 import sublime

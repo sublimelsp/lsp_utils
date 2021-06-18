@@ -31,7 +31,7 @@ def run_command_async(args: List[str], on_success: StringCallback, on_error: Str
     On error calls the provided `on_error` callback with the potential `stderr` output.
     """
 
-    def execute(on_success, on_error, args):
+    def execute(on_success: StringCallback, on_error: StringCallback, args: List[str]) -> None:
         result, error = run_command_sync(args, **kwargs)
         on_error(error) if error is not None else on_success(result)
 
