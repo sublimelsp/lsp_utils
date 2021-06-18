@@ -15,8 +15,8 @@ from LSP.plugin import unregister_plugin
 from LSP.plugin import WorkspaceFolder
 from LSP.plugin.core.rpc import method2attr
 from LSP.plugin.core.typing import Any, Callable, Dict, List, Optional, Tuple, TypedDict
-from weakref import ref
 from os import path
+from weakref import ref
 import sublime
 
 __all__ = ['ClientHandler']
