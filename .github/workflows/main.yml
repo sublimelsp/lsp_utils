@@ -48,8 +48,6 @@ jobs:
       - run: sh -e /etc/init.d/xvfb start
       - run: curl -OL https://raw.githubusercontent.com/SublimeText/UnitTesting/master/sbin/github.sh
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-      - run: python3 tests/server.py --version
-      - run: python3 tests/adjust_unittesting_config_for_ci.py && cat unittesting.json
       - run: |
           PATH="$HOME/.local/bin:$PATH"
           sh github.sh bootstrap
