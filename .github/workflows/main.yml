@@ -30,6 +30,8 @@ jobs:
       - run: curl --silent https://raw.githubusercontent.com/SublimeText/UnitTesting/master/sbin/ci.sh --output ci.sh
       - run: |
           sh ci.sh bootstrap
+          sh ci.sh install_package LSP main https://github.com/sublimelsp/LSP.git
+          sh ci.sh install_package LSP-pyright master https://github.com/sublimelsp/LSP-pyright.git
           sh ci.sh install_package_control
           subl --stay &
           sleep 8
@@ -49,6 +51,8 @@ jobs:
       - run: |
           PATH="$HOME/.local/bin:$PATH"
           sh github.sh bootstrap
+          sh github.sh install_package LSP main https://github.com/sublimelsp/LSP.git
+          sh github.sh install_package LSP-pyright master https://github.com/sublimelsp/LSP-pyright.git
           sh github.sh install_package_control
           sh github.sh run_tests
         name: Run UnitTesting tests
