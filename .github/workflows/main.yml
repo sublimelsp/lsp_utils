@@ -51,10 +51,13 @@ jobs:
       - run: |
           PATH="$HOME/.local/bin:$PATH"
           sh github.sh bootstrap
+          rm -rf "$HOME/.config/sublime-text/Packages/lsp_utils"
           sh github.sh install_package LSP main https://github.com/sublimelsp/LSP.git
           sh github.sh install_package LSP-pyright master https://github.com/sublimelsp/LSP-pyright.git
-          echo '{}' > "$HOME/.config/sublime-text/Packages/User/Package Control.sublime-settings"
           sh github.sh install_package_control
+          rm -rf "$HOME/.config/sublime-text/Packages/lsp_utils"
+          mkdir -p "$HOME/.config/sublime-text/Packages/lsp_utils"
+          cp -r ./ "$HOME/.config/sublime-text/Packages/lsp_utils"
           sh github.sh run_tests
         name: Run UnitTesting tests
 
