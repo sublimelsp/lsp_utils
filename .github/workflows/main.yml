@@ -29,10 +29,11 @@ jobs:
       - run: echo "$HOME/Library/Python/3.7/bin" >> $GITHUB_PATH
       - run: curl --silent https://raw.githubusercontent.com/SublimeText/UnitTesting/master/sbin/ci.sh --output ci.sh
       - run: |
-          sh ci.sh bootstrap
+          sh ci.sh bootstrap true  # true == skip pacakge copy
           sh ci.sh install_package LSP main https://github.com/sublimelsp/LSP.git
           sh ci.sh install_package LSP-pyright master https://github.com/sublimelsp/LSP-pyright.git
           sh ci.sh install_package_control
+          sh ci.sh copy_tested_package true  # true == overwrite existing package directory
           subl --stay &
           sleep 8
           sh ci.sh run_tests
