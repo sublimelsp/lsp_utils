@@ -168,9 +168,9 @@ RunTests() {
     #     exit 1
     # fi
     if [ -z "$1" ]; then
-        exit_code=`python "$STP/UnitTesting/sbin/run_tests.py" "$PACKAGE"`
+        python "$STP/UnitTesting/sbin/run_tests.py" "$PACKAGE" || true
     else
-        exit_code=`python "$STP/UnitTesting/sbin/run_tests.py" "$@" "$PACKAGE"`
+        python "$STP/UnitTesting/sbin/run_tests.py" "$@" "$PACKAGE" || true
     fi
 
     # pkill "[Ss]ubl" || true
