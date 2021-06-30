@@ -214,18 +214,3 @@ case $COMMAND in
         RunTests "--color-scheme-test" "$@"
         ;;
 esac
-
-    Terms
-    Privacy
-    Security
-    Status
-    Docs
-
-    Contact GitHub
-    Pricing
-    API
-    Training
-    Blog
-    About
-
-Loading complete
