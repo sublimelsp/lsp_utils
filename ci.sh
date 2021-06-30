@@ -1,35 +1,3 @@
-
-Skip to content
-Pull requests
-Issues
-Trending
-Explore
-@rchl
-SublimeText /
-UnitTesting
-
-98
-
-    31
-
-Code
-Issues 20
-Pull requests 3
-Actions
-Wiki
-
-    Releases91
-
-More
-UnitTesting/sbin/ci.sh
-@rchl
-rchl Add "OverwriteExisting" argument to CopyTestedPackage
-Latest commit 0f52de6 10 days ago
-History
-2 contributors
-@randy3k
-@rchl
-216 lines (188 sloc) 5.69 KB
 #!/bin/bash
 
 # This script should be CI agnostic
