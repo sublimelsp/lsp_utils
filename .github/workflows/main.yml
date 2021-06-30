@@ -21,7 +21,7 @@ env:
 
 jobs:
   macOS:
-    name: Tests (ST${{ matrix.sublime_text.name }})
+    name: Tests (ST${{ matrix.sublime_text.version }})
     runs-on: macos-latest
     strategy:
       matrix:
@@ -49,7 +49,7 @@ jobs:
         name: Run UnitTesting tests
 
   Linux:
-    name: Tests (ST${{ matrix.sublime_text.name }})
+    name: Tests (ST${{ matrix.sublime_text.version }})
     runs-on: ubuntu-latest
     container:
       image: sublimetext/unittesting

@@ -2,12 +2,17 @@ from LSP.plugin.core.registry import windows
 from LSP.plugin.core.sessions import Session
 from LSP.plugin.core.types import ClientStates
 from LSP.plugin.core.typing import Generator, Optional
-from LSP.plugin.documents import DocumentSyncListener
 from os.path import join
 from sublime_plugin import view_event_listeners
 from unittesting import DeferrableTestCase
 import sublime
 
+try:
+    from LSP.plugin.documents import DocumentSyncListener
+    ST3 = False
+except ImportError:
+    from LSP.plugin.core.documents import DocumentSyncListener
+    ST3 = True
 
 TIMEOUT_TIME = 2000
 
@@ -89,10 +94,16 @@ class TextDocumentTestCase(DeferrableTestCase):
         # events like on_load_async, on_activated, on_deactivated. That makes things not properly initialize on
         # opening file (manager missing in DocumentSyncListener)
         # Revisit this once we're on ST4.
-        for listener in view_event_listeners[cls.view.id()]:
-            if isinstance(listener, DocumentSyncListener):
-                sublime.set_timeout_async(listener.on_activated_async)
-                return True
+        if ST3:
+            for listener in view_event_listeners[self.view.id()]:
+                if isinstance(listener, DocumentSyncListener):
+                    sublime.set_timeout_async(listener.on_activated_async)
+                    return True
+        else:
+            for listener in view_event_listeners[cls.view.id()]:
+                if isinstance(listener, DocumentSyncListener):
+                    sublime.set_timeout_async(listener.on_activated_async)
+                    return True
         return False
 
     @classmethod
