@@ -24,6 +24,7 @@ jobs:
     name: Tests (ST${{ matrix.sublime_text.version }})
     runs-on: macos-latest
     strategy:
+      fail-fast: false
       matrix:
         sublime_text:
           - version: 3
@@ -46,7 +47,9 @@ jobs:
           subl --stay &
           sleep 8
           sh ci.sh run_tests
-        name: Run UnitTesting tests
+      - uses: OrbitalOwen/desktop-screenshot-action@0.1
+        with:
+          file-name: 'desktop.jpg'
 
   Linux:
     name: Tests (ST${{ matrix.sublime_text.version }})
@@ -81,7 +84,6 @@ jobs:
           sh github.sh install_package_control
           sh github.sh copy_tested_package true  # true == overwrite existing package directory
           sh github.sh run_tests
-        name: Run UnitTesting tests
 
   Lint:
     runs-on: ubuntu-latest
