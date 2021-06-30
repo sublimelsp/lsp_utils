@@ -15,7 +15,6 @@ on:
       - "docs/**"
 
 env:
-  SUBLIME_TEXT_VERSION: "4"
   SUBLIME_TEXT_ARCH: x64
   PACKAGE: lsp_utils
   UNITTESTING_TAG: master
@@ -23,6 +22,11 @@ env:
 jobs:
   macOS:
     runs-on: macos-latest
+    strategy:
+      matrix:
+        ST_VERSION: ['3', '4']
+    env:
+      SUBLIME_TEXT_VERSION: ${{ matrix.ST_VERSION }}
     steps:
       - uses: actions/checkout@v1
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
@@ -42,6 +46,11 @@ jobs:
   Linux:
     runs-on: ubuntu-latest
     container: sublimetext/unittesting
+    strategy:
+      matrix:
+        ST_VERSION: ['3', '4']
+    env:
+      SUBLIME_TEXT_VERSION: ${{ matrix.ST_VERSION }}
     steps:
       - uses: actions/checkout@v1
       - run: sudo apt update
