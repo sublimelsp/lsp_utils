@@ -173,6 +173,11 @@ RunTests() {
         python "$STP/UnitTesting/sbin/run_tests.py" "$@" "$PACKAGE" || true
     fi
 
+    ls -la "$STP/User/UnitTesting/lsp_utils/"
+    ls -la "$STP/User/UnitTesting/"
+    cat "$STP/User/UnitTesting/result"
+    open "$STP/User/UnitTesting/lsp_utils/"
+
     # pkill "[Ss]ubl" || true
     # pkill 'plugin_host' || true
     # sleep 1

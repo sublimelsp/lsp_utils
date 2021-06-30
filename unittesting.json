@@ -7,5 +7,5 @@
     "start_coverage_after_reload": false,
     "show_reload_progress": false,
     "output": null,
-    "generate_html_report": true
+    "generate_html_report": false
 }

@@ -34,7 +34,7 @@ class TextDocumentTestCase(DeferrableTestCase):
 
     @classmethod
     def get_test_file_name(cls) -> str:
-        return 'example.py'
+        return 'sample.py'
 
     @classmethod
     def get_session_name(cls) -> str:
