@@ -1,5 +1,5 @@
 from LSP.plugin.core.typing import cast, Generator
-from .setup import TextDocumentTestCase
+from setup import TextDocumentTestCase
 
 try:
     from LSP.plugin.session_view import SessionView
