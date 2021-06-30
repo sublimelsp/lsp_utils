@@ -94,16 +94,10 @@ class TextDocumentTestCase(DeferrableTestCase):
         # events like on_load_async, on_activated, on_deactivated. That makes things not properly initialize on
         # opening file (manager missing in DocumentSyncListener)
         # Revisit this once we're on ST4.
-        if ST3:
-            for listener in view_event_listeners[self.view.id()]:
-                if isinstance(listener, DocumentSyncListener):
-                    sublime.set_timeout_async(listener.on_activated_async)
-                    return True
-        else:
-            for listener in view_event_listeners[cls.view.id()]:
-                if isinstance(listener, DocumentSyncListener):
-                    sublime.set_timeout_async(listener.on_activated_async)
-                    return True
+        for listener in view_event_listeners[cls.view.id()]:
+            if isinstance(listener, DocumentSyncListener):
+                sublime.set_timeout_async(listener.on_activated_async)
+                return True
         return False
 
     @classmethod
