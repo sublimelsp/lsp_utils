@@ -47,7 +47,7 @@ jobs:
           sh ci.sh run_tests
       - uses: OrbitalOwen/desktop-screenshot-action@0.1
         with:
-          file-name: 'desktop.jpg'
+          file-name: desktop${{ matrix.sublime_text.version }}.jpg
 
   Linux:
     name: Tests (Linux, ST${{ matrix.sublime_text.version }})
