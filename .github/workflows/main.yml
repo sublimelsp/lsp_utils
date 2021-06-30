@@ -21,7 +21,7 @@ env:
 
 jobs:
   macOS:
-    name: Tests (ST${{ matrix.sublime_text.version }})
+    name: Tests (macOS, ST${{ matrix.sublime_text.version }})
     runs-on: macos-latest
     strategy:
       fail-fast: false
@@ -39,20 +39,19 @@ jobs:
       - run: echo "$HOME/Library/Python/3.7/bin" >> $GITHUB_PATH
       - run: curl --silent https://raw.githubusercontent.com/SublimeText/UnitTesting/master/sbin/ci.sh --output ci.sh
       - run: |
-          sh ci.sh bootstrap true  # true == skip pacakge copy
-          sh ci.sh install_package LSP ${{ matrix.sublime_text.lsp_tag }} https://github.com/sublimelsp/LSP.git
-          sh ci.sh install_package LSP-pyright master https://github.com/sublimelsp/LSP-pyright.git
-          sh ci.sh install_package_control
-          sh ci.sh copy_tested_package true  # true == overwrite existing package directory
-          subl --stay &
-          sleep 8
-          sh ci.sh run_tests
+          sh github.sh bootstrap true  # true == skip package copy
+          sh github.sh install_package LSP ${{ matrix.sublime_text.lsp_tag }} https://github.com/sublimelsp/LSP.git
+          sh github.sh install_package LSP-pyright master https://github.com/sublimelsp/LSP-pyright.git
+          sh github.sh install_package_control
+          sh github.sh copy_tested_package true  # true == overwrite existing package directory
       - uses: OrbitalOwen/desktop-screenshot-action@0.1
+      - run: |
+          sh github.sh run_tests
         with:
           file-name: 'desktop.jpg'
 
   Linux:
-    name: Tests (ST${{ matrix.sublime_text.version }})
+    name: Tests (Linux, ST${{ matrix.sublime_text.version }})
     runs-on: ubuntu-latest
     container:
       image: sublimetext/unittesting
@@ -78,7 +77,7 @@ jobs:
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
       - run: |
           PATH="$HOME/.local/bin:$PATH"
-          sh github.sh bootstrap true  # true == skip pacakge copy
+          sh github.sh bootstrap true  # true == skip package copy
           sh github.sh install_package LSP ${{ matrix.sublime_text.lsp_tag }} https://github.com/sublimelsp/LSP.git
           sh github.sh install_package LSP-pyright master https://github.com/sublimelsp/LSP-pyright.git
           sh github.sh install_package_control
