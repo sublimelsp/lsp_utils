@@ -53,6 +53,9 @@ jobs:
       SUBLIME_TEXT_VERSION: ${{ matrix.ST_VERSION }}
     steps:
       - uses: actions/checkout@v1
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '12'
       - run: sudo apt update
       - run: sudo apt install --no-install-recommends -y x11-xserver-utils python3-pip
       - run: sh -e /etc/init.d/xvfb start
