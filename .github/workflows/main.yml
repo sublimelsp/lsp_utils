@@ -21,12 +21,17 @@ env:
 
 jobs:
   macOS:
+    name: Tests (ST${{ matrix.sublime_text.name }})
     runs-on: macos-latest
     strategy:
       matrix:
-        ST_VERSION: ['3', '4']
+        sublime_text:
+          - version: 3
+            lsp_tag: 'st3'
+          - version: 4
+            lsp_tag: 'main'
     env:
-      SUBLIME_TEXT_VERSION: ${{ matrix.ST_VERSION }}
+      SUBLIME_TEXT_VERSION: ${{ matrix.sublime_text.version }}
     steps:
       - uses: actions/checkout@v1
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
@@ -34,7 +39,7 @@ jobs:
       - run: curl --silent https://raw.githubusercontent.com/SublimeText/UnitTesting/master/sbin/ci.sh --output ci.sh
       - run: |
           sh ci.sh bootstrap true  # true == skip pacakge copy
-          sh ci.sh install_package LSP main https://github.com/sublimelsp/LSP.git
+          sh ci.sh install_package LSP ${{ matrix.sublime_text.lsp_tag }} https://github.com/sublimelsp/LSP.git
           sh ci.sh install_package LSP-pyright master https://github.com/sublimelsp/LSP-pyright.git
           sh ci.sh install_package_control
           sh ci.sh copy_tested_package true  # true == overwrite existing package directory
@@ -44,15 +49,20 @@ jobs:
         name: Run UnitTesting tests
 
   Linux:
+    name: Tests (ST${{ matrix.sublime_text.name }})
     runs-on: ubuntu-latest
     container:
       image: sublimetext/unittesting
       options: --cap-add=NET_ADMIN
     strategy:
       matrix:
-        ST_VERSION: ['3', '4']
+        sublime_text:
+          - version: 3
+            lsp_tag: 'st3'
+          - version: 4
+            lsp_tag: 'main'
     env:
-      SUBLIME_TEXT_VERSION: ${{ matrix.ST_VERSION }}
+      SUBLIME_TEXT_VERSION: ${{ matrix.sublime_text.version }}
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-node@v2
@@ -66,7 +76,7 @@ jobs:
       - run: |
           PATH="$HOME/.local/bin:$PATH"
           sh github.sh bootstrap true  # true == skip pacakge copy
-          sh github.sh install_package LSP main https://github.com/sublimelsp/LSP.git
+          sh github.sh install_package LSP ${{ matrix.sublime_text.lsp_tag }} https://github.com/sublimelsp/LSP.git
           sh github.sh install_package LSP-pyright master https://github.com/sublimelsp/LSP-pyright.git
           sh github.sh install_package_control
           sh github.sh copy_tested_package true  # true == overwrite existing package directory
