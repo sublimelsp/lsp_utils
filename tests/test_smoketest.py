@@ -22,4 +22,4 @@ class PyrightSmokeTests(TextDocumentTestCase):
         region = error_regions[0]
         self.assertEqual(region.a, 11)
         self.assertEqual(region.b, 31)
-        window.run_command('show_panel', args= {"panel": "console", "toggle": True})
+        self.view.window().run_command('show_panel', {"panel": "console", "toggle": True})
