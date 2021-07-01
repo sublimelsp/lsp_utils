@@ -35,6 +35,9 @@ jobs:
       SUBLIME_TEXT_VERSION: ${{ matrix.sublime_text.version }}
     steps:
       - uses: actions/checkout@v1
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '12'
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
       - run: echo "$HOME/Library/Python/3.7/bin" >> $GITHUB_PATH
       - run: curl -OL https://raw.githubusercontent.com/SublimeText/UnitTesting/master/sbin/github.sh
