@@ -38,7 +38,7 @@ class TextDocumentTestCase(DeferrableTestCase):
 
     @classmethod
     def get_session_name(cls) -> str:
-        return 'LSP-pyright'
+        return 'lsp-pyright' if ST3 else 'LSP-pyright'
 
     @classmethod
     def setUpClass(cls) -> Generator:
@@ -52,15 +52,16 @@ class TextDocumentTestCase(DeferrableTestCase):
         yield {'condition': lambda: not cls.view.is_loading(), 'timeout': TIMEOUT_TIME}
         yield cls.ensure_document_listener_created
         # First start needs time to install the dependencies.
-        INSTALL_TIMEOUT = 20000
+        INSTALL_TIMEOUT = 5000
         yield {
             'condition': lambda: cls.wm.get_session(cls.get_session_name(), filename) is not None,
             'timeout': INSTALL_TIMEOUT
         }
         cls.session = cls.wm.get_session(cls.get_session_name(), filename)
         yield {'condition': lambda: cls.session.state == ClientStates.READY, 'timeout': TIMEOUT_TIME}
-        # Ensure SessionView is created.
-        yield lambda: cls.session.session_view_for_view_async(cls.view)
+        if not ST3:
+            # Ensure SessionView is created.
+            yield lambda: cls.session.session_view_for_view_async(cls.view)
         yield from close_test_view(cls.view)
 
     def setUp(self) -> Generator:
@@ -73,8 +74,9 @@ class TextDocumentTestCase(DeferrableTestCase):
             self.assertTrue(self.wm._configs.match_view(self.view))
         self.init_view_settings()
         yield self.ensure_document_listener_created
-        # Ensure SessionView is created.
-        yield lambda: self.session.session_view_for_view_async(self.view)
+        if not ST3:
+            # Ensure SessionView is created.
+            yield lambda: self.session.session_view_for_view_async(self.view)
 
     @classmethod
     def init_view_settings(cls) -> None:
