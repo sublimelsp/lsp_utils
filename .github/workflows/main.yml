@@ -48,9 +48,6 @@ jobs:
           sh github.sh install_package_control
           sh github.sh copy_tested_package true  # true == overwrite existing package directory
           sh github.sh run_tests
-      - uses: OrbitalOwen/desktop-screenshot-action@0.1
-        with:
-          file-name: desktop${{ matrix.sublime_text.version }}.jpg
 
   Linux:
     name: Tests (Linux, ST${{ matrix.sublime_text.version }})
