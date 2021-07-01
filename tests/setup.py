@@ -105,7 +105,10 @@ class TextDocumentTestCase(DeferrableTestCase):
     @classmethod
     def tearDownClass(cls) -> 'Generator':
         if cls.session and cls.wm:
-            sublime.set_timeout_async(cls.session.end_async)
+            if ST3:
+                cls.wm.end_config_sessions(self.config.name)
+            else:
+                sublime.set_timeout_async(cls.session.end_async)
             yield lambda: cls.session.state == ClientStates.STOPPING
             if cls.view:
                 yield lambda: cls.wm.get_session(cls.get_session_name(), cls.view.file_name()) is None
