@@ -52,7 +52,7 @@ class TextDocumentTestCase(DeferrableTestCase):
         yield {'condition': lambda: not cls.view.is_loading(), 'timeout': TIMEOUT_TIME}
         yield cls.ensure_document_listener_created
         # First start needs time to install the dependencies.
-        INSTALL_TIMEOUT = 5000
+        INSTALL_TIMEOUT = 6000
         yield {
             'condition': lambda: cls.wm.get_session(cls.get_session_name(), filename) is not None,
             'timeout': INSTALL_TIMEOUT
@@ -61,7 +61,7 @@ class TextDocumentTestCase(DeferrableTestCase):
         yield {'condition': lambda: cls.session.state == ClientStates.READY, 'timeout': TIMEOUT_TIME}
         if not ST3:
             # Ensure SessionView is created.
-            yield lambda: cls.session.session_view_for_view_async(cls.view)
+            yield {'condition': lambda: cls.session.session_view_for_view_async(cls.view), 'timeout': TIMEOUT_TIME}
         yield from close_test_view(cls.view)
 
     def setUp(self) -> Generator:
@@ -79,7 +79,7 @@ class TextDocumentTestCase(DeferrableTestCase):
         yield self.ensure_document_listener_created
         if not ST3:
             # Ensure SessionView is created.
-            yield lambda: self.session.session_view_for_view_async(self.view)
+            yield {'condition': lambda: self.session.session_view_for_view_async(self.view), 'timeout': TIMEOUT_TIME}
 
     @classmethod
     def init_view_settings(cls) -> None:

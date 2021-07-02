@@ -1,4 +1,3 @@
-from .activity_indicator import ActivityIndicator
 from .helpers import log_and_show_message
 from .helpers import parse_version
 from .helpers import run_command_sync
@@ -8,6 +7,7 @@ from contextlib import contextmanager
 from LSP.plugin.core.typing import Any, Generator, List, Optional, Tuple
 from os import path
 from os import remove
+from sublime_lib import ActivityIndicator
 import os
 import shutil
 import sublime
