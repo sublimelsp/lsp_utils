@@ -74,7 +74,6 @@ jobs:
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
       - run: curl -OL https://raw.githubusercontent.com/SublimeText/UnitTesting/master/sbin/github.sh
       - run: |
-          PATH="$HOME/.local/bin:$PATH"
           sh github.sh bootstrap true  # true == skip package copy
           sh github.sh install_package LSP ${{ matrix.sublime_text.lsp_tag }} https://github.com/sublimelsp/LSP.git
           sh github.sh install_package LSP-pyright master https://github.com/sublimelsp/LSP-pyright.git
