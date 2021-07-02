@@ -24,7 +24,6 @@ jobs:
     name: Tests (macOS, ST${{ matrix.sublime_text.version }})
     runs-on: macos-latest
     strategy:
-      fail-fast: false
       matrix:
         sublime_text:
           - version: 3
