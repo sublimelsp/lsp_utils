@@ -30,6 +30,7 @@ class ServerNpmResource(ServerResourceInterface):
         node_runtime = NodeRuntime.get(package_name, storage_path, minimum_node_version)
         if node_runtime:
             return ServerNpmResource(package_name, server_directory, server_binary_path, package_storage, node_runtime)
+        return None
 
     def __init__(self, package_name: str, server_directory: str, server_binary_path: str,
                  package_storage: str, node_runtime: NodeRuntime) -> None:

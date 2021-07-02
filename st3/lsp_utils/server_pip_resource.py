@@ -1,7 +1,7 @@
 from .helpers import run_command_sync
 from .server_resource_interface import ServerResourceInterface
 from .server_resource_interface import ServerStatus
-from LSP.plugin.core.typing import List, Optional, Tuple
+from LSP.plugin.core.typing import Any, List, Optional, Tuple
 from sublime_lib import ResourcePath
 import os
 import shutil
@@ -31,7 +31,7 @@ class ServerPipResource(ServerResourceInterface):
         return 'python' if sublime.platform() == 'windows' else 'python3'
 
     @classmethod
-    def run(cls, *args, cwd: Optional[str] = None) -> str:
+    def run(cls, *args: Any, cwd: Optional[str] = None) -> str:
         output, error = run_command_sync(list(args), cwd=cwd)
         if error:
             raise Exception(error)
@@ -52,7 +52,7 @@ class ServerPipResource(ServerResourceInterface):
             if line:
                 parts = line.split('==')
                 if len(parts) == 2:
-                    requirements.append(tuple(parts))
+                    requirements.append((parts[0], parts[1]))
                 elif len(parts) == 1:
                     requirements.append((parts[0], None))
         return requirements

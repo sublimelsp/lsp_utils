@@ -57,7 +57,7 @@ class ActivityIndicator:
     .. versionadded:: 1.11.0
     """
     width = 10  # type: int
-    interval = 100  # type: float
+    interval = 100  # type: int
 
     _target = None  # type: Optional[StatusTarget]
 
@@ -104,7 +104,8 @@ class ActivityIndicator:
         If the indicator is not running, do nothing.
         """
         self._state = False
-        self._target.clear()
+        if self._target:
+            self._target.clear()
 
     def set_label(self, label: str) -> None:
         """
@@ -126,7 +127,8 @@ class ActivityIndicator:
             self._run()
 
     def _update(self) -> None:
-        self._target.set(self._render(self._ticks))
+        if self._target:
+            self._target.set(self._render(self._ticks))
 
     def _render(self, ticks: int) -> str:
         status = ticks % (2 * self.width)

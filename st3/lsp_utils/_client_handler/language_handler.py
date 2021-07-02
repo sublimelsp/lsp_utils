@@ -1,3 +1,4 @@
+# type: ignore
 from .._util import weak_method
 from ..activity_indicator import ActivityIndicator
 from ..api_wrapper_interface import ApiWrapperInterface

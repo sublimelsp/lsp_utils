@@ -1,1 +1,7 @@
+.github/ export-ignore
+.style.yapf export-ignore
 docs/ export-ignore
+mypy.ini export-ignore
+tests/ export-ignore
+tox.ini export-ignore
+unittesting.json export-ignore

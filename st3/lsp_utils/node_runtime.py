@@ -5,7 +5,7 @@ from .helpers import run_command_sync
 from .helpers import SemanticVersion
 from .helpers import version_to_string
 from contextlib import contextmanager
-from LSP.plugin.core.typing import List, Optional, Tuple
+from LSP.plugin.core.typing import Any, Generator, List, Optional, Tuple
 from os import path
 from os import remove
 import os
@@ -46,7 +46,10 @@ class NodeRuntime:
     def _resolve_node_runtime(
         cls, package_name: str, storage_path: str, minimum_version: SemanticVersion
     ) -> Optional['NodeRuntime']:
-        selected_runtimes = sublime.load_settings('lsp_utils.sublime-settings').get('nodejs_runtime')
+        node_runtime = None  # type: Optional[NodeRuntime]
+        default_runtimes = ['system', 'local']
+        settings = sublime.load_settings('lsp_utils.sublime-settings')
+        selected_runtimes = settings.get('nodejs_runtime') or default_runtimes
         for runtime in selected_runtimes:
             if runtime == 'system':
                 node_runtime = NodeRuntimePATH()
@@ -62,13 +65,13 @@ class NodeRuntime:
                 if not node_runtime.meets_requirements():
                     if not sublime.ok_cancel_dialog(NO_NODE_FOUND_MESSAGE.format(package_name=package_name),
                                                     'Install Node.js'):
-                        return
+                        return None
                     try:
                         node_runtime.install_node()
                     except Exception as ex:
                         log_and_show_message('{}: Error: Failed installing a local Node.js runtime:\n{}'.format(
                             package_name, ex))
-                        return
+                        return None
                 if node_runtime.meets_requirements():
                     try:
                         cls._check_node_version(node_runtime, minimum_version)
@@ -76,6 +79,7 @@ class NodeRuntime:
                     except Exception as ex:
                         error = 'Ignoring local Node.js runtime due to an error. {}'.format(ex)
                         log_and_show_message('{}: Error: {}'.format(package_name, error))
+        return None
 
     @classmethod
     def _check_node_version(cls, node_runtime: 'NodeRuntime', minimum_version: SemanticVersion) -> None:
@@ -160,8 +164,9 @@ class NodeRuntimeLocal(NodeRuntime):
         binary_path = path.join(self._node_dir, 'bin', 'node')
         if path.isfile(exe_path):
             return exe_path
-        elif path.isfile(binary_path):
+        if path.isfile(binary_path):
             return binary_path
+        return None
 
     def resolve_lib(self) -> str:
         lib_path = path.join(self._node_dir, 'lib', 'node_modules')
@@ -236,7 +241,7 @@ class InstallNode:
 
     def _install_node(self, filename: str) -> None:
         archive = path.join(self._cache_dir, filename)
-        opener = zipfile.ZipFile if filename.endswith('.zip') else tarfile.open
+        opener = zipfile.ZipFile if filename.endswith('.zip') else tarfile.open  # type: Any
         try:
             with opener(archive) as f:
                 names = f.namelist() if hasattr(f, 'namelist') else f.getnames()
@@ -254,7 +259,7 @@ class InstallNode:
 
 
 @contextmanager
-def chdir(new_dir: str):
+def chdir(new_dir: str) -> Generator[None, None, None]:
     '''Context Manager for changing the working directory'''
     cur_dir = os.getcwd()
     os.chdir(new_dir)
