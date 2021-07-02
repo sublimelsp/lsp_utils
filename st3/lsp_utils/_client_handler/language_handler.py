@@ -1,6 +1,5 @@
 # type: ignore
 from .._util import weak_method
-from ..activity_indicator import ActivityIndicator
 from ..api_wrapper_interface import ApiWrapperInterface
 from ..helpers import log_and_show_message
 from ..server_resource_interface import ServerStatus
@@ -15,6 +14,7 @@ from LSP.plugin import Request
 from LSP.plugin import Response
 from LSP.plugin import WorkspaceFolder
 from LSP.plugin.core.typing import Any, Callable, Dict
+from sublime_lib import ActivityIndicator
 from weakref import ref
 import sublime
 
