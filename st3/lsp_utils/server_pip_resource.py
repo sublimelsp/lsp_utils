@@ -10,7 +10,7 @@ import sublime
 __all__ = ['ServerPipResource']
 
 
-def parse_requirements_file(content: str) -> Dict[str, Optional[str]]:
+def parse_requirements(content: str) -> Dict[str, Optional[str]]:
     requirements = {}  # type: Dict[str, Optional[str]]
     lines = [line.strip() for line in content.splitlines()]
     for line in lines:
@@ -87,8 +87,8 @@ class ServerPipResource(ServerResourceInterface):
             with open(self.python_version(), 'r') as f:
                 if f.readline().strip() != self.run(self.python_exe(), '--version').strip():
                     return True
-            installed_requirements = parse_requirements_file(self.run(self.pip_exe(), 'freeze'))
-            requirements = parse_requirements_file(ResourcePath(self._requirements_path).read_text())
+            installed_requirements = parse_requirements(self.run(self.pip_exe(), 'freeze'))
+            requirements = parse_requirements(ResourcePath(self._requirements_path).read_text())
             for name, version in requirements.items():
                 if name not in installed_requirements:
                     # Has new requirement
