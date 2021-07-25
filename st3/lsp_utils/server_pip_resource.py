@@ -1,13 +1,26 @@
 from .helpers import run_command_sync
 from .server_resource_interface import ServerResourceInterface
 from .server_resource_interface import ServerStatus
-from LSP.plugin.core.typing import Any, List, Optional, Tuple
+from LSP.plugin.core.typing import Any, Dict, Optional
 from sublime_lib import ResourcePath
 import os
 import shutil
 import sublime
 
 __all__ = ['ServerPipResource']
+
+
+def parse_requirements_file(content: str) -> Dict[str, Optional[str]]:
+    requirements = {}  # type: Dict[str, Optional[str]]
+    lines = [line.strip() for line in content.splitlines()]
+    for line in lines:
+        if line:
+            parts = line.split('==')
+            if len(parts) == 2:
+                requirements[parts[0].replace('[all]', '')] = parts[1]
+            elif len(parts) == 1:
+                requirements[parts[0]] = None
+    return requirements
 
 
 class ServerPipResource(ServerResourceInterface):
@@ -45,18 +58,6 @@ class ServerPipResource(ServerResourceInterface):
         self._server_binary_filename = server_binary_filename
         self._status = ServerStatus.UNINITIALIZED
 
-    def parse_requirements(self, requirements_path: str) -> List[Tuple[str, Optional[str]]]:
-        requirements = []  # type: List[Tuple[str, Optional[str]]]
-        lines = [line.strip() for line in ResourcePath(self._requirements_path).read_text().splitlines()]
-        for line in lines:
-            if line:
-                parts = line.split('==')
-                if len(parts) == 2:
-                    requirements.append((parts[0], parts[1]))
-                elif len(parts) == 1:
-                    requirements.append((parts[0], None))
-        return requirements
-
     def basedir(self) -> str:
         return os.path.join(self._storage_path, self._package_name)
 
@@ -86,16 +87,17 @@ class ServerPipResource(ServerResourceInterface):
             with open(self.python_version(), 'r') as f:
                 if f.readline().strip() != self.run(self.python_exe(), '--version').strip():
                     return True
-            for line in self.run(self.pip_exe(), 'freeze').splitlines():
-                requirements = self.parse_requirements(self._requirements_path)
-                for requirement, version in requirements:
-                    if not version:
-                        continue
-                    prefix = requirement + '=='
-                    if line.startswith(prefix):
-                        stored_version_str = line[len(prefix):].strip()
-                        if stored_version_str != version:
-                            return True
+            installed_requirements = parse_requirements_file(self.run(self.pip_exe(), 'freeze'))
+            requirements = parse_requirements_file(ResourcePath(self._requirements_path).read_text())
+            for name, version in requirements.items():
+                if name not in installed_requirements:
+                    # Has new requirement
+                    return True
+                if not version:
+                    continue
+                installed_version = installed_requirements.get(name)
+                if version != installed_version:
+                    return True
             self._status = ServerStatus.READY
             return False
         return True
