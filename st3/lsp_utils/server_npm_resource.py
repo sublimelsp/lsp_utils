@@ -3,7 +3,7 @@ from .node_runtime import NodeRuntime
 from .server_resource_interface import ServerResourceInterface
 from .server_resource_interface import ServerStatus
 from hashlib import md5
-from LSP.plugin.core.typing import Dict, Optional
+from LSP.plugin.core.typing import Dict
 from os import makedirs
 from os import path
 from os import remove
