@@ -62,6 +62,9 @@ class NodeRuntime:
                     except Exception as ex:
                         message = 'Ignoring system Node.js runtime due to an error. {}'.format(ex)
                         log_and_show_message('{}: Error: {}'.format(package_name, message))
+                else:
+                    message = 'The system Node.js does not meet the requirements: {}'.format(node_runtime)
+                    log_and_show_message('{}: {}'.format(package_name, message))
             elif runtime == 'local':
                 node_runtime = NodeRuntimeLocal(path.join(storage_path, 'lsp_utils', 'node-runtime'))
                 if not node_runtime.meets_requirements():
