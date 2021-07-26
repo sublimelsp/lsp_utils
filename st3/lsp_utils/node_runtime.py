@@ -4,6 +4,7 @@ from .helpers import run_command_sync
 from .helpers import SemanticVersion
 from .helpers import version_to_string
 from contextlib import contextmanager
+from LSP.plugin.core.logging import debug
 from LSP.plugin.core.typing import Any, Generator, List, Optional, Tuple
 from os import path
 from os import remove
@@ -40,6 +41,7 @@ class NodeRuntime:
             return cls._node_runtime
         cls._node_runtime_resolved = True
         cls._node_runtime = cls._resolve_node_runtime(package_name, storage_path, minimum_version)
+        debug('Resolved Node Runtime for client {}: {}'.format(package_name, cls._node_runtime))
         return cls._node_runtime
 
     @classmethod
@@ -92,6 +94,10 @@ class NodeRuntime:
         self._node = None  # type: Optional[str]
         self._npm = None  # type: Optional[str]
         self._version = None  # type: Optional[SemanticVersion]
+
+    def __repr__(self) -> str:
+        return '{}(node: {}, npm: {}, version: {})'.format(
+            self.__class__.__name__, self._node, self._npm, version_to_string(self._version) if self._version else None)
 
     def meets_requirements(self) -> bool:
         return self._node is not None and self._npm is not None
