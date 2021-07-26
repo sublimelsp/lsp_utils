@@ -3,7 +3,7 @@ from .node_runtime import NodeRuntime
 from .server_resource_interface import ServerResourceInterface
 from .server_resource_interface import ServerStatus
 from hashlib import md5
-from LSP.plugin.core.typing import Dict, Optional
+from LSP.plugin.core.typing import Dict
 from os import makedirs
 from os import path
 from os import remove
@@ -20,7 +20,7 @@ class ServerNpmResource(ServerResourceInterface):
     """
 
     @classmethod
-    def create(cls, options: Dict) -> Optional['ServerNpmResource']:
+    def create(cls, options: Dict) -> 'ServerNpmResource':
         package_name = options['package_name']
         server_directory = options['server_directory']
         server_binary_path = options['server_binary_path']
@@ -28,9 +28,9 @@ class ServerNpmResource(ServerResourceInterface):
         storage_path = options['storage_path']
         minimum_node_version = options['minimum_node_version']
         node_runtime = NodeRuntime.get(package_name, storage_path, minimum_node_version)
-        if node_runtime:
-            return ServerNpmResource(package_name, server_directory, server_binary_path, package_storage, node_runtime)
-        return None
+        if not node_runtime:
+            raise Exception('Failed resolving the Node Runtime. Please see Sublime Text console for more information')
+        return ServerNpmResource(package_name, server_directory, server_binary_path, package_storage, node_runtime)
 
     def __init__(self, package_name: str, server_directory: str, server_binary_path: str,
                  package_storage: str, node_runtime: NodeRuntime) -> None:
