@@ -136,6 +136,7 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
         Remember to call the super class and merge the results if overriding.
         """
         return {
+            'pathsep': os.pathsep,
             'server_path': cls.binary_path(),
         }
 
