@@ -131,6 +131,8 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface):
         extra_paths = path.pathsep.join(cls.get_additional_paths())
         if extra_paths:
             original_path = configuration.env.get('PATH') or ''
+            if isinstance(original_path, list):
+                original_path = path.pathsep.join(original_path)
             configuration.env['PATH'] = path.pathsep.join([extra_paths, original_path])
         return None
 
