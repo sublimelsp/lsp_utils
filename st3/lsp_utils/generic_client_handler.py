@@ -180,10 +180,7 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
     @classmethod
     def on_client_configuration_ready(cls, configuration: Dict) -> None:
         """
-        .. deprecated:: 1.8
-           Use :func:`on_settings_changed()` instead.
-
-        Called with default configuration object that contains merged default and user settings.
+        Called with the final client configuration object that contains merged default and user settings.
 
         Can be used to alter default configuration before registering it.
         """

@@ -1,4 +1,4 @@
-from LSP.plugin.core.typing import Any, Callable, List, Optional, Tuple
+from LSP.plugin.core.typing import Any, Callable, Dict, List, Optional, Tuple
 import re
 import sublime
 import subprocess
@@ -8,7 +8,9 @@ StringCallback = Callable[[str], None]
 SemanticVersion = Tuple[int, int, int]
 
 
-def run_command_sync(args: List[str], cwd: Optional[str] = None) -> Tuple[str, Optional[str]]:
+def run_command_sync(
+    args: List[str], cwd: Optional[str] = None, env: Optional[Dict[str, str]] = None
+) -> Tuple[str, Optional[str]]:
     """
     Runs the given command synchronously.
 
@@ -17,7 +19,8 @@ def run_command_sync(args: List[str], cwd: Optional[str] = None) -> Tuple[str, O
               command has succeeded then the second tuple element will be `None`.
     """
     try:
-        output = subprocess.check_output(args, cwd=cwd, shell=sublime.platform() == 'windows', stderr=subprocess.STDOUT)
+        output = subprocess.check_output(
+            args, cwd=cwd, shell=sublime.platform() == 'windows', stderr=subprocess.STDOUT, env=env)
         return (decode_bytes(output).strip(), None)
     except subprocess.CalledProcessError as error:
         return ('', decode_bytes(error.output).strip())

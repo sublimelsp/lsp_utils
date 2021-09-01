@@ -5,13 +5,14 @@ from .helpers import SemanticVersion
 from .helpers import version_to_string
 from contextlib import contextmanager
 from LSP.plugin.core.logging import debug
-from LSP.plugin.core.typing import Any, Generator, List, Optional, Tuple
+from LSP.plugin.core.typing import Any, Dict, Generator, List, Optional, Tuple
 from os import path
 from os import remove
 from sublime_lib import ActivityIndicator
 import os
 import shutil
 import sublime
+import sys
 import tarfile
 import urllib.request
 import zipfile
@@ -19,7 +20,9 @@ import zipfile
 __all__ = ['NodeRuntime', 'NodeRuntimePATH', 'NodeRuntimeLocal']
 
 IS_MAC_ARM = sublime.platform() == 'osx' and sublime.arch() == 'arm64'
-DEFAULT_NODE_VERSION = '16.2.0' if IS_MAC_ARM else '12.20.2'
+IS_WINDOWS_7_OR_LOWER = sys.platform == 'win32' and sys.getwindowsversion() <= (6, 1)  # type: ignore
+
+DEFAULT_NODE_VERSION = '16.2.0' if IS_MAC_ARM else '14.17.6'
 NODE_DIST_URL = 'https://nodejs.org/dist/v{version}/{filename}'
 NO_NODE_FOUND_MESSAGE = 'Could not start {package_name} due to not being able to find Node.js \
 runtime on the PATH. Press the "Install Node.js" button to install Node.js automatically \
@@ -108,12 +111,17 @@ class NodeRuntime:
     def node_bin(self) -> Optional[str]:
         return self._node
 
+    def node_env(self) -> Optional[Dict[str, str]]:
+        if IS_WINDOWS_7_OR_LOWER:
+            return {'NODE_SKIP_PLATFORM_CHECK': '1'}
+        return None
+
     def resolve_version(self) -> SemanticVersion:
         if self._version:
             return self._version
         if not self._node:
             raise Exception('Node.js not initialized')
-        version, error = run_command_sync([self._node, '--version'])
+        version, error = run_command_sync([self._node, '--version'], env=self.node_env())
         if error is None:
             self._version = parse_version(version)
         else:
@@ -136,7 +144,7 @@ class NodeRuntime:
             '--verbose',
             '--production',
         ]
-        stdout, error = run_command_sync(args, cwd=package_dir)
+        stdout, error = run_command_sync(args, cwd=package_dir, env=self.node_env())
         print('[lsp_utils] START output of command: "{}"'.format(''.join(args)))
         print(stdout)
         print('[lsp_utils] Command output END')
