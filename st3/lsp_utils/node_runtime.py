@@ -20,7 +20,7 @@ import zipfile
 __all__ = ['NodeRuntime', 'NodeRuntimePATH', 'NodeRuntimeLocal']
 
 IS_MAC_ARM = sublime.platform() == 'osx' and sublime.arch() == 'arm64'
-IS_WINDOWS_7_OR_LOWER = sys.platform == 'win32' and sys.getwindowsversion() <= (6, 1)  # type: ignore
+IS_WINDOWS_7_OR_LOWER = sys.platform == 'win32' and sys.getwindowsversion()[:2] <= (6, 1)  # type: ignore
 
 DEFAULT_NODE_VERSION = '16.2.0' if IS_MAC_ARM else '14.17.6'
 NODE_DIST_URL = 'https://nodejs.org/dist/v{version}/{filename}'
@@ -121,7 +121,7 @@ class NodeRuntime:
             return self._version
         if not self._node:
             raise Exception('Node.js not initialized')
-        version, error = run_command_sync([self._node, '--version'], env=self.node_env())
+        version, error = run_command_sync([self._node, '--version'], extra_env=self.node_env())
         if error is None:
             self._version = parse_version(version)
         else:
@@ -144,7 +144,7 @@ class NodeRuntime:
             '--verbose',
             '--production',
         ]
-        stdout, error = run_command_sync(args, cwd=package_dir, env=self.node_env())
+        stdout, error = run_command_sync(args, cwd=package_dir, extra_env=self.node_env())
         print('[lsp_utils] START output of command: "{}"'.format(''.join(args)))
         print(stdout)
         print('[lsp_utils] Command output END')

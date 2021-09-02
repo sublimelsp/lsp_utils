@@ -1,4 +1,5 @@
 from LSP.plugin.core.typing import Any, Callable, Dict, List, Optional, Tuple
+import os
 import re
 import sublime
 import subprocess
@@ -9,7 +10,7 @@ SemanticVersion = Tuple[int, int, int]
 
 
 def run_command_sync(
-    args: List[str], cwd: Optional[str] = None, env: Optional[Dict[str, str]] = None
+    args: List[str], cwd: Optional[str] = None, extra_env: Optional[Dict[str, str]] = None
 ) -> Tuple[str, Optional[str]]:
     """
     Runs the given command synchronously.
@@ -19,6 +20,10 @@ def run_command_sync(
               command has succeeded then the second tuple element will be `None`.
     """
     try:
+        env = None
+        if extra_env:
+            env = os.environ.copy()
+            env.update(extra_env)
         output = subprocess.check_output(
             args, cwd=cwd, shell=sublime.platform() == 'windows', stderr=subprocess.STDOUT, env=env)
         return (decode_bytes(output).strip(), None)
