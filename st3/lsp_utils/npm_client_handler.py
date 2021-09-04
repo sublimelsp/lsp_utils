@@ -1,7 +1,7 @@
 from .generic_client_handler import GenericClientHandler
 from .server_npm_resource import ServerNpmResource
 from .server_resource_interface import ServerResourceInterface
-from LSP.plugin.core.typing import Dict, List, Optional, Tuple
+from LSP.plugin.core.typing import Any, Dict, List, Optional, Tuple
 from os import path
 
 __all__ = ['NpmClientHandler']
@@ -93,6 +93,12 @@ class NpmClientHandler(GenericClientHandler):
             })
         return cls.__server
 
+    @classmethod
+    def on_client_configuration_ready(cls, configuration: Dict[str, Any]) -> None:
+        super().on_client_configuration_ready(configuration)
+        if cls._node_env():
+            configuration.setdefault('env', {}).update(cls._node_env())
+
     # --- Internal ----------------------------------------------------------------------------------------------------
 
     @classmethod
@@ -106,3 +112,9 @@ class NpmClientHandler(GenericClientHandler):
         if cls.__server:
             return cls.__server.node_bin
         return ''
+
+    @classmethod
+    def _node_env(cls) -> Optional[Dict[str, str]]:
+        if cls.__server:
+            return cls.__server.node_env
+        return None
