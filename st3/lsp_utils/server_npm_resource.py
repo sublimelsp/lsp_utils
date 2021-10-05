@@ -27,13 +27,15 @@ class ServerNpmResource(ServerResourceInterface):
         package_storage = options['package_storage']
         storage_path = options['storage_path']
         minimum_node_version = options['minimum_node_version']
+        skip_npm_install = options['skip_npm_install']
         node_runtime = NodeRuntime.get(package_name, storage_path, minimum_node_version)
         if not node_runtime:
             raise Exception('Failed resolving the Node Runtime. Please see Sublime Text console for more information')
-        return ServerNpmResource(package_name, server_directory, server_binary_path, package_storage, node_runtime)
+        return ServerNpmResource(
+            package_name, server_directory, server_binary_path, package_storage, node_runtime, skip_npm_install)
 
     def __init__(self, package_name: str, server_directory: str, server_binary_path: str,
-                 package_storage: str, node_runtime: NodeRuntime) -> None:
+                 package_storage: str, node_runtime: NodeRuntime, skip_npm_install: bool) -> None:
         if not package_name or not server_directory or not server_binary_path or not node_runtime:
             raise Exception('ServerNpmResource could not initialize due to wrong input')
         self._status = ServerStatus.UNINITIALIZED
@@ -44,6 +46,7 @@ class ServerNpmResource(ServerResourceInterface):
         self._binary_path = path.join(package_storage, node_version, server_binary_path)
         self._installation_marker_file = path.join(package_storage, node_version, '.installing')
         self._node_runtime = node_runtime
+        self._skip_npm_install = skip_npm_install
 
     @property
     def server_directory_path(self) -> str:
@@ -71,7 +74,7 @@ class ServerNpmResource(ServerResourceInterface):
 
     def needs_installation(self) -> bool:
         installed = False
-        if path.isdir(path.join(self._server_dest, 'node_modules')):
+        if self._skip_npm_install or path.isdir(path.join(self._server_dest, 'node_modules')):
             # Server already installed. Check if version has changed or last installation did not complete.
             try:
                 src_hash = md5(ResourcePath(self._server_src, 'package.json').read_bytes()).hexdigest()
@@ -94,9 +97,10 @@ class ServerNpmResource(ServerResourceInterface):
             if path.isdir(self._server_dest):
                 shutil.rmtree(self._server_dest)
             ResourcePath(self._server_src).copytree(self._server_dest, exist_ok=True)
-            dependencies_installed = path.isdir(path.join(self._server_dest, 'node_modules'))
-            if not dependencies_installed:
-                self._node_runtime.npm_install(self._server_dest)
+            if not self._skip_npm_install:
+                dependencies_installed = path.isdir(path.join(self._server_dest, 'node_modules'))
+                if not dependencies_installed:
+                    self._node_runtime.npm_install(self._server_dest)
             remove(self._installation_marker_file)
         except Exception as error:
             self._status = ServerStatus.ERROR
