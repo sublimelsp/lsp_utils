@@ -76,8 +76,11 @@ class ServerNpmResource(ServerResourceInterface):
         installed = False
         if self._skip_npm_install or path.isdir(path.join(self._server_dest, 'node_modules')):
             # Server already installed. Check if version has changed or last installation did not complete.
+            src_package_json = ResourcePath(self._server_src, 'package.json')
+            if not src_package_json.exists():
+                raise Exception('Missing required "package.json" in {}'.format(self._server_src))
+            src_hash = md5(src_package_json.read_bytes()).hexdigest()
             try:
-                src_hash = md5(ResourcePath(self._server_src, 'package.json').read_bytes()).hexdigest()
                 with open(path.join(self._server_dest, 'package.json'), 'rb') as file:
                     dst_hash = md5(file.read()).hexdigest()
                 if src_hash == dst_hash and not path.isfile(self._installation_marker_file):
