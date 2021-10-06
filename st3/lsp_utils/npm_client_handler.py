@@ -29,6 +29,13 @@ class NpmClientHandler(GenericClientHandler):
     :required: Yes
     """
 
+    skip_npm_install = False
+    """
+    Whether to skip the step that runs "npm install" in case the server doesn't need any dependencies.
+
+    :required: No
+    """
+
     # --- NpmClientHandler handlers -----------------------------------------------------------------------------------
 
     @classmethod
@@ -90,6 +97,7 @@ class NpmClientHandler(GenericClientHandler):
                 'package_storage': cls.package_storage(),
                 'minimum_node_version': cls.minimum_node_version(),
                 'storage_path': cls.storage_path(),
+                'skip_npm_install': cls.skip_npm_install,
             })
         return cls.__server
 
