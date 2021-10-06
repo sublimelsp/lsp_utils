@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@v1
       - uses: actions/setup-node@v2
         with:
-          node-version: '12'
+          node-version: '14'
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
       - run: echo "$HOME/Library/Python/3.7/bin" >> $GITHUB_PATH
       - run: curl -OL https://raw.githubusercontent.com/SublimeText/UnitTesting/master/sbin/github.sh
@@ -67,7 +67,7 @@ jobs:
       - uses: actions/checkout@v1
       - uses: actions/setup-node@v2
         with:
-          node-version: '12'
+          node-version: '14'
       - run: sudo apt update
       - run: sudo apt install --no-install-recommends -y x11-xserver-utils python3-pip
       - run: sh -e /etc/init.d/xvfb start
