@@ -41,6 +41,6 @@ class ApiWrapperInterface(metaclass=ABCMeta):
     def send_request(self, method: str, params: Any, handler: Callable[[Any, bool], None]) -> None:
         """
         Sends a request to the server. The handler will be called with the result received from the server and
-        a boolean value `True` if request has succeeded and `False` if it returned an error.
+        a boolean value `False` if request has succeeded and `True` if it returned an error.
         """
         ...
