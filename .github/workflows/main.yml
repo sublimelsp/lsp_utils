@@ -26,17 +26,12 @@ jobs:
         with:
           node-version: '14'
       - uses: actions/checkout@v2
-        with:
-          repository: sublimelsp/lsp_utils
       - uses: SublimeText/UnitTesting/actions/setup@v1
         with:
-          package-name: lsp_utils
           extra-packages: |
             sublimelsp/LSP@main
             sublimelsp/LSP-pyright
       - uses: SublimeText/UnitTesting/actions/run-tests@v1
-        with:
-          package-name: lsp_utils
 
   Lint:
     runs-on: ubuntu-latest
