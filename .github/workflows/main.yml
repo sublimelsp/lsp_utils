@@ -14,72 +14,30 @@ on:
       - ".github/workflows/docs.yml"
       - "docs/**"
 
-env:
-  SUBLIME_TEXT_ARCH: x64
-  PACKAGE: lsp_utils
-  UNITTESTING_TAG: master
-
 jobs:
-  macOS:
-    name: Tests (macOS, ST${{ matrix.sublime_text.version }})
-    runs-on: macos-latest
+  Unittesting:
     strategy:
+      fail-fast: false
       matrix:
-        sublime_text:
-          - version: 3
-            lsp_tag: 'st3'
-          - version: 4
-            lsp_tag: 'main'
-    env:
-      SUBLIME_TEXT_VERSION: ${{ matrix.sublime_text.version }}
+        os: ["ubuntu-latest", "macOS-latest"]
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v1
       - uses: actions/setup-node@v2
         with:
           node-version: '14'
-      - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-      - run: echo "$HOME/Library/Python/3.7/bin" >> $GITHUB_PATH
-      - run: curl -OL https://raw.githubusercontent.com/SublimeText/UnitTesting/master/sbin/github.sh
-      - run: |
-          sh github.sh bootstrap true  # true == skip package copy
-          sh github.sh install_package LSP ${{ matrix.sublime_text.lsp_tag }} https://github.com/sublimelsp/LSP.git
-          sh github.sh install_package LSP-pyright master https://github.com/sublimelsp/LSP-pyright.git
-          sh github.sh install_package_control
-          sh github.sh copy_tested_package true  # true == overwrite existing package directory
-          sh github.sh run_tests
-
-  Linux:
-    name: Tests (Linux, ST${{ matrix.sublime_text.version }})
-    runs-on: ubuntu-latest
-    container:
-      image: sublimetext/unittesting
-      options: --cap-add=NET_ADMIN
-    strategy:
-      matrix:
-        sublime_text:
-          - version: 3
-            lsp_tag: 'st3'
-          - version: 4
-            lsp_tag: 'main'
-    env:
-      SUBLIME_TEXT_VERSION: ${{ matrix.sublime_text.version }}
-    steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v2
         with:
-          node-version: '14'
-      - run: sudo apt update
-      - run: sudo apt install --no-install-recommends -y x11-xserver-utils python3-pip
-      - run: sh -e /etc/init.d/xvfb start
-      - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-      - run: curl -OL https://raw.githubusercontent.com/SublimeText/UnitTesting/master/sbin/github.sh
-      - run: |
-          sh github.sh bootstrap true  # true == skip package copy
-          sh github.sh install_package LSP ${{ matrix.sublime_text.lsp_tag }} https://github.com/sublimelsp/LSP.git
-          sh github.sh install_package LSP-pyright master https://github.com/sublimelsp/LSP-pyright.git
-          sh github.sh install_package_control
-          sh github.sh copy_tested_package true  # true == overwrite existing package directory
-          sh github.sh run_tests
+          repository: sublimelsp/lsp_utils
+      - uses: SublimeText/UnitTesting/actions/setup@master
+        with:
+          package-name: lsp_utils
+          unittesting-version: master
+          extra-packages: |
+            sublimelsp/LSP@main
+            sublimelsp/LSP-pyright
+      - uses: SublimeText/UnitTesting/actions/run-tests@master
+        with:
+          package-name: lsp_utils
 
   Lint:
     runs-on: ubuntu-latest
