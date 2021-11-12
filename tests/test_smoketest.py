@@ -20,6 +20,5 @@ class PyrightSmokeTests(TextDocumentTestCase):
         error_regions = yield lambda: self.view.get_regions(error_region_key)
         self.assertEqual(len(error_regions), 1)
         region = error_regions[0]
-        self.assertEqual(region.a, 11)
-        self.assertEqual(region.b, 31)
+        self.assertEqual((region.a, region.b), (6, 7))
         self.view.window().run_command('show_panel', {"panel": "console", "toggle": True})

@@ -1,3 +1,1 @@
-import os
-
-os.path.join('a', 2)
+foo = 1  # type: str
