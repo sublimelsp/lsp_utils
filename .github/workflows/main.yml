@@ -28,14 +28,13 @@ jobs:
       - uses: actions/checkout@v2
         with:
           repository: sublimelsp/lsp_utils
-      - uses: SublimeText/UnitTesting/actions/setup@master
+      - uses: SublimeText/UnitTesting/actions/setup@v1
         with:
           package-name: lsp_utils
-          unittesting-version: master
           extra-packages: |
             sublimelsp/LSP@main
             sublimelsp/LSP-pyright
-      - uses: SublimeText/UnitTesting/actions/run-tests@master
+      - uses: SublimeText/UnitTesting/actions/run-tests@v1
         with:
           package-name: lsp_utils
 
