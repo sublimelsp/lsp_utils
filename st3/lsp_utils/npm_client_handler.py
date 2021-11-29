@@ -113,6 +113,7 @@ class NpmClientHandler(GenericClientHandler):
         node_env = cls._node_env()
         if node_env:
             configuration.env.update(node_env)
+        return None
 
     # --- Internal ----------------------------------------------------------------------------------------------------
 
