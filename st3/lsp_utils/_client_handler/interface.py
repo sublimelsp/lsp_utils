@@ -89,11 +89,6 @@ class ClientHandlerInterface(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def on_client_configuration_ready(cls, configuration: Dict) -> None:
-        ...
-
-    @classmethod
-    @abstractmethod
     def is_allowed_to_start(
         cls,
         window: sublime.Window,
