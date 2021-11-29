@@ -149,20 +149,6 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface):
         super().cleanup()
 
     @classmethod
-    def get_default_settings_schema(cls) -> Dict[str, Any]:
-        return {
-            'auto_complete_selector': '',
-            'command': [],
-            'enabled': True,
-            'env': {},
-            'experimental_capabilities': {},
-            'ignore_server_trigger_chars': False,
-            'initializationOptions': {},
-            'languages': [],
-            'settings': {},
-        }
-
-    @classmethod
     def on_settings_read_internal(cls, settings: sublime.Settings) -> None:
         languages = settings.get('languages', None)  # type: Optional[List[LanguagesDict]]
         if languages:
