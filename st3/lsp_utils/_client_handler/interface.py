@@ -5,7 +5,7 @@ from abc import abstractmethod
 from LSP.plugin import ClientConfig
 from LSP.plugin import DottedDict
 from LSP.plugin import WorkspaceFolder
-from LSP.plugin.core.typing import Any, Dict, List, Optional, Tuple
+from LSP.plugin.core.typing import Dict, List, Optional, Tuple
 import sublime
 
 __all__ = ['ClientHandlerInterface']
@@ -13,11 +13,6 @@ __all__ = ['ClientHandlerInterface']
 
 class ClientHandlerInterface(metaclass=ABCMeta):
     package_name = ''
-
-    @classmethod
-    @abstractmethod
-    def get_default_settings_schema(cls) -> Dict[str, Any]:
-        ...
 
     @classmethod
     @abstractmethod
@@ -81,15 +76,6 @@ class ClientHandlerInterface(metaclass=ABCMeta):
     @classmethod
     @abstractmethod
     def on_settings_read(cls, settings: sublime.Settings) -> bool:
-        ...
-
-    @classmethod
-    def on_settings_read_internal(cls, settings: sublime.Settings) -> None:
-        pass
-
-    @classmethod
-    @abstractmethod
-    def on_client_configuration_ready(cls, configuration: Dict) -> None:
         ...
 
     @classmethod

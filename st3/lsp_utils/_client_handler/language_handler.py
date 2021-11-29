@@ -151,6 +151,8 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
         super().cleanup()
         cls._setup_called = False
 
+    # --- Internals ---------------------------------------------------------------------------------------------------
+
     @classmethod
     def get_default_settings_schema(cls) -> Dict[str, Any]:
         return {
@@ -162,8 +164,6 @@ class ClientHandler(LanguageHandler, ClientHandlerInterface):
             'languages': [],
             'settings': {},
         }
-
-    # --- Internals ---------------------------------------------------------------------------------------------------
 
     def __init__(self):
         super().__init__()

@@ -1,8 +1,11 @@
 from .generic_client_handler import GenericClientHandler
 from .server_npm_resource import ServerNpmResource
 from .server_resource_interface import ServerResourceInterface
-from LSP.plugin.core.typing import Any, Dict, List, Optional, Tuple
+from LSP.plugin import ClientConfig
+from LSP.plugin import WorkspaceFolder
+from LSP.plugin.core.typing import Dict, List, Optional, Tuple
 from os import path
+import sublime
 
 __all__ = ['NpmClientHandler']
 
@@ -102,10 +105,15 @@ class NpmClientHandler(GenericClientHandler):
         return cls.__server
 
     @classmethod
-    def on_client_configuration_ready(cls, configuration: Dict[str, Any]) -> None:
-        super().on_client_configuration_ready(configuration)
-        if cls._node_env():
-            configuration.setdefault('env', {}).update(cls._node_env())
+    def can_start(cls, window: sublime.Window, initiating_view: sublime.View,
+                  workspace_folders: List[WorkspaceFolder], configuration: ClientConfig) -> Optional[str]:
+        reason = super().can_start(window, initiating_view, workspace_folders, configuration)
+        if reason:
+            return reason
+        node_env = cls._node_env()
+        if node_env:
+            configuration.env.update(node_env)
+        return None
 
     # --- Internal ----------------------------------------------------------------------------------------------------
 

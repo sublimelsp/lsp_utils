@@ -148,44 +148,7 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface):
         unregister_plugin(cls)
         super().cleanup()
 
-    @classmethod
-    def get_default_settings_schema(cls) -> Dict[str, Any]:
-        return {
-            'auto_complete_selector': '',
-            'command': [],
-            'enabled': True,
-            'env': {},
-            'experimental_capabilities': {},
-            'ignore_server_trigger_chars': False,
-            'initializationOptions': {},
-            'languages': [],
-            'settings': {},
-        }
-
-    @classmethod
-    def on_settings_read_internal(cls, settings: sublime.Settings) -> None:
-        languages = settings.get('languages', None)  # type: Optional[List[LanguagesDict]]
-        if languages:
-            settings.set('languages', cls._upgrade_languages_list(languages))
-
     # --- Internals ---------------------------------------------------------------------------------------------------
-
-    @classmethod
-    def _upgrade_languages_list(cls, languages: List[LanguagesDict]) -> List[LanguagesDict]:
-        upgraded_list = []
-        for language in languages:
-            if 'document_selector' in language:
-                language.pop('scopes', None)
-                language.pop('syntaxes', None)
-                upgraded_list.append(language)
-            elif 'scopes' in language:
-                upgraded_list.append({
-                    'languageId': language.get('languageId'),
-                    'document_selector': ' | '.join(language['scopes'] or []),
-                })
-            else:
-                upgraded_list.append(language)
-        return upgraded_list
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)

@@ -108,20 +108,9 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
     def read_settings(cls) -> Tuple[sublime.Settings, str]:
         filename = "{}.sublime-settings".format(cls.package_name)
         loaded_settings = sublime.load_settings(filename)
-        cls.on_settings_read_internal(loaded_settings)
         changed = cls.on_settings_read(loaded_settings)
         if changed:
             sublime.save_settings(filename)
-        settings = {}
-        for key, default in cls.get_default_settings_schema().items():
-            settings[key] = loaded_settings.get(key, default)
-        # Pass a copy of the settings to the "on_client_configuration_ready" and copy back returned values.
-        settings_copy = {}
-        for key, default in cls.get_default_settings_schema().items():
-            settings_copy[key] = settings.get(key, default)
-        cls.on_client_configuration_ready(settings_copy)
-        for key in cls.get_default_settings_schema().keys():
-            loaded_settings.set(key, settings_copy[key])
         filepath = "Packages/{}/{}".format(cls.package_name, filename)
         return (loaded_settings, filepath)
 
@@ -176,15 +165,6 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
         :returns: `True` to save modifications back into the settings file.
         """
         return False
-
-    @classmethod
-    def on_client_configuration_ready(cls, configuration: Dict) -> None:
-        """
-        Called with the final client configuration object that contains merged default and user settings.
-
-        Can be used to alter default configuration before registering it.
-        """
-        pass
 
     @classmethod
     def is_allowed_to_start(
