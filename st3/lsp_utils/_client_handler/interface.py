@@ -79,10 +79,6 @@ class ClientHandlerInterface(metaclass=ABCMeta):
         ...
 
     @classmethod
-    def on_settings_read_internal(cls, settings: sublime.Settings) -> None:
-        pass
-
-    @classmethod
     @abstractmethod
     def is_allowed_to_start(
         cls,

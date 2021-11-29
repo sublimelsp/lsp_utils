@@ -108,7 +108,6 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
     def read_settings(cls) -> Tuple[sublime.Settings, str]:
         filename = "{}.sublime-settings".format(cls.package_name)
         loaded_settings = sublime.load_settings(filename)
-        cls.on_settings_read_internal(loaded_settings)
         changed = cls.on_settings_read(loaded_settings)
         if changed:
             sublime.save_settings(filename)
