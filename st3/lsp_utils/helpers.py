@@ -10,7 +10,7 @@ SemanticVersion = Tuple[int, int, int]
 
 
 def run_command_sync(
-    args: List[str], cwd: Optional[str] = None, extra_env: Optional[Dict[str, str]] = None
+    args: List[str], cwd: Optional[str] = None, extra_env: Optional[Dict[str, str]] = None, extra_paths: List[str] = []
 ) -> Tuple[str, Optional[str]]:
     """
     Runs the given command synchronously.
@@ -21,9 +21,12 @@ def run_command_sync(
     """
     try:
         env = None
-        if extra_env:
+        if extra_env or extra_paths:
             env = os.environ.copy()
-            env.update(extra_env)
+            if extra_env:
+                env.update(extra_env)
+            if extra_paths:
+                env['PATH'] = os.path.pathsep.join(extra_paths) + os.path.pathsep + env['PATH']
         output = subprocess.check_output(
             args, cwd=cwd, shell=sublime.platform() == 'windows', stderr=subprocess.STDOUT, env=env)
         return (decode_bytes(output).strip(), None)
