@@ -100,6 +100,7 @@ class NodeRuntime:
         self._node = None  # type: Optional[str]
         self._npm = None  # type: Optional[str]
         self._version = None  # type: Optional[SemanticVersion]
+        self._additional_paths = []  # type: List[str]
 
     def __repr__(self) -> str:
         return '{}(node: {}, npm: {}, version: {})'.format(
@@ -144,7 +145,8 @@ class NodeRuntime:
             '--verbose',
             '--production',
         ]
-        stdout, error = run_command_sync(args, cwd=package_dir, extra_env=self.node_env())
+        stdout, error = run_command_sync(
+            args, cwd=package_dir, extra_env=self.node_env(), extra_paths=self._additional_paths)
         print('[lsp_utils] START output of command: "{}"'.format(''.join(args)))
         print(stdout)
         print('[lsp_utils] Command output END')
@@ -165,6 +167,7 @@ class NodeRuntimeLocal(NodeRuntime):
         self._base_dir = path.abspath(path.join(base_dir, node_version))
         self._node_version = node_version
         self._node_dir = path.join(self._base_dir, 'node')
+        self._additional_paths = [path.join(self._node_dir, 'bin')]
         self._install_in_progress_marker_file = path.join(self._base_dir, '.installing')
         self.resolve_paths()
 

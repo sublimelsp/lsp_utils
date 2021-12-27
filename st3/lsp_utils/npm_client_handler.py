@@ -74,7 +74,12 @@ class NpmClientHandler(GenericClientHandler):
 
     @classmethod
     def get_additional_paths(cls) -> List[str]:
-        return [path.dirname(cls._node_bin())]
+        node_bin = cls._node_bin()
+        if node_bin:
+            node_path = path.dirname(node_bin)
+            if node_path:
+                return [node_path]
+        return []
 
     # --- GenericClientHandler handlers -------------------------------------------------------------------------------
 
