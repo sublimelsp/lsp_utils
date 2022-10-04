@@ -44,11 +44,32 @@ class NpmClientHandler(GenericClientHandler):
     @classmethod
     def minimum_node_version(cls) -> Tuple[int, int, int]:
         """
+        .. deprecated:: 2.1.0
+           Use :meth:`required_node_version` instead.
+
         The minimum Node version required for this plugin.
 
         :returns: The semantic version tuple with the minimum required version. Defaults to :code:`(8, 0, 0)`.
         """
         return (8, 0, 0)
+
+    @classmethod
+    def required_node_version(cls) -> str:
+        """
+        The NPM semantic version (typically a range) specifying which version of Node is required for this plugin.
+
+        For example:
+         - `16.1.1` - only allows a single version
+         - `16.x` - allows any build for major version 16
+         - `>=16` - allows version 16 and above
+         - `16 - 18` allows any version between version 16 and 18 (inlusive). It's important to have spaces around
+           the `-` in this case.
+
+        Also see more examples and a testing playground at https://semver.npmjs.com/ .
+
+        :returns: Required NPM semantic version. Defaults to :code:`0.0.0` which means "no restrictions".
+        """
+        return '0.0.0'
 
     @classmethod
     def get_additional_variables(cls) -> Dict[str, str]:
@@ -104,6 +125,7 @@ class NpmClientHandler(GenericClientHandler):
                 'server_binary_path': cls.server_binary_path,
                 'package_storage': cls.package_storage(),
                 'minimum_node_version': cls.minimum_node_version(),
+                'required_node_version': cls.required_node_version(),
                 'storage_path': cls.storage_path(),
                 'skip_npm_install': cls.skip_npm_install,
             })

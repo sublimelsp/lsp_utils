@@ -1,6 +1,5 @@
 from LSP.plugin.core.typing import Any, Callable, Dict, List, Optional, Tuple
 import os
-import re
 import sublime
 import subprocess
 import threading
@@ -57,20 +56,6 @@ def decode_bytes(data: bytes) -> str:
     return data.decode('utf-8', 'ignore')
 
 
-def parse_version(version: str) -> SemanticVersion:
-    """
-    Converts a version string to a version tuple (major, minor, patch).
-
-    :returns: The semantic version in form of a 3-element tuple.
-    """
-    match = re.match(r'v?(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(?:-.+)?', version)
-    if match:
-        major, minor, patch = match.groups()
-        return int(major), int(minor), int(patch)
-    else:
-        return 0, 0, 0
-
-
 def version_to_string(version: SemanticVersion) -> str:
     """
     Returns a string representation of a version tuple.
@@ -78,7 +63,7 @@ def version_to_string(version: SemanticVersion) -> str:
     return '.'.join([str(c) for c in version])
 
 
-def log_and_show_message(message: str, additional_logs: str = None, show_in_status: bool = True) -> None:
+def log_and_show_message(message: str, additional_logs: Optional[str] = None, show_in_status: bool = True) -> None:
     """
     Logs the message in the console and optionally sets it as a status message on the window.
 
