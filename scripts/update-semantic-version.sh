@@ -43,6 +43,7 @@ popd || exit
 pushd "${OUTPUT_DIR}/temp" || exit
 
 git am "${SCRIPT_DIR}/3.3-compat-fix.patch" || exit
+rm semantic_version/django_fields.py || exit
 
 popd || exit
 
