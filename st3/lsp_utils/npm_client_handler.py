@@ -58,12 +58,12 @@ class NpmClientHandler(GenericClientHandler):
         """
         The NPM semantic version (typically a range) specifying which version of Node is required for this plugin.
 
-        For example:
+        Examples:
          - `16.1.1` - only allows a single version
          - `16.x` - allows any build for major version 16
          - `>=16` - allows version 16 and above
-         - `16 - 18` allows any version between version 16 and 18 (inlusive). It's important to have spaces around
-           the `-` in this case.
+         - `16 - 18` allows any version between version 16 and 18 (inclusive). It's important to have spaces around
+           the dash in this case.
 
         Also see more examples and a testing playground at https://semver.npmjs.com/ .
 
