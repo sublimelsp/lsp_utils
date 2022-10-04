@@ -41,15 +41,15 @@ class NodeRuntime:
         cls, package_name: str, storage_path: str, required_node_version: Union[str, SemanticVersion]
     ) -> Optional['NodeRuntime']:
         if isinstance(required_node_version, tuple):
-            required_node_version = NpmSpec('>={}'.format(version_to_string(required_node_version)))
+            required_semantic_version = NpmSpec('>={}'.format(version_to_string(required_node_version)))
         elif isinstance(required_node_version, str):
-            required_node_version = NpmSpec(required_node_version)
+            required_semantic_version = NpmSpec(required_node_version)
         if cls._node_runtime_resolved:
             if cls._node_runtime:
-                cls._check_node_version(cls._node_runtime, required_node_version)
+                cls._check_node_version(cls._node_runtime, required_semantic_version)
             return cls._node_runtime
         cls._node_runtime_resolved = True
-        cls._node_runtime = cls._resolve_node_runtime(package_name, storage_path, required_node_version)
+        cls._node_runtime = cls._resolve_node_runtime(package_name, storage_path, required_semantic_version)
         debug('Resolved Node Runtime for client {}: {}'.format(package_name, cls._node_runtime))
         return cls._node_runtime
 

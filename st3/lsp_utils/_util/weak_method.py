@@ -18,17 +18,17 @@ __all__ = ['weak_method']
 #
 # [1] https://github.com/SublimeText/sublime_lib/blob/master/st3/sublime_lib/_util/weak_method.py
 
-def weak_method(method: Callable) -> Callable:
+def weak_method(method: Callable[..., Any]) -> Callable:
     assert isinstance(method, MethodType)
     self_ref = weakref.ref(method.__self__)
     function_ref = weakref.ref(method.__func__)
 
     def wrapped(*args: Any, **kwargs: Any) -> Any:
         self = self_ref()
-        function = function_ref()
-        if self is None or function is None:
-            print('[lsp_utils] Error: weak_method not called due to a deleted reference', [self, function])
+        fn = function_ref()
+        if self is None or fn is None:
+            print('[lsp_utils] Error: weak_method not called due to a deleted reference', [self, fn])
             return
-        return function(self, *args, **kwargs)
+        return fn(self, *args, **kwargs)  # type: ignore
 
     return wrapped
