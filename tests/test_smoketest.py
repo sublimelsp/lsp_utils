@@ -1,5 +1,5 @@
 from LSP.plugin.core.typing import cast, Generator
-from .setup import TextDocumentTestCase
+from .setup import TextDocumentTestCase, TIMEOUT_TIME
 import sys
 
 try:
@@ -18,9 +18,7 @@ class PyrightSmokeTests(TextDocumentTestCase):
             session_view = cast(SessionView, self.session.session_view_for_view_async(self.view))
             self.assertIsNotNone(session_view)
             error_region_key = session_view.diagnostics_key(1, False)
-            for diag, region in session_view.session_buffer.diagnostics:
-                print(diag, file=sys.stderr)
-                print(region, file=sys.stderr)
+            yield {'condition': lambda: len(session_view.session_buffer.diagnostics) == 1, 'timeout': TIMEOUT_TIME}
         error_regions = yield lambda: self.view.get_regions(error_region_key)
         print('error_regions', error_regions, file=sys.stderr)
         self.assertEqual(len(error_regions), 1)
