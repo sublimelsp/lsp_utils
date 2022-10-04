@@ -1,5 +1,6 @@
 from LSP.plugin.core.typing import cast, Generator
 from .setup import TextDocumentTestCase
+import sys
 
 try:
     from LSP.plugin.session_view import SessionView
@@ -18,9 +19,10 @@ class PyrightSmokeTests(TextDocumentTestCase):
             self.assertIsNotNone(session_view)
             error_region_key = session_view.diagnostics_key(1, False)
             for diag, region in session_view.session_buffer.diagnostics:
-                print(diag)
-                print(region)
+                print(diag, file=sys.stderr)
+                print(region, file=sys.stderr)
         error_regions = yield lambda: self.view.get_regions(error_region_key)
+        print('error_regions', error_regions, file=sys.stderr)
         self.assertEqual(len(error_regions), 1)
         region = error_regions[0]
         self.assertEqual((region.a, region.b), (6, 7))
