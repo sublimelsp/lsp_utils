@@ -18,6 +18,8 @@ class PyrightSmokeTests(TextDocumentTestCase):
             session_view = cast(SessionView, self.session.session_view_for_view_async(self.view))
             self.assertIsNotNone(session_view)
             error_region_key = session_view.diagnostics_key(1, False)
+            from LSP.plugin.core.panels import WindowPanelListener
+            print(WindowPanelListener.server_log_map)
             yield {'condition': lambda: len(session_view.session_buffer.diagnostics) == 1, 'timeout': TIMEOUT_TIME}
         error_regions = yield lambda: self.view.get_regions(error_region_key)
         print('error_regions', error_regions, file=sys.stderr)
