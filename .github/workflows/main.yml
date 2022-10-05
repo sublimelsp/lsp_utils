@@ -51,7 +51,7 @@ jobs:
           python-version: '3.8'
       - run: sudo apt update
       - run: sudo apt install --no-install-recommends -y x11-xserver-utils
-      - run: pip3 install mypy==0.982 flake8==5.0.4 pyright==1.1.273 --user
+      - run: pip3 install mypy==0.982 flake8==5.0.4 pyright==1.1.274 --user
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
       - run: cd .. && git clone https://github.com/sublimelsp/LSP.git
       - run: cd .. && git clone https://github.com/SublimeText/sublime_lib.git
