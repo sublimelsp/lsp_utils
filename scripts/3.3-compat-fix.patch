@@ -1,0 +1,29 @@
+From 64ec603d91c4f22a7d1236b6bbf76ec22d59e08e Mon Sep 17 00:00:00 2001
+From: Rafal Chlodnicki <me@me.com>
+Date: Mon, 3 Oct 2022 23:01:07 +0200
+Subject: [PATCH] patch
+
+---
+ semantic_version/__init__.py | 9 ---------
+ 1 file changed, 9 deletions(-)
+
+diff --git a/semantic_version/__init__.py b/semantic_version/__init__.py
+index 1528bda..c50f305 100644
+--- a/semantic_version/__init__.py
++++ b/semantic_version/__init__.py
+@@ -7,12 +7,3 @@ from .base import compare, match, validate, SimpleSpec, NpmSpec, Spec, SpecItem,
+ 
+ 
+ __author__ = "Raphaël Barrois <raphael.barrois+semver@polytechnique.org>"
+-try:
+-    # Python 3.8+
+-    from importlib.metadata import version
+-
+-    __version__ = version("semantic_version")
+-except ImportError:
+-    import pkg_resources
+-
+-    __version__ = pkg_resources.get_distribution("semantic_version").version
+-- 
+2.37.3
+

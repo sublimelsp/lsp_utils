@@ -1,4 +1,3 @@
-from .helpers import version_to_string
 from .node_runtime import NodeRuntime
 from .server_resource_interface import ServerResourceInterface
 from .server_resource_interface import ServerStatus
@@ -27,8 +26,12 @@ class ServerNpmResource(ServerResourceInterface):
         package_storage = options['package_storage']
         storage_path = options['storage_path']
         minimum_node_version = options['minimum_node_version']
+        required_node_version = options['required_node_version']
         skip_npm_install = options['skip_npm_install']
-        node_runtime = NodeRuntime.get(package_name, storage_path, minimum_node_version)
+        # Fallback to "minimum_node_version" if "required_node_version" is 0.0.0 (not overridden).
+        if '0.0.0' == required_node_version:
+            required_node_version = minimum_node_version
+        node_runtime = NodeRuntime.get(package_name, storage_path, required_node_version)
         if not node_runtime:
             raise Exception('Failed resolving the Node Runtime. Please see Sublime Text console for more information')
         return ServerNpmResource(
@@ -41,7 +44,7 @@ class ServerNpmResource(ServerResourceInterface):
         self._status = ServerStatus.UNINITIALIZED
         self._package_name = package_name
         self._server_src = 'Packages/{}/{}/'.format(self._package_name, server_directory)
-        node_version = version_to_string(node_runtime.resolve_version())
+        node_version = str(node_runtime.resolve_version())
         self._server_dest = path.join(package_storage, node_version, server_directory)
         self._binary_path = path.join(package_storage, node_version, server_binary_path)
         self._installation_marker_file = path.join(package_storage, node_version, '.installing')

@@ -1,11 +1,11 @@
 from .helpers import log_and_show_message
-from .helpers import parse_version
 from .helpers import run_command_sync
 from .helpers import SemanticVersion
 from .helpers import version_to_string
+from .third_party.semantic_version import NpmSpec, Version
 from contextlib import contextmanager
 from LSP.plugin.core.logging import debug
-from LSP.plugin.core.typing import Any, Dict, Generator, List, Optional, Tuple
+from LSP.plugin.core.typing import Any, Dict, Generator, List, Optional, Tuple, Union
 from os import path
 from os import remove
 from sublime_lib import ActivityIndicator
@@ -37,19 +37,25 @@ class NodeRuntime:
     """
 
     @classmethod
-    def get(cls, package_name: str, storage_path: str, minimum_version: SemanticVersion) -> Optional['NodeRuntime']:
+    def get(
+        cls, package_name: str, storage_path: str, required_node_version: Union[str, SemanticVersion]
+    ) -> Optional['NodeRuntime']:
+        if isinstance(required_node_version, tuple):
+            required_semantic_version = NpmSpec('>={}'.format(version_to_string(required_node_version)))
+        elif isinstance(required_node_version, str):
+            required_semantic_version = NpmSpec(required_node_version)
         if cls._node_runtime_resolved:
             if cls._node_runtime:
-                cls._check_node_version(cls._node_runtime, minimum_version)
+                cls._check_node_version(cls._node_runtime, required_semantic_version)
             return cls._node_runtime
         cls._node_runtime_resolved = True
-        cls._node_runtime = cls._resolve_node_runtime(package_name, storage_path, minimum_version)
+        cls._node_runtime = cls._resolve_node_runtime(package_name, storage_path, required_semantic_version)
         debug('Resolved Node Runtime for client {}: {}'.format(package_name, cls._node_runtime))
         return cls._node_runtime
 
     @classmethod
     def _resolve_node_runtime(
-        cls, package_name: str, storage_path: str, minimum_version: SemanticVersion
+        cls, package_name: str, storage_path: str, required_node_version: NpmSpec
     ) -> Optional['NodeRuntime']:
         node_runtime = None  # type: Optional[NodeRuntime]
         default_runtimes = ['system', 'local']
@@ -60,7 +66,7 @@ class NodeRuntime:
                 node_runtime = NodeRuntimePATH()
                 if node_runtime.meets_requirements():
                     try:
-                        cls._check_node_version(node_runtime, minimum_version)
+                        cls._check_node_version(node_runtime, required_node_version)
                         return node_runtime
                     except Exception as ex:
                         message = 'Ignoring system Node.js runtime due to an error. {}'.format(ex)
@@ -82,7 +88,7 @@ class NodeRuntime:
                         return None
                 if node_runtime.meets_requirements():
                     try:
-                        cls._check_node_version(node_runtime, minimum_version)
+                        cls._check_node_version(node_runtime, required_node_version)
                         return node_runtime
                     except Exception as ex:
                         error = 'Ignoring local Node.js runtime due to an error. {}'.format(ex)
@@ -90,21 +96,21 @@ class NodeRuntime:
         return None
 
     @classmethod
-    def _check_node_version(cls, node_runtime: 'NodeRuntime', minimum_version: SemanticVersion) -> None:
+    def _check_node_version(cls, node_runtime: 'NodeRuntime', required_node_version: NpmSpec) -> None:
         node_version = node_runtime.resolve_version()
-        if node_version < minimum_version:
-            raise Exception('Node.js version requirement failed. Expected minimum: {}, got {}.'.format(
-                version_to_string(minimum_version), version_to_string(node_version)))
+        if node_version not in required_node_version:
+            raise Exception('Node.js version requirement failed. Expected {}, got {}.'.format(
+                required_node_version, node_version))
 
     def __init__(self) -> None:
         self._node = None  # type: Optional[str]
         self._npm = None  # type: Optional[str]
-        self._version = None  # type: Optional[SemanticVersion]
+        self._version = None  # type: Optional[Version]
         self._additional_paths = []  # type: List[str]
 
     def __repr__(self) -> str:
         return '{}(node: {}, npm: {}, version: {})'.format(
-            self.__class__.__name__, self._node, self._npm, version_to_string(self._version) if self._version else None)
+            self.__class__.__name__, self._node, self._npm, self._version if self._version else None)
 
     def meets_requirements(self) -> bool:
         return self._node is not None and self._npm is not None
@@ -117,14 +123,14 @@ class NodeRuntime:
             return {'NODE_SKIP_PLATFORM_CHECK': '1'}
         return None
 
-    def resolve_version(self) -> SemanticVersion:
+    def resolve_version(self) -> Version:
         if self._version:
             return self._version
         if not self._node:
             raise Exception('Node.js not initialized')
         version, error = run_command_sync([self._node, '--version'], extra_env=self.node_env())
         if error is None:
-            self._version = parse_version(version)
+            self._version = Version(version.replace('v', ''))
         else:
             raise Exception('Error resolving node version:\n{}'.format(error))
         return self._version

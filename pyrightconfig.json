@@ -1,0 +1,6 @@
+{
+    "pythonVersion": "3.11",
+    "reportMissingModuleSource": "none",
+    "ignore": ["**/third_party/"],
+    "extraPaths": ["..", "../LSP/stubs", "../sublime_lib/st3"]
+}
