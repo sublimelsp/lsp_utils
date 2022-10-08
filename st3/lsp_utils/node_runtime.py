@@ -24,7 +24,7 @@ IS_WINDOWS_7_OR_LOWER = sys.platform == 'win32' and sys.getwindowsversion()[:2] 
 DEFAULT_NODE_VERSION = '16.15.0'
 NODE_DIST_URL = 'https://nodejs.org/dist/v{version}/{filename}'
 NO_NODE_FOUND_MESSAGE = 'Could not start {package_name} due to not being able to resolve suitable Node.js \
-runtime on the PATH. Press the "Install Node.js" button to download required Node.js version \
+runtime on the PATH. Press the "Download Node.js" button to get required Node.js version \
 (note that it will be used only by LSP and will not affect your system otherwise).'
 
 
@@ -82,15 +82,15 @@ class NodeRuntime:
                 try:
                     local_runtime.check_binary_present()
                 except Exception as ex:
-                    log_lines.append(' * Not installed. Asking to install...')
+                    log_lines.append(' * Not downloaded. Asking to download...')
                     if not sublime.ok_cancel_dialog(
-                            NO_NODE_FOUND_MESSAGE.format(package_name=package_name), 'Install Node.js'):
-                        log_lines.append(' * Install skipped')
+                            NO_NODE_FOUND_MESSAGE.format(package_name=package_name), 'Download Node.js'):
+                        log_lines.append(' * Download skipped')
                         continue
                     try:
                         local_runtime.install_node()
                     except Exception as ex:
-                        log_lines.append(' * Failed installing: {}'.format(ex))
+                        log_lines.append(' * Failed downloading: {}'.format(ex))
                         resolved_runtime = local_runtime
                         continue
                     try:
@@ -228,7 +228,7 @@ class NodeRuntimeLocal(NodeRuntime):
     def install_node(self) -> None:
         os.makedirs(os.path.dirname(self._install_in_progress_marker_file), exist_ok=True)
         open(self._install_in_progress_marker_file, 'a').close()
-        with ActivityIndicator(sublime.active_window(), 'Installing Node.js'):
+        with ActivityIndicator(sublime.active_window(), 'Downloading Node.js'):
             install_node = InstallNode(self._base_dir, self._node_version)
             install_node.run()
             self.resolve_paths()
@@ -249,7 +249,7 @@ class InstallNode:
         self._cache_dir = path.join(self._base_dir, 'cache')
 
     def run(self) -> None:
-        print('[lsp_utils] Installing Node.js {}'.format(self._node_version))
+        print('[lsp_utils] Downloading Node.js {}'.format(self._node_version))
         archive, url = self._node_archive()
         if not self._node_archive_exists(archive):
             self._download_node(url, archive)
