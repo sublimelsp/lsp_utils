@@ -1,11 +1,10 @@
-from .helpers import log_and_show_message
 from .helpers import run_command_sync
 from .helpers import SemanticVersion
 from .helpers import version_to_string
 from .third_party.semantic_version import NpmSpec, Version
 from contextlib import contextmanager
 from LSP.plugin.core.logging import debug
-from LSP.plugin.core.typing import Any, Dict, Generator, List, Optional, Tuple, Union
+from LSP.plugin.core.typing import cast, Any, Dict, Generator, List, Optional, Tuple, Union
 from os import path
 from os import remove
 from sublime_lib import ActivityIndicator
@@ -24,9 +23,9 @@ IS_WINDOWS_7_OR_LOWER = sys.platform == 'win32' and sys.getwindowsversion()[:2] 
 
 DEFAULT_NODE_VERSION = '16.15.0'
 NODE_DIST_URL = 'https://nodejs.org/dist/v{version}/{filename}'
-NO_NODE_FOUND_MESSAGE = 'Could not start {package_name} due to not being able to find Node.js \
-runtime on the PATH. Press the "Install Node.js" button to install Node.js automatically \
-(note that it will be installed locally for LSP and will not affect your system otherwise).'
+NO_NODE_FOUND_MESSAGE = 'Could not start {package_name} due to not being able to resolve suitable Node.js \
+runtime on the PATH. Press the "Download Node.js" button to get required Node.js version \
+(note that it will be used only by LSP and will not affect your system otherwise).'
 
 
 class NodeRuntime:
@@ -46,61 +45,70 @@ class NodeRuntime:
             required_semantic_version = NpmSpec(required_node_version)
         if cls._node_runtime_resolved:
             if cls._node_runtime:
-                cls._check_node_version(cls._node_runtime, required_semantic_version)
+                cls._node_runtime.check_satisfies_version(required_semantic_version)
             return cls._node_runtime
         cls._node_runtime_resolved = True
         cls._node_runtime = cls._resolve_node_runtime(package_name, storage_path, required_semantic_version)
-        debug('Resolved Node Runtime for client {}: {}'.format(package_name, cls._node_runtime))
+        debug('Resolved Node.js Runtime for package {}: {}'.format(package_name, cls._node_runtime))
         return cls._node_runtime
 
     @classmethod
     def _resolve_node_runtime(
         cls, package_name: str, storage_path: str, required_node_version: NpmSpec
-    ) -> Optional['NodeRuntime']:
-        node_runtime = None  # type: Optional[NodeRuntime]
+    ) -> 'NodeRuntime':
+        resolved_runtime = None  # type: Optional[NodeRuntime]
         default_runtimes = ['system', 'local']
         settings = sublime.load_settings('lsp_utils.sublime-settings')
-        selected_runtimes = settings.get('nodejs_runtime') or default_runtimes
-        for runtime in selected_runtimes:
-            if runtime == 'system':
-                node_runtime = NodeRuntimePATH()
-                if node_runtime.meets_requirements():
+        selected_runtimes = cast(List[str], settings.get('nodejs_runtime') or default_runtimes)
+        log_lines = ['--- lsp_utils Node.js resolving start ---']
+        for runtime_type in selected_runtimes:
+            if runtime_type == 'system':
+                log_lines.append('Resolving Node.js Runtime in env PATH for package {}...'.format(package_name))
+                path_runtime = NodeRuntimePATH()
+                try:
+                    path_runtime.check_binary_present()
+                except Exception as ex:
+                    log_lines.append(' * Failed: {}'.format(ex))
+                    continue
+                try:
+                    path_runtime.check_satisfies_version(required_node_version)
+                    resolved_runtime = path_runtime
+                    break
+                except Exception as ex:
+                    log_lines.append(' * {}'.format(ex))
+            elif runtime_type == 'local':
+                log_lines.append('Resolving Node.js Runtime from lsp_utils for package {}...'.format(package_name))
+                local_runtime = NodeRuntimeLocal(path.join(storage_path, 'lsp_utils', 'node-runtime'))
+                try:
+                    local_runtime.check_binary_present()
+                except Exception as ex:
+                    log_lines.append(' * Not downloaded. Asking to download...')
+                    if not sublime.ok_cancel_dialog(
+                            NO_NODE_FOUND_MESSAGE.format(package_name=package_name), 'Download Node.js'):
+                        log_lines.append(' * Download skipped')
+                        continue
                     try:
-                        cls._check_node_version(node_runtime, required_node_version)
-                        return node_runtime
+                        local_runtime.install_node()
                     except Exception as ex:
-                        message = 'Ignoring system Node.js runtime due to an error. {}'.format(ex)
-                        log_and_show_message('{}: Error: {}'.format(package_name, message))
-                else:
-                    message = 'The system Node.js does not meet the requirements: {}'.format(node_runtime)
-                    log_and_show_message('{}: {}'.format(package_name, message))
-            elif runtime == 'local':
-                node_runtime = NodeRuntimeLocal(path.join(storage_path, 'lsp_utils', 'node-runtime'))
-                if not node_runtime.meets_requirements():
-                    if not sublime.ok_cancel_dialog(NO_NODE_FOUND_MESSAGE.format(package_name=package_name),
-                                                    'Install Node.js'):
-                        return None
+                        log_lines.append(' * Failed downloading: {}'.format(ex))
+                        resolved_runtime = local_runtime
+                        continue
                     try:
-                        node_runtime.install_node()
+                        local_runtime.check_binary_present()
                     except Exception as ex:
-                        log_and_show_message('{}: Error: Failed installing a local Node.js runtime:\n{}'.format(
-                            package_name, ex))
-                        return None
-                if node_runtime.meets_requirements():
-                    try:
-                        cls._check_node_version(node_runtime, required_node_version)
-                        return node_runtime
-                    except Exception as ex:
-                        error = 'Ignoring local Node.js runtime due to an error. {}'.format(ex)
-                        log_and_show_message('{}: Error: {}'.format(package_name, error))
-        return None
-
-    @classmethod
-    def _check_node_version(cls, node_runtime: 'NodeRuntime', required_node_version: NpmSpec) -> None:
-        node_version = node_runtime.resolve_version()
-        if node_version not in required_node_version:
-            raise Exception('Node.js version requirement failed. Expected {}, got {}.'.format(
-                required_node_version, node_version))
+                        log_lines.append(' * Failed: {}'.format(ex))
+                        continue
+                try:
+                    local_runtime.check_satisfies_version(required_node_version)
+                    resolved_runtime = local_runtime
+                    break
+                except Exception as ex:
+                    log_lines.append(' * {}'.format(ex))
+        if not resolved_runtime:
+            log_lines.append('--- lsp_utils Node.js resolving end ---')
+            print('\n'.join(log_lines))
+            raise Exception('Failed resolving Node.js Runtime. Please check in the console for more details.')
+        return resolved_runtime
 
     def __init__(self) -> None:
         self._node = None  # type: Optional[str]
@@ -112,16 +120,28 @@ class NodeRuntime:
         return '{}(node: {}, npm: {}, version: {})'.format(
             self.__class__.__name__, self._node, self._npm, self._version if self._version else None)
 
-    def meets_requirements(self) -> bool:
-        return self._node is not None and self._npm is not None
-
     def node_bin(self) -> Optional[str]:
         return self._node
+
+    def npm_bin(self) -> Optional[str]:
+        return self._npm
 
     def node_env(self) -> Optional[Dict[str, str]]:
         if IS_WINDOWS_7_OR_LOWER:
             return {'NODE_SKIP_PLATFORM_CHECK': '1'}
         return None
+
+    def check_binary_present(self) -> None:
+        if self._node is None:
+            raise Exception('"node" binary not found')
+        if self._npm is None:
+            raise Exception('"npm" binary not found')
+
+    def check_satisfies_version(self, required_node_version: NpmSpec) -> None:
+        node_version = self.resolve_version()
+        if node_version not in required_node_version:
+            raise Exception(
+                'Version requirement failed. Expected {}, got {}.'.format(required_node_version, node_version))
 
     def resolve_version(self) -> Version:
         if self._version:
@@ -132,7 +152,7 @@ class NodeRuntime:
         if error is None:
             self._version = Version(version.replace('v', ''))
         else:
-            raise Exception('Error resolving node version:\n{}'.format(error))
+            raise Exception('Error resolving Node.js version:\n{}'.format(error))
         return self._version
 
     def npm_command(self) -> List[str]:
@@ -208,7 +228,7 @@ class NodeRuntimeLocal(NodeRuntime):
     def install_node(self) -> None:
         os.makedirs(os.path.dirname(self._install_in_progress_marker_file), exist_ok=True)
         open(self._install_in_progress_marker_file, 'a').close()
-        with ActivityIndicator(sublime.active_window(), 'Installing Node.js'):
+        with ActivityIndicator(sublime.active_window(), 'Downloading Node.js'):
             install_node = InstallNode(self._base_dir, self._node_version)
             install_node.run()
             self.resolve_paths()
@@ -229,7 +249,7 @@ class InstallNode:
         self._cache_dir = path.join(self._base_dir, 'cache')
 
     def run(self) -> None:
-        print('[lsp_utils] Installing Node.js {}'.format(self._node_version))
+        print('[lsp_utils] Downloading Node.js {}'.format(self._node_version))
         archive, url = self._node_archive()
         if not self._node_archive_exists(archive):
             self._download_node(url, archive)

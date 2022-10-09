@@ -33,7 +33,7 @@ class ServerNpmResource(ServerResourceInterface):
             required_node_version = minimum_node_version
         node_runtime = NodeRuntime.get(package_name, storage_path, required_node_version)
         if not node_runtime:
-            raise Exception('Failed resolving the Node Runtime. Please see Sublime Text console for more information')
+            raise Exception('Failed resolving Node.js Runtime. Please see Sublime Text console for more information.')
         return ServerNpmResource(
             package_name, server_directory, server_binary_path, package_storage, node_runtime, skip_npm_install)
 
