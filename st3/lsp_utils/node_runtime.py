@@ -81,7 +81,7 @@ class NodeRuntime:
                 local_runtime = NodeRuntimeLocal(path.join(storage_path, 'lsp_utils', 'node-runtime'))
                 try:
                     local_runtime.check_binary_present()
-                except Exception as ex:
+                except Exception:
                     log_lines.append(' * Not downloaded. Asking to download...')
                     if not sublime.ok_cancel_dialog(
                             NO_NODE_FOUND_MESSAGE.format(package_name=package_name), 'Download Node.js'):
@@ -141,7 +141,7 @@ class NodeRuntime:
         node_version = self.resolve_version()
         if node_version not in required_node_version:
             raise Exception(
-                'Version requirement failed. Expected {}, got {}.'.format(required_node_version, node_version))
+                'Node.js version requirement failed. Expected {}, got {}.'.format(required_node_version, node_version))
 
     def resolve_version(self) -> Version:
         if self._version:

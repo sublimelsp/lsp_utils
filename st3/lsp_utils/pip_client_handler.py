@@ -3,6 +3,7 @@ from .server_pip_resource import ServerPipResource
 from .server_resource_interface import ServerResourceInterface
 from LSP.plugin.core.typing import List, Optional
 from os import path
+import sublime
 
 __all__ = ['PipClientHandler']
 
@@ -41,6 +42,16 @@ class PipClientHandler(GenericClientHandler):
     :required: Yes
     """
 
+    @classmethod
+    def get_python_binary(cls) -> str:
+        """
+        Returns a binary name or a full path to the Python interpreter used to create environment for the server.
+
+        The default implementation returns `python` on Windows and `python3` on other platforms. When only the binary
+        name is specified then it will be expected that it can be found on the PATH.
+        """
+        return 'python' if sublime.platform() == 'windows' else 'python3'
+
     # --- GenericClientHandler handlers -------------------------------------------------------------------------------
 
     @classmethod
@@ -51,7 +62,7 @@ class PipClientHandler(GenericClientHandler):
     def get_server(cls) -> Optional[ServerResourceInterface]:
         if not cls.__server:
             cls.__server = ServerPipResource(cls.storage_path(), cls.package_name, cls.requirements_txt_path,
-                                             cls.server_filename)
+                                             cls.server_filename, cls.get_python_binary())
         return cls.__server
 
     @classmethod
