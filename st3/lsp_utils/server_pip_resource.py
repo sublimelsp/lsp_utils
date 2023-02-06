@@ -40,10 +40,6 @@ class ServerPipResource(ServerResourceInterface):
         return '.exe' if sublime.platform() == 'windows' else ''
 
     @classmethod
-    def python_exe(cls) -> str:
-        return 'python' if sublime.platform() == 'windows' else 'python3'
-
-    @classmethod
     def run(cls, *args: Any, cwd: Optional[str] = None) -> str:
         output, error = run_command_sync(list(args), cwd=cwd)
         if error:
@@ -51,11 +47,12 @@ class ServerPipResource(ServerResourceInterface):
         return output
 
     def __init__(self, storage_path: str, package_name: str, requirements_path: str,
-                 server_binary_filename: str) -> None:
+                 server_binary_filename: str, python_binary: str) -> None:
         self._storage_path = storage_path
         self._package_name = package_name
         self._requirements_path = 'Packages/{}/{}'.format(self._package_name, requirements_path)
         self._server_binary_filename = server_binary_filename
+        self._python_binary = python_binary
         self._status = ServerStatus.UNINITIALIZED
 
     def basedir(self) -> str:
@@ -65,10 +62,10 @@ class ServerPipResource(ServerResourceInterface):
         bin_dir = 'Scripts' if sublime.platform() == 'windows' else 'bin'
         return os.path.join(self.basedir(), bin_dir)
 
-    def server_exe(self) -> str:
+    def server_binary(self) -> str:
         return os.path.join(self.bindir(), self._server_binary_filename + self.file_extension())
 
-    def pip_exe(self) -> str:
+    def pip_binary(self) -> str:
         return os.path.join(self.bindir(), 'pip' + self.file_extension())
 
     def python_version(self) -> str:
@@ -78,16 +75,16 @@ class ServerPipResource(ServerResourceInterface):
 
     @property
     def binary_path(self) -> str:
-        return self.server_exe()
+        return self.server_binary()
 
     def needs_installation(self) -> bool:
-        if os.path.exists(self.server_exe()) and os.path.exists(self.pip_exe()):
+        if os.path.exists(self.server_binary()) and os.path.exists(self.pip_binary()):
             if not os.path.exists(self.python_version()):
                 return True
             with open(self.python_version(), 'r') as f:
-                if f.readline().strip() != self.run(self.python_exe(), '--version').strip():
+                if f.readline().strip() != self.run(self._python_binary, '--version').strip():
                     return True
-            installed_requirements = parse_requirements(self.run(self.pip_exe(), 'freeze'))
+            installed_requirements = parse_requirements(self.run(self.pip_binary(), 'freeze'))
             requirements = parse_requirements(ResourcePath(self._requirements_path).read_text())
             for name, version in requirements.items():
                 if name not in installed_requirements:
@@ -106,12 +103,12 @@ class ServerPipResource(ServerResourceInterface):
         shutil.rmtree(self.basedir(), ignore_errors=True)
         try:
             os.makedirs(self.basedir(), exist_ok=True)
-            self.run(self.python_exe(), '-m', 'venv', self._package_name, cwd=self._storage_path)
+            self.run(self._python_binary, '-m', 'venv', self._package_name, cwd=self._storage_path)
             dest_requirements_txt_path = os.path.join(self._storage_path, self._package_name, 'requirements.txt')
             ResourcePath(self._requirements_path).copy(dest_requirements_txt_path)
-            self.run(self.pip_exe(), 'install', '-r', dest_requirements_txt_path, '--disable-pip-version-check')
+            self.run(self.pip_binary(), 'install', '-r', dest_requirements_txt_path, '--disable-pip-version-check')
             with open(self.python_version(), 'w') as f:
-                f.write(self.run(self.python_exe(), '--version'))
+                f.write(self.run(self._python_binary, '--version'))
         except Exception:
             shutil.rmtree(self.basedir(), ignore_errors=True)
             raise

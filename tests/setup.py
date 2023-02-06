@@ -74,7 +74,7 @@ class TextDocumentTestCase(DeferrableTestCase):
             if ST3:
                 self.assertTrue(self.wm._configs.syntax_supported(self.view))
             else:
-                self.assertTrue(self.wm._configs.match_view(self.view))
+                self.assertTrue(self.wm.get_config_manager().match_view(self.view))
         self.init_view_settings()
         yield self.ensure_document_listener_created
         if not ST3:
