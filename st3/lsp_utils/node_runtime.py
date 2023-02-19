@@ -11,6 +11,7 @@ from sublime_lib import ActivityIndicator
 import os
 import shutil
 import sublime
+import subprocess
 import sys
 import tarfile
 import urllib.request
@@ -18,10 +19,10 @@ import zipfile
 
 __all__ = ['NodeRuntime', 'NodeRuntimePATH', 'NodeRuntimeLocal']
 
-IS_MAC_ARM = sublime.platform() == 'osx' and sublime.arch() == 'arm64'
 IS_WINDOWS_7_OR_LOWER = sys.platform == 'win32' and sys.getwindowsversion()[:2] <= (6, 1)  # type: ignore
 
-DEFAULT_NODE_VERSION = '16.15.0'
+DEFAULT_NODE_VERSION = '16.17.1'
+ELECTRON_VERSION = '22.2.0'
 NODE_DIST_URL = 'https://nodejs.org/dist/v{version}/{filename}'
 NO_NODE_FOUND_MESSAGE = 'Could not start {package_name} due to not being able to resolve suitable Node.js \
 runtime on the PATH. Press the "Download Node.js" button to get required Node.js version \
@@ -78,7 +79,8 @@ class NodeRuntime:
                     log_lines.append(' * {}'.format(ex))
             elif runtime_type == 'local':
                 log_lines.append('Resolving Node.js Runtime from lsp_utils for package {}...'.format(package_name))
-                local_runtime = NodeRuntimeLocal(path.join(storage_path, 'lsp_utils', 'node-runtime'))
+                use_electron = cast(bool, settings.get('use_electron_for_local_runtime') or False)
+                local_runtime = NodeRuntimeLocal(path.join(storage_path, 'lsp_utils', 'node-runtime'), use_electron)
                 try:
                     local_runtime.check_binary_present()
                 except Exception:
@@ -100,6 +102,8 @@ class NodeRuntime:
                         continue
                 try:
                     local_runtime.check_satisfies_version(required_node_version)
+                    if use_electron:
+                        local_runtime.check_satisfies_electron()
                     resolved_runtime = local_runtime
                     break
                 except Exception as ex:
@@ -126,10 +130,10 @@ class NodeRuntime:
     def npm_bin(self) -> Optional[str]:
         return self._npm
 
-    def node_env(self) -> Optional[Dict[str, str]]:
+    def node_env(self) -> Dict[str, str]:
         if IS_WINDOWS_7_OR_LOWER:
             return {'NODE_SKIP_PLATFORM_CHECK': '1'}
-        return None
+        return {}
 
     def check_binary_present(self) -> None:
         if self._node is None:
@@ -155,29 +159,38 @@ class NodeRuntime:
             raise Exception('Error resolving Node.js version:\n{}'.format(error))
         return self._version
 
-    def npm_command(self) -> List[str]:
-        if self._npm is None:
-            raise Exception('Npm command not initialized')
-        return [self._npm]
+    def run_node(self, args: List[str], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                 env: Dict[str, Any] = {}) -> Optional[subprocess.Popen]:
+        node_bin = self.node_bin()
+        if node_bin is None:
+            return
+        os_env = os.environ.copy()
+        os_env.update(self.node_env())
+        os_env.update(env)
+        startupinfo = None
+        if sublime.platform() == 'windows':
+            startupinfo = subprocess.STARTUPINFO()  # type: ignore
+            startupinfo.dwFlags |= subprocess.SW_HIDE | subprocess.STARTF_USESHOWWINDOW  # type: ignore
+        return subprocess.Popen(
+            [node_bin] + args, stdin=stdin, stdout=stdout, stderr=stderr, env=os_env, startupinfo=startupinfo)
 
-    def npm_install(self, package_dir: str, use_ci: bool = True) -> None:
-        if not path.isdir(package_dir):
-            raise Exception('Specified package_dir path "{}" does not exist'.format(package_dir))
+    def run_npm(self, args: List[str], cwd: str) -> None:
+        if not path.isdir(cwd):
+            raise Exception('Specified working directory "{}" does not exist'.format(cwd))
         if not self._node:
             raise Exception('Node.js not installed. Use InstallNode command first.')
-        args = self.npm_command() + [
-            'ci' if use_ci else 'install',
-            '--scripts-prepend-node-path=true',
-            '--verbose',
-            '--production',
-        ]
         stdout, error = run_command_sync(
-            args, cwd=package_dir, extra_env=self.node_env(), extra_paths=self._additional_paths)
+            self._npm_command() + args, cwd=cwd, extra_env=self.node_env(), extra_paths=self._additional_paths)
         print('[lsp_utils] START output of command: "{}"'.format(''.join(args)))
         print(stdout)
         print('[lsp_utils] Command output END')
         if error is not None:
             raise Exception('Failed to run npm command "{}":\n{}'.format(' '.join(args), error))
+
+    def _npm_command(self) -> List[str]:
+        if self._npm is None:
+            raise Exception('Npm command not initialized')
+        return [self._npm]
 
 
 class NodeRuntimePATH(NodeRuntime):
@@ -188,24 +201,30 @@ class NodeRuntimePATH(NodeRuntime):
 
 
 class NodeRuntimeLocal(NodeRuntime):
-    def __init__(self, base_dir: str, node_version: str = DEFAULT_NODE_VERSION):
+    def __init__(self, base_dir: str, use_electron: bool, node_version: str = DEFAULT_NODE_VERSION):
         super().__init__()
         self._base_dir = path.abspath(path.join(base_dir, node_version))
         self._node_version = node_version
         self._node_dir = path.join(self._base_dir, 'node')
         self._additional_paths = [path.join(self._node_dir, 'bin')]
         self._install_in_progress_marker_file = path.join(self._base_dir, '.installing')
-        self.resolve_paths()
+        self._use_electron = use_electron
+        self._resolve_paths()
 
-    def resolve_paths(self) -> None:
+    def node_env(self) -> Dict[str, str]:
+        extra_env = super().node_env()
+        if self._use_electron:
+            extra_env.update({'ELECTRON_RUN_AS_NODE': 'true'})
+        return extra_env
+
+    def _resolve_paths(self) -> None:
         if path.isfile(self._install_in_progress_marker_file):
             # Will trigger re-installation.
             return
-        self._node = self.resolve_binary()
-        self._node_lib = self.resolve_lib()
-        self._npm = path.join(self._node_lib, 'npm', 'bin', 'npm-cli.js')
+        self._node = self._resolve_binary()
+        self._npm = path.join(self._resolve_lib(), 'npm', 'bin', 'npm-cli.js')
 
-    def resolve_binary(self) -> Optional[str]:
+    def _resolve_binary(self) -> Optional[str]:
         exe_path = path.join(self._node_dir, 'node.exe')
         binary_path = path.join(self._node_dir, 'bin', 'node')
         if path.isfile(exe_path):
@@ -214,13 +233,13 @@ class NodeRuntimeLocal(NodeRuntime):
             return binary_path
         return None
 
-    def resolve_lib(self) -> str:
+    def _resolve_lib(self) -> str:
         lib_path = path.join(self._node_dir, 'lib', 'node_modules')
         if not path.isdir(lib_path):
             lib_path = path.join(self._node_dir, 'node_modules')
         return lib_path
 
-    def npm_command(self) -> List[str]:
+    def _npm_command(self) -> List[str]:
         if not self._node or not self._npm:
             raise Exception('Node.js or Npm command not initialized')
         return [self._node, self._npm]
@@ -231,9 +250,37 @@ class NodeRuntimeLocal(NodeRuntime):
         with ActivityIndicator(sublime.active_window(), 'Downloading Node.js'):
             install_node = InstallNode(self._base_dir, self._node_version)
             install_node.run()
-            self.resolve_paths()
+            self._resolve_paths()
         remove(self._install_in_progress_marker_file)
-        self.resolve_paths()
+        self._resolve_paths()
+
+    def check_satisfies_electron(self) -> None:
+        if not self._use_electron:
+            return
+        if not self._resolve_electron_binary():
+            self._install_electron()
+        self._node = self._resolve_electron_binary()
+
+    def _install_electron(self) -> None:
+        if not self._use_electron:
+            return
+        with ActivityIndicator(sublime.active_window(), 'Downloading Electron'):
+            print('[lsp_utils] Installing Electron dependency...')
+            self.run_npm(['install', '-g', 'electron@{}'.format(ELECTRON_VERSION)], cwd=self._node_dir)
+
+    def _resolve_electron_binary(self) -> Optional[str]:
+        if not self._use_electron:
+            return
+        electron_dist_dir = path.join(self._resolve_lib(), 'electron', 'dist')
+        binary_path = None
+        platform = sublime.platform()
+        if platform == 'osx':
+            binary_path = path.join(electron_dist_dir, 'Electron.app', 'Contents', 'MacOS', 'Electron')
+        elif platform == 'windows':
+            binary_path = path.join(electron_dist_dir, 'electron.exe')
+        else:
+            binary_path = path.join(electron_dist_dir, 'electron')
+        return binary_path if binary_path and path.isfile(binary_path) else None
 
 
 class InstallNode:
@@ -253,7 +300,7 @@ class InstallNode:
         archive, url = self._node_archive()
         if not self._node_archive_exists(archive):
             self._download_node(url, archive)
-        self._install_node(archive)
+        self._install(archive)
 
     def _node_archive(self) -> Tuple[str, str]:
         platform = sublime.platform()
@@ -285,7 +332,7 @@ class InstallNode:
             with open(archive, 'wb') as f:
                 shutil.copyfileobj(response, f)
 
-    def _install_node(self, filename: str) -> None:
+    def _install(self, filename: str) -> None:
         archive = path.join(self._cache_dir, filename)
         opener = zipfile.ZipFile if filename.endswith('.zip') else tarfile.open  # type: Any
         try:

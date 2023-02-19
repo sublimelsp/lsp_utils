@@ -104,7 +104,13 @@ class ServerNpmResource(ServerResourceInterface):
                 shutil.rmtree(self._server_dest)
             ResourcePath(self._server_src).copytree(self._server_dest, exist_ok=True)
             if not self._skip_npm_install:
-                self._node_runtime.npm_install(self._server_dest)
+                args = [
+                    'ci',
+                    '--scripts-prepend-node-path=true',
+                    '--verbose',
+                    '--omit dev',
+                ]
+                self._node_runtime.run_npm(args, cwd=self._server_dest)
             remove(self._installation_marker_file)
         except Exception as error:
             self._status = ServerStatus.ERROR
