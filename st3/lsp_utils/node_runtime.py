@@ -159,8 +159,14 @@ class NodeRuntime:
             raise Exception('Error resolving Node.js version:\n{}'.format(error))
         return self._version
 
-    def run_node(self, args: List[str], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                 env: Dict[str, Any] = {}) -> Optional[subprocess.Popen]:
+    def run_node(
+        self,
+        args: List[str],
+        stdin: int = subprocess.PIPE,
+        stdout: int = subprocess.PIPE,
+        stderr: int = subprocess.PIPE,
+        env: Dict[str, Any] = {}
+    ) -> Optional[subprocess.Popen]:
         node_bin = self.node_bin()
         if node_bin is None:
             return
