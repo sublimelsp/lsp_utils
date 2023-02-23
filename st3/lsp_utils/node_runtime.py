@@ -169,7 +169,7 @@ class NodeRuntime:
     ) -> Optional[subprocess.Popen]:
         node_bin = self.node_bin()
         if node_bin is None:
-            return
+            return None
         os_env = os.environ.copy()
         os_env.update(self.node_env())
         os_env.update(env)
@@ -276,7 +276,7 @@ class NodeRuntimeLocal(NodeRuntime):
 
     def _resolve_electron_binary(self) -> Optional[str]:
         if not self._use_electron:
-            return
+            return None
         electron_dist_dir = path.join(self._resolve_lib(), 'electron', 'dist')
         binary_path = None
         platform = sublime.platform()
