@@ -22,7 +22,7 @@ __all__ = ['NodeRuntime', 'NodeRuntimePATH', 'NodeRuntimeLocal']
 IS_WINDOWS_7_OR_LOWER = sys.platform == 'win32' and sys.getwindowsversion()[:2] <= (6, 1)  # type: ignore
 
 DEFAULT_NODE_VERSION = '16.17.1'
-ELECTRON_VERSION = '22.2.0'
+ELECTRON_VERSION = '22.2.0'  # includes matching 16.17.1 version of Node.js
 NODE_DIST_URL = 'https://nodejs.org/dist/v{version}/{filename}'
 NO_NODE_FOUND_MESSAGE = 'Could not start {package_name} due to not being able to resolve suitable Node.js \
 runtime on the PATH. Press the "Download Node.js" button to get required Node.js version \
