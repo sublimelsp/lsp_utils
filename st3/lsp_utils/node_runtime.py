@@ -212,7 +212,7 @@ class NodeRuntimeLocal(NodeRuntime):
         self._base_dir = path.abspath(path.join(base_dir, node_version))
         self._node_version = node_version
         self._node_dir = path.join(self._base_dir, 'node')
-        self._additional_paths = [path.join(self._node_dir, 'bin')]
+        self._additional_paths = [self._node_dir, path.join(self._node_dir, 'bin')]
         self._install_in_progress_marker_file = path.join(self._base_dir, '.installing')
         self._use_electron = use_electron
         self._resolve_paths()
