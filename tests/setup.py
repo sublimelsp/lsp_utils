@@ -52,7 +52,7 @@ class TextDocumentTestCase(DeferrableTestCase):
         yield {'condition': lambda: not cls.view.is_loading(), 'timeout': TIMEOUT_TIME}
         yield cls.ensure_document_listener_created
         # First start needs time to install the dependencies.
-        INSTALL_TIMEOUT = 6000
+        INSTALL_TIMEOUT = 30000
         yield {
             'condition': lambda: cls.wm.get_session(cls.get_session_name(), filename) is not None,
             'timeout': INSTALL_TIMEOUT

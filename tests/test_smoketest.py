@@ -16,7 +16,7 @@ class PyrightSmokeTests(TextDocumentTestCase):
         else:
             session_view = cast(SessionView, self.session.session_view_for_view_async(self.view))
             self.assertIsNotNone(session_view)
-            error_region_key = session_view.diagnostics_key(1, False)
+            error_region_key = '{}_icon'.format(session_view.diagnostics_key(1, multiline=False))
             yield {'condition': lambda: len(session_view.session_buffer.diagnostics) == 1, 'timeout': TIMEOUT_TIME * 4}
         error_regions = yield lambda: self.view.get_regions(error_region_key)
         self.assertEqual(len(error_regions), 1)
