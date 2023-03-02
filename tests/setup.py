@@ -1,4 +1,3 @@
-from json import dumps
 from LSP.plugin.core.registry import windows
 from LSP.plugin.core.sessions import Session
 from LSP.plugin.core.types import ClientStates
