@@ -1,4 +1,5 @@
 from LSP.plugin.core.registry import windows
+from LSP.plugin.core.sessions import get_plugin
 from LSP.plugin.core.sessions import Session
 from LSP.plugin.core.types import ClientStates
 from LSP.plugin.core.typing import Any, Dict, Generator, Optional
@@ -18,6 +19,8 @@ except ImportError:
     ST3 = True
 
 TIMEOUT_TIME = 2000
+
+lsp_pyright_class = get_plugin('LSP-pyright')
 
 
 def close_test_view(view: Optional[sublime.View]) -> 'Generator':
@@ -46,6 +49,7 @@ class TextDocumentTestCase(DeferrableTestCase):
     @classmethod
     def setUpClass(cls) -> Generator:
         super().setUpClass()
+        lsp_pyright_class.setup()
         window = sublime.active_window()
         filename = expand(join('$packages', 'lsp_utils', 'tests', cls.get_test_file_name()), window)
         open_view = window.find_open_file(filename)
@@ -110,7 +114,6 @@ class TextDocumentTestCase(DeferrableTestCase):
 
     @classmethod
     def set_lsp_utils_settings(cls, value: Dict[str, Any]) -> None:
-        NodeRuntime._node_runtime_resolved = False
         settings = sublime.load_settings(SETTINGS_FILENAME)
         for key, value in value.items():
             settings.set(key, value)
@@ -121,6 +124,8 @@ class TextDocumentTestCase(DeferrableTestCase):
         settings_filepath = join(sublime.packages_path(), 'User', SETTINGS_FILENAME)
         if isfile(settings_filepath):
             remove(settings_filepath)
+        sublime.save_settings(SETTINGS_FILENAME)
+        NodeRuntime._node_runtime_resolved = False
 
     @classmethod
     def tearDownClass(cls) -> 'Generator':
@@ -135,6 +140,7 @@ class TextDocumentTestCase(DeferrableTestCase):
         cls.session = None
         cls.wm = None
         cls.remove_lsp_utils_settings()
+        lsp_pyright_class.cleanup()
         super().tearDownClass()
 
     def doCleanups(self) -> 'Generator':
