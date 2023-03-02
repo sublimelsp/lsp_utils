@@ -1,4 +1,3 @@
-from lsp_utils import NodeRuntime
 from LSP.plugin.core.typing import cast, Generator
 from .setup import TextDocumentTestCase, TIMEOUT_TIME
 
