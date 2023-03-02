@@ -22,7 +22,6 @@ except ImportError:
 TIMEOUT_TIME = 2000
 
 
-
 def close_test_view(view: Optional[sublime.View]) -> 'Generator':
     if view:
         view.set_scratch(True)
