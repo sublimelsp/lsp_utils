@@ -1,8 +1,12 @@
+from json import dumps
 from LSP.plugin.core.registry import windows
 from LSP.plugin.core.sessions import Session
 from LSP.plugin.core.types import ClientStates
-from LSP.plugin.core.typing import Generator, Optional
-from os.path import join
+from LSP.plugin.core.typing import Any, Dict, Generator, Optional
+from lsp_utils import NodeRuntime
+from lsp_utils import SETTINGS_FILENAME
+from os import remove
+from os.path import isfile, join
 from sublime_plugin import view_event_listeners
 from unittesting import DeferrableTestCase
 import sublime
@@ -106,6 +110,20 @@ class TextDocumentTestCase(DeferrableTestCase):
         return False
 
     @classmethod
+    def set_lsp_utils_settings(cls, value: Dict[str, Any]) -> None:
+        NodeRuntime._node_runtime_resolved = False
+        settings = sublime.load_settings(SETTINGS_FILENAME)
+        for key, value in value.items():
+            settings.set(key, value)
+        sublime.save_settings(SETTINGS_FILENAME)
+
+    @classmethod
+    def remove_lsp_utils_settings(cls) -> None:
+        settings_filepath = join(sublime.packages_path(), 'User', SETTINGS_FILENAME)
+        if isfile(settings_filepath):
+            remove(settings_filepath)
+
+    @classmethod
     def tearDownClass(cls) -> 'Generator':
         if cls.session and cls.wm:
             if ST3:
@@ -117,6 +135,7 @@ class TextDocumentTestCase(DeferrableTestCase):
                 yield lambda: cls.wm.get_session(cls.get_session_name(), cls.view.file_name()) is None
         cls.session = None
         cls.wm = None
+        cls.remove_lsp_utils_settings()
         super().tearDownClass()
 
     def doCleanups(self) -> 'Generator':

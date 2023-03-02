@@ -1,3 +1,4 @@
+from lsp_utils import NodeRuntime
 from LSP.plugin.core.typing import cast, Generator
 from .setup import TextDocumentTestCase, TIMEOUT_TIME
 
@@ -8,9 +9,9 @@ except ImportError:
     ST3 = True
 
 
-class PyrightSmokeTests(TextDocumentTestCase):
+class BaseTestCase(TextDocumentTestCase):
 
-    def test_set_and_get(self) -> Generator:
+    def test_diagnostics(self) -> Generator:
         if ST3:
             error_region_key = 'lsp_error'
         else:
@@ -23,3 +24,34 @@ class PyrightSmokeTests(TextDocumentTestCase):
         region = error_regions[0]
         self.assertEqual((region.a, region.b), (6, 7))
         self.view.window().run_command('show_panel', {"panel": "console", "toggle": True})
+
+
+class SystemRuntime(BaseTestCase):
+
+    @classmethod
+    def setUpClass(cls) -> Generator:
+        cls.set_lsp_utils_settings({
+            'nodejs_runtime': ['system'],
+        })
+        yield from super().setUpClass()
+
+
+class LocalRuntime(BaseTestCase):
+
+    @classmethod
+    def setUpClass(cls) -> Generator:
+        cls.set_lsp_utils_settings({
+            'nodejs_runtime': ['local'],
+        })
+        yield from super().setUpClass()
+
+
+class LocalRuntimeAndElectron(BaseTestCase):
+
+    @classmethod
+    def setUpClass(cls) -> Generator:
+        cls.set_lsp_utils_settings({
+            'nodejs_runtime': ['local'],
+            'use_electron_for_local_runtime': True
+        })
+        yield from super().setUpClass()

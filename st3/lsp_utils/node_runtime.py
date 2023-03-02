@@ -1,3 +1,4 @@
+from .constants import SETTINGS_FILENAME
 from .helpers import run_command_sync
 from .helpers import SemanticVersion
 from .helpers import version_to_string
@@ -59,7 +60,7 @@ class NodeRuntime:
     ) -> 'NodeRuntime':
         resolved_runtime = None  # type: Optional[NodeRuntime]
         default_runtimes = ['system', 'local']
-        settings = sublime.load_settings('lsp_utils.sublime-settings')
+        settings = sublime.load_settings(SETTINGS_FILENAME)
         selected_runtimes = cast(List[str], settings.get('nodejs_runtime') or default_runtimes)
         log_lines = ['--- lsp_utils Node.js resolving start ---']
         for runtime_type in selected_runtimes:
@@ -85,7 +86,7 @@ class NodeRuntime:
                     local_runtime.check_binary_present()
                 except Exception:
                     log_lines.append(' * Not downloaded. Asking to download...')
-                    if not sublime.ok_cancel_dialog(
+                    if selected_runtimes != ['local'] and not sublime.ok_cancel_dialog(
                             NO_NODE_FOUND_MESSAGE.format(package_name=package_name), 'Download Node.js'):
                         log_lines.append(' * Download skipped')
                         continue
