@@ -222,6 +222,8 @@ class NodeRuntimeLocal(NodeRuntime):
 
     def node_env(self) -> Dict[str, str]:
         extra_env = super().node_env()
+        # Don't use user's local NPM config.
+        extra_env.update({'NPM_CONFIG_USERCONFIG': '/dev/null'})
         if self._use_electron:
             extra_env.update({'ELECTRON_RUN_AS_NODE': 'true'})
         return extra_env
