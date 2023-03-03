@@ -14,12 +14,13 @@ def parse_requirements(content: str) -> Dict[str, Optional[str]]:
     requirements = {}  # type: Dict[str, Optional[str]]
     lines = [line.strip() for line in content.splitlines()]
     for line in lines:
-        if line:
-            parts = line.split('==')
-            if len(parts) == 2:
-                requirements[parts[0].replace('[all]', '')] = parts[1]
-            elif len(parts) == 1:
-                requirements[parts[0]] = None
+        if not line or line.startswith('#'):
+            continue
+        parts = line.split('==')
+        if len(parts) == 2:
+            requirements[parts[0].replace('[all]', '')] = parts[1]
+        elif len(parts) == 1:
+            requirements[parts[0]] = None
     return requirements
 
 
