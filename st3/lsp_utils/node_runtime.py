@@ -87,10 +87,11 @@ class NodeRuntime:
                 except Exception:
                     log_lines.append(' * Not downloaded. Asking to download...')
                     # If first (or only) runtime is "local" then install without asking.
-                    if selected_runtimes[0] == 'local' and not sublime.ok_cancel_dialog(
-                            NO_NODE_FOUND_MESSAGE.format(package_name=package_name), 'Download Node.js'):
-                        log_lines.append(' * Download skipped')
-                        continue
+                    if selected_runtimes[0] != 'local':
+                        if not sublime.ok_cancel_dialog(
+                                NO_NODE_FOUND_MESSAGE.format(package_name=package_name), 'Download Node.js'):
+                            log_lines.append(' * Download skipped')
+                            continue
                     try:
                         local_runtime.install_node()
                     except Exception as ex:
