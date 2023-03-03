@@ -28,7 +28,15 @@
               },
               "uniqueItems": true,
             },
-            "use_electron_for_local_runtime": {
+            "local_npm_config": {
+              "type": "object",
+              "items": {
+                "type": "string"
+              },
+              "default": {},
+              "markdownDescription": "NPM configuration options used when running NPM with the `local` runtime.\nLocal runtime doesn't use user configuration in ~/.npmrc so you can use this setting to pass any custom options instead.\n\nRefer to https://docs.npmjs.com/cli/v9/using-npm/config for the list of options."
+            },
+            "local_use_electron": {
               "type": "boolean",
               "default": false,
               "markdownDescription": "Uses Node.js runtime from the Electron package rather than the standard one. This has the benefit of lower memory usage due it having [pointer compression](https://v8.dev/blog/pointer-compression) enabled.\n\nOnly relevant when using `local` variant of `nodejs_runtime`."

@@ -41,7 +41,7 @@ class LocalRuntime(BaseTestCase):
     def setUpClass(cls) -> Generator:
         cls.set_lsp_utils_settings({
             'nodejs_runtime': ['local'],
-            'use_electron_for_local_runtime': False
+            'local_use_electron': False
         })
         yield from super().setUpClass()
 
@@ -52,6 +52,6 @@ class LocalRuntimeAndElectron(BaseTestCase):
     def setUpClass(cls) -> Generator:
         cls.set_lsp_utils_settings({
             'nodejs_runtime': ['local'],
-            'use_electron_for_local_runtime': True
+            'local_use_electron': True
         })
         yield from super().setUpClass()

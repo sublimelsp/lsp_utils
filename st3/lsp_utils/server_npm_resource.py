@@ -108,7 +108,7 @@ class ServerNpmResource(ServerResourceInterface):
                     'ci',
                     '--scripts-prepend-node-path=true',
                     '--verbose',
-                    '--omit dev',
+                    '--omit=dev',
                 ]
                 self._node_runtime.run_npm(args, cwd=self._server_dest)
             remove(self._installation_marker_file)

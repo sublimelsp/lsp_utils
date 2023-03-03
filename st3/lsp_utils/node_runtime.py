@@ -80,8 +80,10 @@ class NodeRuntime:
                     log_lines.append(' * {}'.format(ex))
             elif runtime_type == 'local':
                 log_lines.append('Resolving Node.js Runtime from lsp_utils for package {}...'.format(package_name))
-                use_electron = cast(bool, settings.get('use_electron_for_local_runtime') or False)
-                local_runtime = NodeRuntimeLocal(path.join(storage_path, 'lsp_utils', 'node-runtime'), use_electron)
+                use_electron = cast(bool, settings.get('local_use_electron') or False)
+                npm_config = cast(dict, settings.get('local_npm_config') or {})
+                local_runtime = NodeRuntimeLocal(
+                    path.join(storage_path, 'lsp_utils', 'node-runtime'), use_electron, npm_config)
                 try:
                     local_runtime.check_binary_present()
                 except Exception:
@@ -210,7 +212,9 @@ class NodeRuntimePATH(NodeRuntime):
 
 
 class NodeRuntimeLocal(NodeRuntime):
-    def __init__(self, base_dir: str, use_electron: bool, node_version: str = DEFAULT_NODE_VERSION):
+    def __init__(
+        self, base_dir: str, use_electron: bool, npm_config: Dict[str, str], node_version: str = DEFAULT_NODE_VERSION
+    ):
         super().__init__()
         self._base_dir = path.abspath(path.join(base_dir, node_version))
         self._node_version = node_version
@@ -218,6 +222,10 @@ class NodeRuntimeLocal(NodeRuntime):
         self._additional_paths = [self._node_dir, path.join(self._node_dir, 'bin')]
         self._install_in_progress_marker_file = path.join(self._base_dir, '.installing')
         self._use_electron = use_electron
+        self._npm_flags = []
+        for key, value in npm_config.items():
+            self._npm_flags.append('--{}={}'.format(key, value))
+        self._npm_config = npm_config
         self._resolve_paths()
 
     def node_env(self) -> Dict[str, str]:
@@ -253,7 +261,7 @@ class NodeRuntimeLocal(NodeRuntime):
     def _npm_command(self) -> List[str]:
         if not self._node or not self._npm:
             raise Exception('Node.js or Npm command not initialized')
-        return [self._node, self._npm]
+        return [self._node, self._npm] + self._npm_flags
 
     def install_node(self) -> None:
         os.makedirs(os.path.dirname(self._install_in_progress_marker_file), exist_ok=True)
