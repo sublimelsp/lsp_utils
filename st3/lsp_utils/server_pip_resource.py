@@ -68,7 +68,7 @@ class ServerPipResource(ServerResourceInterface):
         return self.server_binary()
 
     def needs_installation(self) -> bool:
-        if not path.exists(self.server_binary()) and path.exists(self.pip_binary()):
+        if not path.exists(self.server_binary()) or not path.exists(self.pip_binary()):
             return True
         if not path.exists(self.python_version()):
             return True
