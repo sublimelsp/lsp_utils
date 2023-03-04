@@ -107,8 +107,6 @@ class NodeRuntime:
                         continue
                 try:
                     local_runtime.check_satisfies_version(required_node_version)
-                    if use_electron:
-                        local_runtime.check_satisfies_electron()
                     resolved_runtime = local_runtime
                     break
                 except Exception as ex:
@@ -226,7 +224,8 @@ class NodeRuntimeLocal(NodeRuntime):
         for key, value in npm_config.items():
             self._npm_flags.append('--{}={}'.format(key, value))
         self._npm_config = npm_config
-        self._resolve_paths()
+        if not path.isfile(self._install_in_progress_marker_file):
+            self._resolve_paths()
 
     def node_env(self) -> Dict[str, str]:
         extra_env = super().node_env()
@@ -237,9 +236,6 @@ class NodeRuntimeLocal(NodeRuntime):
         return extra_env
 
     def _resolve_paths(self) -> None:
-        if path.isfile(self._install_in_progress_marker_file):
-            # Will trigger re-installation.
-            return
         self._node = self._resolve_binary()
         self._npm = path.join(self._resolve_lib(), 'npm', 'bin', 'npm-cli.js')
 
@@ -270,22 +266,15 @@ class NodeRuntimeLocal(NodeRuntime):
             install_node = InstallNode(self._base_dir, self._node_version)
             install_node.run()
             self._resolve_paths()
+            if self._use_electron:
+                self.run_npm(['install', '-g', 'electron@{}'.format(ELECTRON_VERSION)], cwd=self._node_dir)
+                self._node = self._resolve_electron_binary()
         remove(self._install_in_progress_marker_file)
-        self._resolve_paths()
 
-    def check_satisfies_electron(self) -> None:
-        if not self._use_electron:
-            return
-        if not self._resolve_electron_binary():
-            self._install_electron()
-        self._node = self._resolve_electron_binary()
-
-    def _install_electron(self) -> None:
-        if not self._use_electron:
-            return
-        with ActivityIndicator(sublime.active_window(), 'Downloading Electron'):
-            print('[lsp_utils] Installing Electron dependency...')
-            self.run_npm(['install', '-g', 'electron@{}'.format(ELECTRON_VERSION)], cwd=self._node_dir)
+    def check_satisfies_version(self, required_node_version: NpmSpec) -> None:
+        super().check_satisfies_version(required_node_version)
+        if self._use_electron:
+            self._node = self._resolve_electron_binary()
 
     def _resolve_electron_binary(self) -> Optional[str]:
         if not self._use_electron:
