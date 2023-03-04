@@ -78,11 +78,11 @@ class ServerPipResource(ServerResourceInterface):
         src_requirements_resource = ResourcePath(self._requirements_path)
         if not src_requirements_resource.exists():
             raise Exception('Missing required "requirements.txt" in {}'.format(self._requirements_path))
-        src_hash = md5(src_requirements_resource.read_bytes()).hexdigest()
+        src_requirements_hash = md5(src_requirements_resource.read_bytes()).hexdigest()
         try:
             with open(path.join(self.basedir(), self._requirements_path_relative), 'rb') as file:
-                dst_hash = md5(file.read()).hexdigest()
-            if src_hash != dst_hash:
+                dst_requirements_hash = md5(file.read()).hexdigest()
+            if src_requirements_hash != dst_requirements_hash:
                 return True
         except FileNotFoundError:
             # Needs to be re-installed.
