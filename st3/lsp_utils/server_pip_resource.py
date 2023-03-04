@@ -2,7 +2,7 @@ from .helpers import run_command_sync
 from .server_resource_interface import ServerResourceInterface
 from .server_resource_interface import ServerStatus
 from hashlib import md5
-from LSP.plugin.core.typing import Any, Dict, Optional
+from LSP.plugin.core.typing import Any, Optional
 from os import path
 from sublime_lib import ResourcePath
 import os
