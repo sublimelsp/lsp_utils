@@ -104,11 +104,12 @@ class ServerNpmResource(ServerResourceInterface):
                 shutil.rmtree(self._server_dest)
             ResourcePath(self._server_src).copytree(self._server_dest, exist_ok=True)
             if not self._skip_npm_install:
+                self._node_runtime.run_npm(['import'], cwd=self._server_dest)
                 args = [
-                    'ci',
+                    '--frozen-lockfile',
                     '--scripts-prepend-node-path=true',
-                    '--verbose',
-                    '--omit=dev',
+                    # '--verbose',
+                    '--production',
                 ]
                 self._node_runtime.run_npm(args, cwd=self._server_dest)
             remove(self._installation_marker_file)
