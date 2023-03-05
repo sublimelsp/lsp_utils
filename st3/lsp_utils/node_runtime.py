@@ -195,9 +195,9 @@ class NodeRuntime:
             raise Exception('Node.js not installed. Use NodeInstaller to install it first.')
         args = [
             'ci',
+            '--omit=dev',
             '--scripts-prepend-node-path=true',
             '--verbose',
-            '--omit=dev',
         ]
         stdout, error = run_command_sync(
             self.npm_command() + args, cwd=cwd, extra_env=self.node_env(), extra_paths=self._additional_paths)
@@ -230,26 +230,7 @@ class NodeRuntimeLocal(NodeRuntime):
         self._install_in_progress_marker_file = path.join(self._base_dir, '.installing')
         self._resolve_paths()
 
-    def _resolve_paths(self) -> None:
-        if path.isfile(self._install_in_progress_marker_file):
-            # Will trigger re-installation.
-            return
-        self._node = self._resolve_binary()
-
-    def _resolve_binary(self) -> Optional[str]:
-        exe_path = path.join(self._node_dir, 'node.exe')
-        binary_path = path.join(self._node_dir, 'bin', 'node')
-        if path.isfile(exe_path):
-            return exe_path
-        if path.isfile(binary_path):
-            return binary_path
-        return None
-
-    def resolve_lib(self) -> str:
-        lib_path = path.join(self._node_dir, 'lib', 'node_modules')
-        if not path.isdir(lib_path):
-            lib_path = path.join(self._node_dir, 'node_modules')
-        return lib_path
+    # --- NodeRuntime overrides ----------------------------------------------------------------------------------------
 
     def npm_command(self) -> List[str]:
         if not self._node or not self._npm:
@@ -265,6 +246,31 @@ class NodeRuntimeLocal(NodeRuntime):
             self._resolve_paths()
         remove(self._install_in_progress_marker_file)
         self._resolve_paths()
+
+    # --- private methods ----------------------------------------------------------------------------------------------
+
+    def _resolve_paths(self) -> None:
+        if path.isfile(self._install_in_progress_marker_file):
+            # Will trigger re-installation.
+            return
+        self._node = self._resolve_binary()
+        self._node_lib = self._resolve_lib()
+        self._npm = path.join(self._node_lib, 'npm', 'bin', 'npm-cli.js')
+
+    def _resolve_binary(self) -> Optional[str]:
+        exe_path = path.join(self._node_dir, 'node.exe')
+        binary_path = path.join(self._node_dir, 'bin', 'node')
+        if path.isfile(exe_path):
+            return exe_path
+        if path.isfile(binary_path):
+            return binary_path
+        return None
+
+    def _resolve_lib(self) -> str:
+        lib_path = path.join(self._node_dir, 'lib', 'node_modules')
+        if not path.isdir(lib_path):
+            lib_path = path.join(self._node_dir, 'node_modules')
+        return lib_path
 
 
 class NodeInstaller:
