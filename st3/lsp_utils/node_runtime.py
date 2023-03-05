@@ -14,9 +14,7 @@ import shutil
 import sublime
 import subprocess
 import sys
-import tarfile
 import urllib.request
-import zipfile
 
 __all__ = ['NodeRuntime', 'NodeRuntimePATH', 'NodeRuntimeLocal']
 
@@ -24,7 +22,8 @@ IS_WINDOWS_7_OR_LOWER = sys.platform == 'win32' and sys.getwindowsversion()[:2] 
 
 DEFAULT_NODE_VERSION = '16.17.1'
 ELECTRON_VERSION = '22.2.0'  # includes matching 16.17.1 version of Node.js
-NODE_DIST_URL = 'https://nodejs.org/dist/v{version}/{filename}'
+ELECTRON_DIST_URL = 'https://github.com/electron/electron/releases/download/v{version}/{filename}'
+YARN_URL = 'https://github.com/yarnpkg/yarn/releases/download/v1.22.19/yarn-1.22.19.js'
 NO_NODE_FOUND_MESSAGE = 'Could not start {package_name} due to not being able to resolve suitable Node.js \
 runtime on the PATH. Press the "Download Node.js" button to get required Node.js version \
 (note that it will be used only by LSP and will not affect your system otherwise).'
@@ -86,8 +85,8 @@ class NodeRuntime:
                     path.join(storage_path, 'lsp_utils', 'node-runtime'), use_electron, npm_config)
                 try:
                     local_runtime.check_binary_present()
-                except Exception:
-                    log_lines.append(' * Not downloaded. Asking to download...')
+                except Exception as ex:
+                    log_lines.append(' * Binaries check failed: {}'.format(ex))
                     # If first (or only) runtime is "local" then install without asking.
                     if selected_runtimes[0] != 'local':
                         if not sublime.ok_cancel_dialog(
@@ -98,7 +97,6 @@ class NodeRuntime:
                         local_runtime.install_node()
                     except Exception as ex:
                         log_lines.append(' * Failed downloading: {}'.format(ex))
-                        resolved_runtime = local_runtime
                         continue
                     try:
                         local_runtime.check_binary_present()
@@ -187,10 +185,10 @@ class NodeRuntime:
         if not path.isdir(cwd):
             raise Exception('Specified working directory "{}" does not exist'.format(cwd))
         if not self._node:
-            raise Exception('Node.js not installed. Use InstallNode command first.')
+            raise Exception('Node.js not installed. Use ElectronInstaller to install it first.')
         stdout, error = run_command_sync(
             self._npm_command() + args, cwd=cwd, extra_env=self.node_env(), extra_paths=self._additional_paths)
-        print('[lsp_utils] START output of command: "{}"'.format(''.join(args)))
+        print('[lsp_utils] START output of command: "{}"'.format(' '.join(args)))
         print(stdout)
         print('[lsp_utils] Command output END')
         if error is not None:
@@ -236,8 +234,8 @@ class NodeRuntimeLocal(NodeRuntime):
         return extra_env
 
     def _resolve_paths(self) -> None:
-        self._node = self._resolve_binary()
-        self._npm = path.join(self._resolve_lib(), 'npm', 'bin', 'npm-cli.js')
+        self._node = self._resolve_electron_binary()
+        self._npm = path.join(self._base_dir, 'yarn.js')
 
     def _resolve_binary(self) -> Optional[str]:
         exe_path = path.join(self._node_dir, 'node.exe')
@@ -248,12 +246,6 @@ class NodeRuntimeLocal(NodeRuntime):
             return binary_path
         return None
 
-    def _resolve_lib(self) -> str:
-        lib_path = path.join(self._node_dir, 'lib', 'node_modules')
-        if not path.isdir(lib_path):
-            lib_path = path.join(self._node_dir, 'node_modules')
-        return lib_path
-
     def _npm_command(self) -> List[str]:
         if not self._node or not self._npm:
             raise Exception('Node.js or Npm command not initialized')
@@ -263,12 +255,15 @@ class NodeRuntimeLocal(NodeRuntime):
         os.makedirs(os.path.dirname(self._install_in_progress_marker_file), exist_ok=True)
         open(self._install_in_progress_marker_file, 'a').close()
         with ActivityIndicator(sublime.active_window(), 'Downloading Node.js'):
-            install_node = InstallNode(self._base_dir, self._node_version)
+            install_node = ElectronInstaller(self._base_dir, self._node_version)
             install_node.run()
             self._resolve_paths()
-            if self._use_electron:
-                self.run_npm(['install', '-g', 'electron@{}'.format(ELECTRON_VERSION)], cwd=self._node_dir)
-                self._node = self._resolve_electron_binary()
+            # ZipFile removes permissions, make server executable
+            if self._node and sublime.platform() != 'windows':
+                os.chmod(self._node, 0o755)
+            # if self._use_electron:
+            #     self.run_npm(['install', '-g', 'electron@{}'.format(ELECTRON_VERSION)], cwd=self._node_dir)
+            #     self._node = self._resolve_electron_binary()
         remove(self._install_in_progress_marker_file)
 
     def check_satisfies_version(self, required_node_version: NpmSpec) -> None:
@@ -279,19 +274,18 @@ class NodeRuntimeLocal(NodeRuntime):
     def _resolve_electron_binary(self) -> Optional[str]:
         if not self._use_electron:
             return None
-        electron_dist_dir = path.join(self._resolve_lib(), 'electron', 'dist')
         binary_path = None
         platform = sublime.platform()
         if platform == 'osx':
-            binary_path = path.join(electron_dist_dir, 'Electron.app', 'Contents', 'MacOS', 'Electron')
+            binary_path = path.join(self._base_dir, 'Electron.app', 'Contents', 'MacOS', 'Electron')
         elif platform == 'windows':
-            binary_path = path.join(electron_dist_dir, 'electron.exe')
+            binary_path = path.join(self._base_dir, 'electron.exe')
         else:
-            binary_path = path.join(electron_dist_dir, 'electron')
+            binary_path = path.join(self._base_dir, 'electron')
         return binary_path if binary_path and path.isfile(binary_path) else None
 
 
-class InstallNode:
+class ElectronInstaller:
     '''Command to install a local copy of Node.js'''
 
     def __init__(self, base_dir: str, node_version: str = DEFAULT_NODE_VERSION) -> None:
@@ -304,28 +298,26 @@ class InstallNode:
         self._cache_dir = path.join(self._base_dir, 'cache')
 
     def run(self) -> None:
-        print('[lsp_utils] Downloading Node.js {}'.format(self._node_version))
         archive, url = self._node_archive()
+        print('[lsp_utils] Downloading Node.js {} from {}'.format(self._node_version, url))
         if not self._node_archive_exists(archive):
             self._download_node(url, archive)
         self._install(archive)
+        self._download_yarn()
 
     def _node_archive(self) -> Tuple[str, str]:
         platform = sublime.platform()
         arch = sublime.arch()
-        if platform == 'windows' and arch == 'x64':
-            node_os = 'win'
-            archive = 'zip'
+        if platform == 'windows':
+            platform_code = 'win32'
         elif platform == 'linux':
-            node_os = 'linux'
-            archive = 'tar.gz'
+            platform_code = 'linux'
         elif platform == 'osx':
-            node_os = 'darwin'
-            archive = 'tar.gz'
+            platform_code = 'darwin'
         else:
             raise Exception('{} {} is not supported'.format(arch, platform))
-        filename = 'node-v{}-{}-{}.{}'.format(self._node_version, node_os, arch, archive)
-        dist_url = NODE_DIST_URL.format(version=self._node_version, filename=filename)
+        filename = 'electron-v{}-{}-{}.zip'.format(ELECTRON_VERSION, platform_code, arch)
+        dist_url = ELECTRON_DIST_URL.format(version=ELECTRON_VERSION, filename=filename)
         return filename, dist_url
 
     def _node_archive_exists(self, filename: str) -> bool:
@@ -342,21 +334,24 @@ class InstallNode:
 
     def _install(self, filename: str) -> None:
         archive = path.join(self._cache_dir, filename)
-        opener = zipfile.ZipFile if filename.endswith('.zip') else tarfile.open  # type: Any
         try:
-            with opener(archive) as f:
-                names = f.namelist() if hasattr(f, 'namelist') else f.getnames()
-                install_dir, _ = next(x for x in names if '/' in x).split('/', 1)
+            with ZipFileWithFixedPermissions(archive) as f:
+                names = f.namelist()
+                _, _ = next(x for x in names if '/' in x).split('/', 1)
                 bad_members = [x for x in names if x.startswith('/') or x.startswith('..')]
                 if bad_members:
                     raise Exception('{} appears to be malicious, bad filenames: {}'.format(filename, bad_members))
                 f.extractall(self._base_dir)
-                with chdir(self._base_dir):
-                    os.rename(install_dir, 'node')
         except Exception as ex:
             raise ex
         finally:
             remove(archive)
+
+    def _download_yarn(self) -> None:
+        archive = path.join(self._base_dir, 'yarn.js')
+        with urllib.request.urlopen(YARN_URL) as response:
+            with open(archive, 'wb') as f:
+                shutil.copyfileobj(response, f)
 
 
 @contextmanager
