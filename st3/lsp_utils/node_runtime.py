@@ -18,7 +18,7 @@ import tarfile
 import urllib.request
 import zipfile
 
-__all__ = ['NodeRuntime', 'NodeRuntimePATH', 'NodeRuntimeLocal', 'ElectronRuntimeLocal']
+__all__ = ['NodeRuntime']
 
 IS_WINDOWS_7_OR_LOWER = sys.platform == 'win32' and sys.getwindowsversion()[:2] <= (6, 1)  # type: ignore
 
@@ -86,11 +86,8 @@ class NodeRuntime:
             elif runtime_type == 'local':
                 log_lines.append('Resolving Node.js Runtime from lsp_utils for package {}...'.format(package_name))
                 use_electron = cast(bool, settings.get('local_use_electron') or False)
-                node_runtime_directory = path.join(storage_path, 'lsp_utils', 'node-runtime')
-                if use_electron:
-                    local_runtime = ElectronRuntimeLocal(node_runtime_directory)
-                else:
-                    local_runtime = NodeRuntimeLocal(node_runtime_directory)
+                runtime_dir = path.join(storage_path, 'lsp_utils', 'node-runtime')
+                local_runtime = ElectronRuntimeLocal(runtime_dir) if use_electron else NodeRuntimeLocal(runtime_dir)
                 try:
                     local_runtime.check_binary_present()
                 except Exception as ex:
