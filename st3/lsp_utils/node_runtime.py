@@ -129,6 +129,9 @@ class NodeRuntime:
         return '{}(node: {}, npm: {}, version: {})'.format(
             self.__class__.__name__, self._node, self._npm, self._version if self._version else None)
 
+    def install_node(self) -> None:
+        raise Exception('Not supported!')
+
     def node_bin(self) -> Optional[str]:
         return self._node
 
@@ -341,24 +344,10 @@ class ElectronRuntimeLocal(NodeRuntime):
         if not path.isfile(self._install_in_progress_marker_file):
             self._resolve_paths()
 
-    def _resolve_paths(self) -> None:
-        self._node = self._resolve_binary()
-        self._npm = path.join(self._base_dir, 'yarn.js')
-
-    def _resolve_binary(self) -> Optional[str]:
-        binary_path = None
-        platform = sublime.platform()
-        if platform == 'osx':
-            binary_path = path.join(self._base_dir, 'Electron.app', 'Contents', 'MacOS', 'Electron')
-        elif platform == 'windows':
-            binary_path = path.join(self._base_dir, 'electron.exe')
-        else:
-            binary_path = path.join(self._base_dir, 'electron')
-        return binary_path if binary_path and path.isfile(binary_path) else None
+    # --- NodeRuntime overrides ----------------------------------------------------------------------------------------
 
     def node_env(self) -> Dict[str, str]:
         extra_env = super().node_env()
-        # Don't use user's local NPM config.
         extra_env.update({'ELECTRON_RUN_AS_NODE': 'true'})
         return extra_env
 
@@ -382,6 +371,23 @@ class ElectronRuntimeLocal(NodeRuntime):
             # '--verbose',
         ]
         self._run_yarn(args, cwd)
+
+    # --- private methods ----------------------------------------------------------------------------------------------
+
+    def _resolve_paths(self) -> None:
+        self._node = self._resolve_binary()
+        self._npm = path.join(self._base_dir, 'yarn.js')
+
+    def _resolve_binary(self) -> Optional[str]:
+        binary_path = None
+        platform = sublime.platform()
+        if platform == 'osx':
+            binary_path = path.join(self._base_dir, 'Electron.app', 'Contents', 'MacOS', 'Electron')
+        elif platform == 'windows':
+            binary_path = path.join(self._base_dir, 'electron.exe')
+        else:
+            binary_path = path.join(self._base_dir, 'electron')
+        return binary_path if binary_path and path.isfile(binary_path) else None
 
     def _run_yarn(self, args: List[str], cwd: str) -> None:
         if not path.isdir(cwd):
