@@ -11,9 +11,4 @@
     // memory usage due it having pointer compression (https://v8.dev/blog/pointer-compression) enabled.
     // Only relevant when using `local` variant of `nodejs_runtime`.
     "local_use_electron": false,
-    // NPM configuration options used when running NPM with the `local` runtime.
-    // Local runtime doesn't use user configuration in ~/.npmrc so you can use this setting
-    // to pass any custom options instead.
-    // Refer to https://docs.npmjs.com/cli/v9/using-npm/config for the list of options.
-    "local_npm_config": {}
 }

@@ -28,14 +28,6 @@
               },
               "uniqueItems": true,
             },
-            "local_npm_config": {
-              "type": "object",
-              "items": {
-                "type": "string"
-              },
-              "default": {},
-              "markdownDescription": "NPM configuration options used when running NPM with the `local` runtime.\nLocal runtime doesn't use user configuration in ~/.npmrc so you can use this setting to pass any custom options instead.\n\nRefer to https://docs.npmjs.com/cli/v9/using-npm/config for the list of options."
-            },
             "local_use_electron": {
               "type": "boolean",
               "default": false,
