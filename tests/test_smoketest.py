@@ -35,7 +35,7 @@ class SystemRuntime(BaseTestCase):
         yield from super().setUpClass()
 
 
-class LocalRuntime(BaseTestCase):
+class LocalNodeRuntime(BaseTestCase):
 
     @classmethod
     def setUpClass(cls) -> Generator:
@@ -46,7 +46,7 @@ class LocalRuntime(BaseTestCase):
         yield from super().setUpClass()
 
 
-class LocalRuntimeAndElectron(BaseTestCase):
+class LocalElectronRuntime(BaseTestCase):
 
     @classmethod
     def setUpClass(cls) -> Generator:
