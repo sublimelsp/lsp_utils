@@ -1,14 +1,19 @@
 from LSP.plugin.core.registry import windows
 from LSP.plugin.core.sessions import Session
 from LSP.plugin.core.types import ClientStates
-from LSP.plugin.core.typing import Generator, Optional
-from os.path import join
+from LSP.plugin.core.typing import Any, Dict, Generator, Optional
+from lsp_utils import NodeRuntime
+from lsp_utils import SETTINGS_FILENAME
+from os import remove
+from os.path import isfile, join
 from sublime_plugin import view_event_listeners
 from unittesting import DeferrableTestCase
 import sublime
 
 try:
     from LSP.plugin.documents import DocumentSyncListener
+    from LSP.plugin.core.sessions import get_plugin
+    lsp_pyright_class = get_plugin('LSP-pyright')
     ST3 = False
 except ImportError:
     from LSP.plugin.core.documents import DocumentSyncListener
@@ -43,6 +48,8 @@ class TextDocumentTestCase(DeferrableTestCase):
     @classmethod
     def setUpClass(cls) -> Generator:
         super().setUpClass()
+        if not ST3:
+            lsp_pyright_class.setup()
         window = sublime.active_window()
         filename = expand(join('$packages', 'lsp_utils', 'tests', cls.get_test_file_name()), window)
         open_view = window.find_open_file(filename)
@@ -52,7 +59,7 @@ class TextDocumentTestCase(DeferrableTestCase):
         yield {'condition': lambda: not cls.view.is_loading(), 'timeout': TIMEOUT_TIME}
         yield cls.ensure_document_listener_created
         # First start needs time to install the dependencies.
-        INSTALL_TIMEOUT = 6000
+        INSTALL_TIMEOUT = 30000
         yield {
             'condition': lambda: cls.wm.get_session(cls.get_session_name(), filename) is not None,
             'timeout': INSTALL_TIMEOUT
@@ -106,6 +113,21 @@ class TextDocumentTestCase(DeferrableTestCase):
         return False
 
     @classmethod
+    def set_lsp_utils_settings(cls, value: Dict[str, Any]) -> None:
+        settings = sublime.load_settings(SETTINGS_FILENAME)
+        for key, value in value.items():
+            settings.set(key, value)
+        sublime.save_settings(SETTINGS_FILENAME)
+
+    @classmethod
+    def remove_lsp_utils_settings(cls) -> None:
+        settings_filepath = join(sublime.packages_path(), 'User', SETTINGS_FILENAME)
+        if isfile(settings_filepath):
+            remove(settings_filepath)
+        sublime.save_settings(SETTINGS_FILENAME)
+        NodeRuntime._node_runtime_resolved = False
+
+    @classmethod
     def tearDownClass(cls) -> 'Generator':
         if cls.session and cls.wm:
             if ST3:
@@ -117,6 +139,9 @@ class TextDocumentTestCase(DeferrableTestCase):
                 yield lambda: cls.wm.get_session(cls.get_session_name(), cls.view.file_name()) is None
         cls.session = None
         cls.wm = None
+        cls.remove_lsp_utils_settings()
+        if not ST3:
+            lsp_pyright_class.cleanup()
         super().tearDownClass()
 
     def doCleanups(self) -> 'Generator':

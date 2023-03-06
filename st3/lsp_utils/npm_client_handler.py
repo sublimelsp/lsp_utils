@@ -132,6 +132,11 @@ class NpmClientHandler(GenericClientHandler):
         return cls.__server
 
     @classmethod
+    def cleanup(cls) -> None:
+        cls.__server = None
+        super().cleanup()
+
+    @classmethod
     def can_start(cls, window: sublime.Window, initiating_view: sublime.View,
                   workspace_folders: List[WorkspaceFolder], configuration: ClientConfig) -> Optional[str]:
         reason = super().can_start(window, initiating_view, workspace_folders, configuration)

@@ -19,7 +19,6 @@ Module with LSP-related utilities for Sublime Text
 }
 ```
 
-2. Run the **Package Control: Satisfy Dependencies** command via command palette
-
+2. Run the **Package Control: Satisfy Dependencies** command via the _Command Palette_.
 
 See also [Documentation on Dependencies](https://packagecontrol.io/docs/dependencies)

@@ -27,6 +27,11 @@
                 ]
               },
               "uniqueItems": true,
+            },
+            "local_use_electron": {
+              "type": "boolean",
+              "default": false,
+              "markdownDescription": "Uses Node.js runtime from the Electron package rather than the official distribution. This has the benefit of lower memory usage due to it having the [pointer compression](https://v8.dev/blog/pointer-compression) enabled.\n\nOnly relevant when using `local` variant of `nodejs_runtime`."
             }
           },
           "additionalProperties": false,
