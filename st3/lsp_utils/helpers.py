@@ -32,7 +32,12 @@ def run_command_sync(
                 env.update(extra_env)
             if extra_paths:
                 env['PATH'] = os.path.pathsep.join(extra_paths) + os.path.pathsep + env['PATH']
-        output = subprocess.check_output(args, cwd=cwd, shell=shell, stderr=subprocess.STDOUT, env=env)
+        startupinfo = None
+        if is_windows:
+            startupinfo = subprocess.STARTUPINFO()  # type: ignore
+            startupinfo.dwFlags |= subprocess.SW_HIDE | subprocess.STARTF_USESHOWWINDOW  # type: ignore
+        output = subprocess.check_output(
+            args, cwd=cwd, shell=shell, stderr=subprocess.STDOUT, env=env, startupinfo=startupinfo)
         return (decode_bytes(output).strip(), None)
     except subprocess.CalledProcessError as error:
         return ('', decode_bytes(error.output).strip())
