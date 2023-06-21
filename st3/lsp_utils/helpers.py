@@ -7,9 +7,15 @@ import threading
 StringCallback = Callable[[str], None]
 SemanticVersion = Tuple[int, int, int]
 
+is_windows = sublime.platform() == 'windows'
+
 
 def run_command_sync(
-    args: List[str], cwd: Optional[str] = None, extra_env: Optional[Dict[str, str]] = None, extra_paths: List[str] = []
+    args: List[str],
+    cwd: Optional[str] = None,
+    extra_env: Optional[Dict[str, str]] = None,
+    extra_paths: List[str] = [],
+    shell: bool = is_windows,
 ) -> Tuple[str, Optional[str]]:
     """
     Runs the given command synchronously.
@@ -26,8 +32,7 @@ def run_command_sync(
                 env.update(extra_env)
             if extra_paths:
                 env['PATH'] = os.path.pathsep.join(extra_paths) + os.path.pathsep + env['PATH']
-        output = subprocess.check_output(
-            args, cwd=cwd, shell=sublime.platform() == 'windows', stderr=subprocess.STDOUT, env=env)
+        output = subprocess.check_output(args, cwd=cwd, shell=shell, stderr=subprocess.STDOUT, env=env)
         return (decode_bytes(output).strip(), None)
     except subprocess.CalledProcessError as error:
         return ('', decode_bytes(error.output).strip())
