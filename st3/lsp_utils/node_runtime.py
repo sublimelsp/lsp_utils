@@ -160,11 +160,12 @@ class NodeRuntime:
             return self._version
         if not self._node:
             raise Exception('Node.js not initialized')
-        version, error = run_command_sync([self._node, '--version'], extra_env=self.node_env())
+        # In this case we have fully resolved binary path already so shouldn't need `shell` on Windows.
+        version, error = run_command_sync([self._node, '--version'], extra_env=self.node_env(), shell=False)
         if error is None:
             self._version = Version(version.replace('v', ''))
         else:
-            raise Exception('Error resolving Node.js version:\n{}'.format(error))
+            raise Exception('Failed resolving Node.js version. Error:\n{}'.format(error))
         return self._version
 
     def run_node(
@@ -200,7 +201,9 @@ class NodeRuntime:
             '--verbose',
         ]
         stdout, error = run_command_sync(
-            self.npm_command() + args, cwd=cwd, extra_env=self.node_env(), extra_paths=self._additional_paths)
+            self.npm_command() + args, cwd=cwd, extra_env=self.node_env(), extra_paths=self._additional_paths,
+            shell=False
+        )
         print('[lsp_utils] START output of command: "{}"'.format(' '.join(args)))
         print(stdout)
         print('[lsp_utils] Command output END')
@@ -400,7 +403,9 @@ class ElectronRuntimeLocal(NodeRuntime):
             raise Exception('Specified working directory "{}" does not exist'.format(cwd))
         if not self._node:
             raise Exception('Node.js not installed. Use NodeInstaller to install it first.')
-        stdout, error = run_command_sync([self._node, self._yarn] + args, cwd=cwd, extra_env=self.node_env())
+        stdout, error = run_command_sync(
+            [self._node, self._yarn] + args, cwd=cwd, extra_env=self.node_env(), shell=False
+        )
         print('[lsp_utils] START output of command: "{}"'.format(' '.join(args)))
         print(stdout)
         print('[lsp_utils] Command output END')
