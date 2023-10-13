@@ -25,8 +25,8 @@ IS_WINDOWS_7_OR_LOWER = sys.platform == 'win32' and sys.getwindowsversion()[:2] 
 NODE_RUNTIME_VERSION = '18.18.1'
 NODE_DIST_URL = 'https://nodejs.org/dist/v{version}/{filename}'
 
-ELECTRON_RUNTIME_VERSION = '26.4.0'  # includes Node.js v18.16.1
-ELECTRON_NODE_VERSION = '18.16.1'
+ELECTRON_RUNTIME_VERSION = '27.0.0'  # includes Node.js v18.17.1
+ELECTRON_NODE_VERSION = '18.17.1'
 ELECTRON_DIST_URL = 'https://github.com/electron/electron/releases/download/v{version}/{filename}'
 YARN_URL = 'https://github.com/yarnpkg/yarn/releases/download/v1.22.19/yarn-1.22.19.js'
 
