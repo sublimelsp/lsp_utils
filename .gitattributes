@@ -1,4 +1,6 @@
 .github/ export-ignore
+.gitattributes export-ignore
+.gitignore export-ignore
 .style.yapf export-ignore
 docs/ export-ignore
 mypy.ini export-ignore
