@@ -70,6 +70,7 @@ class ClientHandlerInterface(metaclass=ABCMeta):
         ...
 
     @classmethod
+    @abstractmethod
     def read_settings(cls) -> Tuple[sublime.Settings, str]:
         ...
 

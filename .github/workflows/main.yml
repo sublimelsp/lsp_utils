@@ -16,51 +16,45 @@ on:
 
 jobs:
   Unittesting:
-    name: Unittesting (ST${{ matrix.sublime-text.version }}, ${{ matrix.os }})
+    name: Unittesting (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macOS-latest"]
-        sublime-text:
-          - version: 3
-            lsp-tag: 'st3'
-          - version: 4
-            lsp-tag: 'main'
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/setup-node@v2
         with:
           node-version: '18'
-      - if: ${{ matrix.os == 'ubuntu-latest' && matrix.sublime-text.version == '3' }}
-        run: |
-          sudo apt update
-          sudo apt install at-spi2-core
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - if: ${{ matrix.os == 'macOS-latest' }}
         run: brew unlink openssl
       - uses: SublimeText/UnitTesting/actions/setup@v1
         with:
-          sublime-text-version: ${{ matrix.sublime-text.version }}
+          sublime-text-version: 4
           extra-packages: |
-            sublimelsp/LSP@${{ matrix.sublime-text.lsp-tag }}
-            sublimelsp/LSP-pyright
+            sublimelsp/LSP@main
+            sublimelsp/LSP-pyright@master
       - uses: SublimeText/UnitTesting/actions/run-tests@v1
 
   Lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
         with:
           path: lsp_utils
       - uses: actions/setup-python@v2
         with:
           python-version: '3.8'
-      - run: sudo apt update
-      - run: sudo apt install --no-install-recommends -y x11-xserver-utils
-      - run: pip3 install mypy==0.982 flake8==5.0.4 pyright==1.1.274 --user
+      - run: |
+          sudo apt update
+          sudo apt install --no-install-recommends -y x11-xserver-utils
+      - run: pip3 install mypy==1.6.0 flake8==5.0.4 pyright==1.1.331 --user
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-      - run: cd .. && git clone https://github.com/sublimelsp/LSP.git
-      - run: cd .. && git clone https://github.com/SublimeText/sublime_lib.git
-      - run: mypy st3/lsp_utils
-      - run: flake8 st3/lsp_utils tests
-      - run: pyright st3/lsp_utils
+      - run: git clone https://github.com/sublimelsp/LSP.git
+      - run: git clone https://github.com/SublimeText/sublime_lib.git
+      - run: |
+          cd lsp_utils
+          mypy st3/lsp_utils
+          flake8 st3/lsp_utils tests
+          pyright st3/lsp_utils
