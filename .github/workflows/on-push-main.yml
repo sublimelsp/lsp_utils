@@ -3,7 +3,7 @@ name: On Push To Master
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   deploy_docs:
