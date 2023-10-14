@@ -35,7 +35,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install at-spi2-core
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - if: ${{ matrix.os == 'macOS-latest' }}
         run: brew unlink openssl
       - uses: SublimeText/UnitTesting/actions/setup@v1
@@ -49,7 +49,7 @@ jobs:
   Lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
         with:
           path: lsp_utils
       - uses: actions/setup-python@v2
