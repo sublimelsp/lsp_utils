@@ -16,33 +16,24 @@ on:
 
 jobs:
   Unittesting:
-    name: Unittesting (ST${{ matrix.sublime-text.version }}, ${{ matrix.os }})
+    name: Unittesting (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macOS-latest"]
-        sublime-text:
-          - version: 3
-            lsp-tag: 'st3'
-          - version: 4
-            lsp-tag: 'main'
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/setup-node@v2
         with:
           node-version: '18'
-      - if: ${{ matrix.os == 'ubuntu-latest' && matrix.sublime-text.version == '3' }}
-        run: |
-          sudo apt update
-          sudo apt install at-spi2-core
       - uses: actions/checkout@v4
       - if: ${{ matrix.os == 'macOS-latest' }}
         run: brew unlink openssl
       - uses: SublimeText/UnitTesting/actions/setup@v1
         with:
-          sublime-text-version: ${{ matrix.sublime-text.version }}
+          sublime-text-version: 4
           extra-packages: |
-            sublimelsp/LSP@${{ matrix.sublime-text.lsp-tag }}
+            sublimelsp/LSP
             sublimelsp/LSP-pyright
       - uses: SublimeText/UnitTesting/actions/run-tests@v1
 
