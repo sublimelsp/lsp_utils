@@ -140,18 +140,16 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface):
 
     @classmethod
     def setup(cls) -> None:
-        super().setup()
         register_plugin(cls)
 
     @classmethod
     def cleanup(cls) -> None:
         unregister_plugin(cls)
-        super().cleanup()
 
     # --- Internals ---------------------------------------------------------------------------------------------------
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        api = ApiWrapper(ref(self))
+        api = ApiWrapper(ref(self))  # type: ignore
         register_decorated_handlers(self, api)
         self.on_ready(api)
