@@ -150,6 +150,6 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        api = ApiWrapper(ref(self))
+        api = ApiWrapper(ref(self))  # type: ignore
         register_decorated_handlers(self, api)
         self.on_ready(api)
