@@ -31,6 +31,10 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: '18'
+      - if: ${{ matrix.os == 'ubuntu-latest' && matrix.sublime-text.version == '3' }}
+        run: |
+          sudo apt update
+          sudo apt install at-spi2-core
       - uses: actions/checkout@v2
       - if: ${{ matrix.os == 'macOS-latest' }}
         run: brew unlink openssl
