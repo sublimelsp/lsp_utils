@@ -55,12 +55,13 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: '3.8'
-      - run: sudo apt update
-      - run: sudo apt install --no-install-recommends -y x11-xserver-utils
+      - run: |
+          sudo apt update
+          sudo apt install --no-install-recommends -y x11-xserver-utils
       - run: pip3 install mypy==0.982 flake8==5.0.4 pyright==1.1.274 --user
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-      - run: cd .. && git clone https://github.com/sublimelsp/LSP.git
-      - run: cd .. && git clone https://github.com/SublimeText/sublime_lib.git
+      - run: git clone https://github.com/sublimelsp/LSP.git ..
+      - run: git clone https://github.com/SublimeText/sublime_lib.git ..
       - run: mypy st3/lsp_utils
       - run: flake8 st3/lsp_utils tests
       - run: pyright st3/lsp_utils
