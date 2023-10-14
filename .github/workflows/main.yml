@@ -62,6 +62,7 @@ jobs:
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
       - run: git clone https://github.com/sublimelsp/LSP.git ../LSP
       - run: git clone https://github.com/SublimeText/sublime_lib.git ../sublime_lib
+      - run: ls -la
       - run: mypy st3/lsp_utils
       - run: flake8 st3/lsp_utils tests
       - run: pyright st3/lsp_utils
