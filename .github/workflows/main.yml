@@ -64,6 +64,6 @@ jobs:
       - run: git clone https://github.com/SublimeText/sublime_lib.git
       - run: |
           cd lsp_utils
-          mypy lsp_utils/st3/lsp_utils
-          flake8 lsp_utils/st3/lsp_utils tests
-          pyright lsp_utils/st3/lsp_utils
+          mypy st3/lsp_utils
+          flake8 st3/lsp_utils tests
+          pyright st3/lsp_utils
