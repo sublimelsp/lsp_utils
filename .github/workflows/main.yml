@@ -60,8 +60,8 @@ jobs:
           sudo apt install --no-install-recommends -y x11-xserver-utils
       - run: pip3 install mypy==0.982 flake8==5.0.4 pyright==1.1.274 --user
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-      - run: git clone https://github.com/sublimelsp/LSP.git ..
-      - run: git clone https://github.com/SublimeText/sublime_lib.git ..
+      - run: git clone https://github.com/sublimelsp/LSP.git ../LSP
+      - run: git clone https://github.com/SublimeText/sublime_lib.git ../sublime_lib
       - run: mypy st3/lsp_utils
       - run: flake8 st3/lsp_utils tests
       - run: pyright st3/lsp_utils
