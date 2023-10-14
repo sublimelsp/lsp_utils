@@ -34,7 +34,7 @@ jobs:
           sublime-text-version: 4
           extra-packages: |
             sublimelsp/LSP@main
-            sublimelsp/LSP-pyright@main
+            sublimelsp/LSP-pyright@master
       - uses: SublimeText/UnitTesting/actions/run-tests@v1
 
   Lint:
