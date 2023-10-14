@@ -140,13 +140,11 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface):
 
     @classmethod
     def setup(cls) -> None:
-        super().setup()
         register_plugin(cls)
 
     @classmethod
     def cleanup(cls) -> None:
         unregister_plugin(cls)
-        super().cleanup()
 
     # --- Internals ---------------------------------------------------------------------------------------------------
 
