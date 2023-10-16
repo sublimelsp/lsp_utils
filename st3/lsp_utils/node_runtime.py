@@ -48,7 +48,7 @@ class NodeRuntime:
     ) -> Optional['NodeRuntime']:
         if isinstance(required_node_version, tuple):
             required_semantic_version = NpmSpec('>={}'.format(version_to_string(required_node_version)))
-        elif isinstance(required_node_version, str):
+        else:
             required_semantic_version = NpmSpec(required_node_version)
         if cls._node_runtime_resolved:
             if cls._node_runtime:
@@ -181,7 +181,7 @@ class NodeRuntime:
         stdout: int = subprocess.PIPE,
         stderr: int = subprocess.PIPE,
         env: Dict[str, Any] = {}
-    ) -> Optional[subprocess.Popen]:
+    ) -> Optional['subprocess.Popen[bytes]']:
         node_bin = self.node_bin()
         if node_bin is None:
             return None
@@ -189,9 +189,9 @@ class NodeRuntime:
         os_env.update(self.node_env())
         os_env.update(env)
         startupinfo = None
-        if sublime.platform() == 'windows':
-            startupinfo = subprocess.STARTUPINFO()  # type: ignore
-            startupinfo.dwFlags |= subprocess.SW_HIDE | subprocess.STARTF_USESHOWWINDOW  # type: ignore
+        if sys.platform == 'win32':
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.SW_HIDE | subprocess.STARTF_USESHOWWINDOW
         return subprocess.Popen(
             [node_bin] + args, stdin=stdin, stdout=stdout, stderr=stderr, env=os_env, startupinfo=startupinfo)
 
