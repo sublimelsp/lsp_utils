@@ -18,7 +18,7 @@ __all__ = ['weak_method']
 #
 # [1] https://github.com/SublimeText/sublime_lib/blob/master/st3/sublime_lib/_util/weak_method.py
 
-def weak_method(method: Callable[..., Any]) -> Callable:
+def weak_method(method: Callable[..., Any]) -> Callable[..., Any]:
     assert isinstance(method, MethodType)
     self_ref = weakref.ref(method.__self__)
     function_ref = weakref.ref(method.__func__)

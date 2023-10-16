@@ -1,8 +1,9 @@
+from .helpers import SemanticVersion
 from .node_runtime import NodeRuntime
 from .server_resource_interface import ServerResourceInterface
 from .server_resource_interface import ServerStatus
 from hashlib import md5
-from LSP.plugin.core.typing import Dict, Optional
+from LSP.plugin.core.typing import Dict, Optional, TypedDict, Union
 from os import makedirs
 from os import path
 from os import remove
@@ -12,6 +13,17 @@ from sublime_lib import ResourcePath
 
 __all__ = ['ServerNpmResource']
 
+ServerNpmResourceCreateOptions = TypedDict('ServerNpmResourceCreateOptions', {
+    'package_name': str,
+    'server_directory': str,
+    'server_binary_path': str,
+    'package_storage': str,
+    'storage_path': str,
+    'minimum_node_version': SemanticVersion,
+    'required_node_version': str,
+    'skip_npm_install': bool,
+})
+
 
 class ServerNpmResource(ServerResourceInterface):
     """
@@ -20,14 +32,14 @@ class ServerNpmResource(ServerResourceInterface):
     """
 
     @classmethod
-    def create(cls, options: Dict) -> 'ServerNpmResource':
+    def create(cls, options: ServerNpmResourceCreateOptions) -> 'ServerNpmResource':
         package_name = options['package_name']
         server_directory = options['server_directory']
         server_binary_path = options['server_binary_path']
         package_storage = options['package_storage']
         storage_path = options['storage_path']
         minimum_node_version = options['minimum_node_version']
-        required_node_version = options['required_node_version']
+        required_node_version = options['required_node_version']  # type: Union[str, SemanticVersion]
         skip_npm_install = options['skip_npm_install']
         # Fallback to "minimum_node_version" if "required_node_version" is 0.0.0 (not overridden).
         if '0.0.0' == required_node_version:

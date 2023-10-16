@@ -1,6 +1,6 @@
 # LSP utilities for Package Control
 
-Module with LSP-related utilities for Sublime Text
+Module with LSP-related utilities for Sublime Text.
 
 📘 [Documentation](https://sublimelsp.github.io/lsp_utils/)
 
