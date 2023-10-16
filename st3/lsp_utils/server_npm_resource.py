@@ -6,8 +6,9 @@ from LSP.plugin.core.typing import Dict, Optional
 from os import makedirs
 from os import path
 from os import remove
+from os import walk
+from shutil import rmtree
 from sublime_lib import ResourcePath
-import shutil
 
 __all__ = ['ServerNpmResource']
 
@@ -43,8 +44,10 @@ class ServerNpmResource(ServerResourceInterface):
             raise Exception('ServerNpmResource could not initialize due to wrong input')
         self._status = ServerStatus.UNINITIALIZED
         self._package_name = package_name
+        self._package_storage = package_storage
         self._server_src = 'Packages/{}/{}/'.format(self._package_name, server_directory)
         node_version = str(node_runtime.resolve_version())
+        self._node_version = node_version
         self._server_dest = path.join(package_storage, node_version, server_directory)
         self._binary_path = path.join(package_storage, node_version, server_binary_path)
         self._installation_marker_file = path.join(package_storage, node_version, '.installing')
@@ -98,10 +101,11 @@ class ServerNpmResource(ServerResourceInterface):
 
     def install_or_update(self) -> None:
         try:
+            self._cleanup_package_storage()
             makedirs(path.dirname(self._installation_marker_file), exist_ok=True)
             open(self._installation_marker_file, 'a').close()
             if path.isdir(self._server_dest):
-                shutil.rmtree(self._server_dest)
+                rmtree(self._server_dest)
             ResourcePath(self._server_src).copytree(self._server_dest, exist_ok=True)
             if not self._skip_npm_install:
                 self._node_runtime.run_install(cwd=self._server_dest)
@@ -110,3 +114,15 @@ class ServerNpmResource(ServerResourceInterface):
             self._status = ServerStatus.ERROR
             raise Exception('Error installing the server:\n{}'.format(error))
         self._status = ServerStatus.READY
+
+    def _cleanup_package_storage(self) -> None:
+        if not path.isdir(self._package_storage):
+            return
+        """Clean up subdirectories of package storage that belong to other node versions."""
+        subdirectories = next(walk(self._package_storage))[1]
+        for directory in subdirectories:
+            if directory == self._node_version:
+                continue
+            node_storage_path = path.join(self._package_storage, directory)
+            print('[lsp_utils] Deleting outdated storage directory "{}"'.format(node_storage_path))
+            rmtree(node_storage_path)

@@ -98,6 +98,12 @@ class NodeRuntime:
                             log_lines.append(' * Download skipped')
                             continue
                     try:
+                        # Remove outdated runtimes.
+                        if path.isdir(runtime_dir):
+                            for directory in next(os.walk(runtime_dir))[1]:
+                                old_dir = path.join(runtime_dir, directory)
+                                print('[lsp_utils] Deleting outdated Node.js runtime directory "{}"'.format(old_dir))
+                                shutil.rmtree(old_dir)
                         local_runtime.install_node()
                     except Exception as ex:
                         log_lines.append(' * Failed downloading: {}'.format(ex))
