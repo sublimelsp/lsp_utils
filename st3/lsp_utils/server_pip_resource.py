@@ -67,6 +67,9 @@ class ServerPipResource(ServerResourceInterface):
     def binary_path(self) -> str:
         return self.server_binary()
 
+    def get_status(self) -> int:
+        return self._status
+
     def needs_installation(self) -> bool:
         if not path.exists(self.server_binary()) or not path.exists(self.pip_binary()):
             return True
@@ -100,10 +103,7 @@ class ServerPipResource(ServerResourceInterface):
             self.run(self.pip_binary(), 'install', '-r', dest_requirements_txt_path, '--disable-pip-version-check')
             with open(self.python_version(), 'w') as f:
                 f.write(self.run(self._python_binary, '--version'))
-        except Exception:
-            shutil.rmtree(self.basedir(), ignore_errors=True)
-            raise
+        except Exception as error:
+            self._status = ServerStatus.ERROR
+            raise Exception('Error installing the server:\n{}'.format(error))
         self._status = ServerStatus.READY
-
-    def get_status(self) -> int:
-        return self._status
