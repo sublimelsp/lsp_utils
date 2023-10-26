@@ -97,13 +97,20 @@ class NodeRuntime:
                                 NO_NODE_FOUND_MESSAGE.format(package_name=package_name), 'Download Node.js'):
                             log_lines.append(' * Download skipped')
                             continue
+                    # Remove outdated runtimes.
+                    if path.isdir(runtime_dir):
+                        for directory in next(os.walk(runtime_dir))[1]:
+                            old_dir = path.join(runtime_dir, directory)
+                            print('[lsp_utils] Deleting outdated Node.js runtime directory "{}"'.format(old_dir))
+                            # On Windows, "shutil.rmtree" will raise file not found errors when deleting a long path (>255 chars).
+                            # See https://stackoverflow.com/a/14076169/4643765
+                            # See https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
+                            deletion_path = ('\\\\?\\' + old_dir) if sublime.platform() == 'windows' else old_dir
+                            try:
+                                shutil.rmtree(deletion_path)
+                            except Exception as ex:
+                                log_lines.append(' * Failed deleting: {}'.format(ex))
                     try:
-                        # Remove outdated runtimes.
-                        if path.isdir(runtime_dir):
-                            for directory in next(os.walk(runtime_dir))[1]:
-                                old_dir = path.join(runtime_dir, directory)
-                                print('[lsp_utils] Deleting outdated Node.js runtime directory "{}"'.format(old_dir))
-                                shutil.rmtree(old_dir)
                         local_runtime.install_node()
                     except Exception as ex:
                         log_lines.append(' * Failed downloading: {}'.format(ex))
