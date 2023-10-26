@@ -1,4 +1,5 @@
 from .constants import SETTINGS_FILENAME
+from .helpers import rmtree_ex
 from .helpers import run_command_sync
 from .helpers import SemanticVersion
 from .helpers import version_to_string
@@ -102,12 +103,8 @@ class NodeRuntime:
                         for directory in next(os.walk(runtime_dir))[1]:
                             old_dir = path.join(runtime_dir, directory)
                             print('[lsp_utils] Deleting outdated Node.js runtime directory "{}"'.format(old_dir))
-                            # On Windows, "shutil.rmtree" will raise file not found errors when deleting a long path (>255 chars).
-                            # See https://stackoverflow.com/a/14076169/4643765
-                            # See https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
-                            deletion_path = ('\\\\?\\' + old_dir) if sublime.platform() == 'windows' else old_dir
                             try:
-                                shutil.rmtree(deletion_path)
+                                rmtree_ex(old_dir)
                             except Exception as ex:
                                 log_lines.append(' * Failed deleting: {}'.format(ex))
                     try:
