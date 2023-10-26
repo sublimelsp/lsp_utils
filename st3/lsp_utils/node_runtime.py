@@ -431,7 +431,7 @@ class ElectronInstaller:
 
     def run(self) -> None:
         archive, url = self._node_archive()
-        print('[lsp_utils] Downloading Electron {} from {}'.format(ELECTRON_NODE_VERSION, url))
+        print('[lsp_utils] Downloading Electron {} (Node.js runtime {}) from {}'.format(ELECTRON_RUNTIME_VERSION, ELECTRON_NODE_VERSION, url))
         if not self._archive_exists(archive):
             self._download(url, archive)
         self._install(archive)
