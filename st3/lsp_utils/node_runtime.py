@@ -239,7 +239,6 @@ class NodeRuntimeLocal(NodeRuntime):
         self._base_dir = path.abspath(path.join(base_dir, node_version))
         self._node_version = node_version
         self._node_dir = path.join(self._base_dir, 'node')
-        self._additional_paths = [path.join(self._node_dir, 'bin')]
         self._install_in_progress_marker_file = path.join(self._base_dir, '.installing')
         self._resolve_paths()
 
@@ -269,6 +268,7 @@ class NodeRuntimeLocal(NodeRuntime):
         self._node = self._resolve_binary()
         self._node_lib = self._resolve_lib()
         self._npm = path.join(self._node_lib, 'npm', 'bin', 'npm-cli.js')
+        self._additional_paths = [path.dirname(self._node)] if self._node else []
 
     def _resolve_binary(self) -> Optional[str]:
         exe_path = path.join(self._node_dir, 'node.exe')
