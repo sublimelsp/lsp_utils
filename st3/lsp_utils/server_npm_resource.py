@@ -1,3 +1,4 @@
+from .helpers import rmtree_ex
 from .helpers import SemanticVersion
 from .node_runtime import NodeRuntime
 from .server_resource_interface import ServerResourceInterface
@@ -8,7 +9,6 @@ from os import makedirs
 from os import path
 from os import remove
 from os import walk
-from shutil import rmtree
 from sublime_lib import ResourcePath
 
 __all__ = ['ServerNpmResource']
@@ -117,7 +117,7 @@ class ServerNpmResource(ServerResourceInterface):
             makedirs(path.dirname(self._installation_marker_file), exist_ok=True)
             open(self._installation_marker_file, 'a').close()
             if path.isdir(self._server_dest):
-                rmtree(self._server_dest)
+                rmtree_ex(self._server_dest)
             ResourcePath(self._server_src).copytree(self._server_dest, exist_ok=True)
             if not self._skip_npm_install:
                 self._node_runtime.run_install(cwd=self._server_dest)
@@ -137,4 +137,4 @@ class ServerNpmResource(ServerResourceInterface):
                 continue
             node_storage_path = path.join(self._package_storage, directory)
             print('[lsp_utils] Deleting outdated storage directory "{}"'.format(node_storage_path))
-            rmtree(node_storage_path)
+            rmtree_ex(node_storage_path)

@@ -1,3 +1,4 @@
+from .helpers import rmtree_ex
 from .helpers import run_command_sync
 from .server_resource_interface import ServerResourceInterface
 from .server_resource_interface import ServerStatus
@@ -6,7 +7,6 @@ from LSP.plugin.core.typing import Any, Optional
 from os import path
 from sublime_lib import ResourcePath
 import os
-import shutil
 import sublime
 
 __all__ = ['ServerPipResource']
@@ -94,7 +94,7 @@ class ServerPipResource(ServerResourceInterface):
         return False
 
     def install_or_update(self) -> None:
-        shutil.rmtree(self.basedir(), ignore_errors=True)
+        rmtree_ex(self.basedir(), ignore_errors=True)
         try:
             os.makedirs(self.basedir(), exist_ok=True)
             self.run(self._python_binary, '-m', 'venv', self._package_name, cwd=self._storage_path)

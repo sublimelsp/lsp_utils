@@ -1,4 +1,5 @@
 from .constants import SETTINGS_FILENAME
+from .helpers import rmtree_ex
 from .helpers import run_command_sync
 from .helpers import SemanticVersion
 from .helpers import version_to_string
@@ -97,13 +98,16 @@ class NodeRuntime:
                                 NO_NODE_FOUND_MESSAGE.format(package_name=package_name), 'Download Node.js'):
                             log_lines.append(' * Download skipped')
                             continue
+                    # Remove outdated runtimes.
+                    if path.isdir(runtime_dir):
+                        for directory in next(os.walk(runtime_dir))[1]:
+                            old_dir = path.join(runtime_dir, directory)
+                            print('[lsp_utils] Deleting outdated Node.js runtime directory "{}"'.format(old_dir))
+                            try:
+                                rmtree_ex(old_dir)
+                            except Exception as ex:
+                                log_lines.append(' * Failed deleting: {}'.format(ex))
                     try:
-                        # Remove outdated runtimes.
-                        if path.isdir(runtime_dir):
-                            for directory in next(os.walk(runtime_dir))[1]:
-                                old_dir = path.join(runtime_dir, directory)
-                                print('[lsp_utils] Deleting outdated Node.js runtime directory "{}"'.format(old_dir))
-                                shutil.rmtree(old_dir)
                         local_runtime.install_node()
                     except Exception as ex:
                         log_lines.append(' * Failed downloading: {}'.format(ex))
@@ -431,7 +435,11 @@ class ElectronInstaller:
 
     def run(self) -> None:
         archive, url = self._node_archive()
-        print('[lsp_utils] Downloading Electron {} from {}'.format(ELECTRON_NODE_VERSION, url))
+        print(
+            '[lsp_utils] Downloading Electron {} (Node.js runtime {}) from {}'.format(
+                ELECTRON_RUNTIME_VERSION, ELECTRON_NODE_VERSION, url
+            )
+        )
         if not self._archive_exists(archive):
             self._download(url, archive)
         self._install(archive)
