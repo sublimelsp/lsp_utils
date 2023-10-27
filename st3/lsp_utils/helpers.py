@@ -71,7 +71,7 @@ def rmtree_ex(path: str, ignore_errors=False) -> None:
     # On Windows, "shutil.rmtree" will raise file not found errors when deleting a long path (>255 chars).
     # See https://stackoverflow.com/a/14076169/4643765
     # See https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
-    path = '\\\\?\\{}'.format(path) if sublime.platform() == 'windows' else path
+    path = R'\\?\{}'.format(path) if sublime.platform() == 'windows' else path
     shutil.rmtree(path, ignore_errors)
 
 
