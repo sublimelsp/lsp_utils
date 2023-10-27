@@ -1,4 +1,3 @@
-from shutil import rmtree
 from .helpers import rmtree_ex
 from .helpers import SemanticVersion
 from .node_runtime import NodeRuntime

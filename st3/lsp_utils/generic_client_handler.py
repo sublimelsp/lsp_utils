@@ -1,5 +1,6 @@
 from ._client_handler import ClientHandler
 from .api_wrapper_interface import ApiWrapperInterface
+from .helpers import rmtree_ex
 from .server_resource_interface import ServerResourceInterface
 from abc import ABCMeta
 from LSP.plugin import ClientConfig
@@ -8,7 +9,6 @@ from LSP.plugin import WorkspaceFolder
 from LSP.plugin.core.typing import Any, Dict, List, Optional, Tuple
 from package_control import events  # type: ignore
 import os
-import shutil
 import sublime
 
 __all__ = ['GenericClientHandler']
@@ -44,7 +44,7 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
 
         def run_async() -> None:
             if os.path.isdir(cls.package_storage()):
-                shutil.rmtree(cls.package_storage())
+                rmtree_ex(cls.package_storage())
 
         if events.remove(cls.package_name):
             sublime.set_timeout_async(run_async, 1000)
