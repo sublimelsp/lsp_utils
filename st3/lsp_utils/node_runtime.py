@@ -29,7 +29,7 @@ NODE_DIST_URL = 'https://nodejs.org/dist/v{version}/{filename}'
 ELECTRON_RUNTIME_VERSION = '27.0.0'  # includes Node.js v18.17.1
 ELECTRON_NODE_VERSION = '18.17.1'
 ELECTRON_DIST_URL = 'https://github.com/electron/electron/releases/download/v{version}/{filename}'
-YARN_URL = 'https://github.com/yarnpkg/yarn/releases/download/v1.22.19/yarn-1.22.19.js'
+YARN_URL = 'https://github.com/yarnpkg/yarn/releases/download/v1.22.21/yarn-1.22.21.js'
 
 NO_NODE_FOUND_MESSAGE = 'Could not start {package_name} due to not being able to resolve suitable Node.js \
 runtime on the PATH. Press the "Download Node.js" button to get required Node.js version \
