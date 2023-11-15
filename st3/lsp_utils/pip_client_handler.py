@@ -3,6 +3,7 @@ from .server_pip_resource import ServerPipResource
 from .server_resource_interface import ServerResourceInterface
 from LSP.plugin.core.typing import List, Optional
 from os import path
+import shutil
 import sublime
 
 __all__ = ['PipClientHandler']
@@ -61,8 +62,11 @@ class PipClientHandler(GenericClientHandler):
     @classmethod
     def get_server(cls) -> Optional[ServerResourceInterface]:
         if not cls.__server:
-            cls.__server = ServerPipResource(cls.storage_path(), cls.package_name, cls.requirements_txt_path,
-                                             cls.server_filename, cls.get_python_binary())
+            python_binary = cls.get_python_binary()
+            if not shutil.which(python_binary):
+                raise Exception('Python binary "{}" not found!'.format(python_binary))
+            cls.__server = ServerPipResource(
+                cls.storage_path(), cls.package_name, cls.requirements_txt_path, cls.server_filename, python_binary)
         return cls.__server
 
     @classmethod
