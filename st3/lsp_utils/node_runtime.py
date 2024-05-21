@@ -246,6 +246,7 @@ class NodeRuntimeAbsolute(NodeRuntime):
         self._base_dir = path.abspath(path.dirname(node_binary))
         self._node = path.join(self._base_dir, 'node')
         self._npm = path.join(self._base_dir, 'npm')
+        self._additional_paths = [path.dirname(self._node)] if self._node else []
 
 class NodeRuntimePATH(NodeRuntime):
     def __init__(self) -> None:
