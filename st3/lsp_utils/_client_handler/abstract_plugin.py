@@ -1,5 +1,6 @@
 from .._util import weak_method
 from ..api_wrapper_interface import ApiWrapperInterface
+from ..helpers import unique_everseen
 from ..server_resource_interface import ServerStatus
 from .api_decorator import register_decorated_handlers
 from .interface import ClientHandlerInterface
@@ -15,6 +16,7 @@ from LSP.plugin import unregister_plugin
 from LSP.plugin import WorkspaceFolder
 from LSP.plugin.core.rpc import method2attr
 from LSP.plugin.core.typing import Any, Callable, Dict, List, Optional, Tuple, TypedDict
+from itertools import chain
 from os import path
 from weakref import ref
 import sublime
@@ -128,12 +130,16 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface):
     @classmethod
     def on_pre_start(cls, window: sublime.Window, initiating_view: sublime.View,
                      workspace_folders: List[WorkspaceFolder], configuration: ClientConfig) -> Optional[str]:
-        extra_paths = path.pathsep.join(cls.get_additional_paths())
+        # To fix https://github.com/TerminalFi/LSP-copilot/issues/163 ,
+        # We don't want to add the same path multiple times whenever a new server session is created.
+        extra_paths = cls.get_additional_paths()
         if extra_paths:
-            original_path = configuration.env.get('PATH') or ''
-            if isinstance(original_path, list):
-                original_path = path.pathsep.join(original_path)
-            configuration.env['PATH'] = path.pathsep.join([extra_paths, original_path])
+            original_path_raw = configuration.env.get('PATH') or ''
+            if isinstance(original_path_raw, str):
+                original_paths = original_path_raw.split(path.pathsep)
+            else:
+                original_paths = original_path_raw
+            configuration.env['PATH'] = path.pathsep.join(unique_everseen(chain(extra_paths, original_paths)))
         return None
 
     # --- ClientHandlerInterface --------------------------------------------------------------------------------------

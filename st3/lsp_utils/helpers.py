@@ -1,9 +1,11 @@
-from LSP.plugin.core.typing import Any, Callable, Dict, List, Optional, Tuple
+from LSP.plugin.core.typing import Any, Callable, Dict, Generator, Iterable, List, Optional, Set, Tuple, TypeVar
 import os
 import shutil
 import sublime
 import subprocess
 import threading
+
+_T = TypeVar('_T')
 
 StringCallback = Callable[[str], None]
 SemanticVersion = Tuple[int, int, int]
@@ -93,3 +95,46 @@ def log_and_show_message(message: str, additional_logs: Optional[str] = None, sh
     print(message, '\n', additional_logs) if additional_logs else print(message)
     if show_in_status:
         sublime.active_window().status_message(message)
+
+
+def unique_everseen(iterable: Iterable[_T], key: Optional[Callable[[_T], Any]] = None) -> Generator[_T, None, None]:
+    """
+    Yield unique elements, preserving order.
+
+        >>> list(unique_everseen('AAAABBBCCDAABBB'))
+        ['A', 'B', 'C', 'D']
+        >>> list(unique_everseen('ABBCcAD', str.lower))
+        ['A', 'B', 'C', 'D']
+
+    Sequences with a mix of hashable and unhashable items can be used.
+    The function will be slower (i.e., `O(n^2)`) for unhashable items.
+
+    Remember that ``list`` objects are unhashable - you can use the *key*
+    parameter to transform the list to a tuple (which is hashable) to
+    avoid a slowdown.
+
+        >>> iterable = ([1, 2], [2, 3], [1, 2])
+        >>> list(unique_everseen(iterable))  # Slow
+        [[1, 2], [2, 3]]
+        >>> list(unique_everseen(iterable, key=tuple))  # Faster
+        [[1, 2], [2, 3]]
+
+    Similarly, you may want to convert unhashable ``set`` objects with
+    ``key=frozenset``. For ``dict`` objects,
+    ``key=lambda x: frozenset(x.items())`` can be used.
+    """
+    seenset: Set[Any] = set()
+    seenset_add = seenset.add
+    seenlist: List[Any] = []
+    seenlist_add = seenlist.append
+
+    for element in iterable:
+        k = element if key is None else key(element)
+        try:
+            if k not in seenset:
+                seenset_add(k)
+                yield element
+        except TypeError:
+            if k not in seenlist:
+                seenlist_add(k)
+                yield element
