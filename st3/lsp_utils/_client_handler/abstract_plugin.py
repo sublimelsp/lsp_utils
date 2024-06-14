@@ -128,19 +128,19 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface):
     @classmethod
     def on_pre_start(cls, window: sublime.Window, initiating_view: sublime.View,
                      workspace_folders: List[WorkspaceFolder], configuration: ClientConfig) -> Optional[str]:
-        original_path_raw = configuration.env.get('PATH') or ''
-        if isinstance(original_path_raw, str):
-            original_paths = original_path_raw.split(path.pathsep)
-        else:
-            original_paths = original_path_raw
-
-        # To fix https://github.com/TerminalFi/LSP-copilot/issues/163 ,
-        # We don't want to add the same path multiple times whenever a new server session is created.
-        # Note that additional paths should be prepended to the original paths.
-        wanted_paths = [path for path in cls.get_additional_paths() if path not in original_paths]
-        wanted_paths.extend(original_paths)
-        configuration.env['PATH'] = path.pathsep.join(wanted_paths)
-
+        extra_paths = cls.get_additional_paths()
+        if extra_paths:
+            original_path_raw = configuration.env.get('PATH') or ''
+            if isinstance(original_path_raw, str):
+                original_paths = original_path_raw.split(path.pathsep)
+            else:
+                original_paths = original_path_raw
+            # To fix https://github.com/TerminalFi/LSP-copilot/issues/163 ,
+            # We don't want to add the same path multiple times whenever a new server session is created.
+            # Note that additional paths should be prepended to the original paths.
+            wanted_paths = [path for path in extra_paths if path not in original_paths]
+            wanted_paths.extend(original_paths)
+            configuration.env['PATH'] = path.pathsep.join(wanted_paths)
         return None
 
     # --- ClientHandlerInterface --------------------------------------------------------------------------------------
