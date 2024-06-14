@@ -43,13 +43,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: lsp_utils
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.8'
       - run: |
           sudo apt update
           sudo apt install --no-install-recommends -y x11-xserver-utils
-      - run: pip3 install mypy==1.6.0 flake8==5.0.4 pyright==1.1.331 --user
+      - run: pip3 install mypy==1.7.1 flake8==5.0.4 pyright==1.1.339 --user
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
       - run: git clone https://github.com/sublimelsp/LSP.git
       - run: git clone https://github.com/SublimeText/sublime_lib.git
