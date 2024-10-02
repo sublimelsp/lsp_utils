@@ -174,9 +174,9 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
     def is_allowed_to_start(
         cls,
         window: sublime.Window,
-        initiating_view: Optional[sublime.View] = None,
-        workspace_folders: Optional[List[WorkspaceFolder]] = None,
-        configuration: Optional[ClientConfig] = None
+        initiating_view: sublime.View,
+        workspace_folders: List[WorkspaceFolder],
+        configuration: ClientConfig,
     ) -> Optional[str]:
         """
         Determines if the session is allowed to start.
