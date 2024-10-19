@@ -46,7 +46,7 @@ jobs:
                 ST_LIBS_DIR="/c/st/Data/Lib/python38/";;
               *)
                 exit 1
-            esac;;
+            esac
 
             cd "${{ inputs.package-path }}"
             rm -rf "$ST_LIBS_DIR/$PACKAGE"
