@@ -37,6 +37,10 @@ jobs:
         shell: bash
         run: |
           if [ "${{ inputs.install-package }}" = "true" ]; then
+            REPO="$GITHUB_REPOSITORY"
+            PACKAGE_FROM_INPUTS="${{ inputs.package-name }}"
+            PACKAGE="${PACKAGE_FROM_INPUTS:-${REPO#*/}}"
+
             case ${{ runner.os }} in
               Linux)
                 ST_LIBS_DIR="$HOME/.config/sublime-text/Lib/python38";;
