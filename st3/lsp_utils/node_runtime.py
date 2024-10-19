@@ -23,7 +23,7 @@ __all__ = ['NodeRuntime']
 
 IS_WINDOWS_7_OR_LOWER = sys.platform == 'win32' and sys.getwindowsversion()[:2] <= (6, 1)  # type: ignore
 
-NODE_RUNTIME_VERSION = '18.18.1'
+NODE_RUNTIME_VERSION = '20.18.0'
 NODE_DIST_URL = 'https://nodejs.org/dist/v{version}/{filename}'
 
 ELECTRON_RUNTIME_VERSION = '33.0.0'  # includes Node.js v20.18.0
