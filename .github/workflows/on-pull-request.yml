@@ -51,7 +51,7 @@ jobs:
               exit 1
           esac
 
-          cd "${{ inputs.package-path }}"
+          cd ./
           rm -rf "$ST_LIBS_DIR/$PACKAGE"
           echo "Copy checked out package '$PACKAGE' to $ST_LIBS_DIR/$PACKAGE"
           mkdir -p "$ST_LIBS_DIR/$PACKAGE"
