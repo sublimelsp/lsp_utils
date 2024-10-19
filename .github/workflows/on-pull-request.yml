@@ -39,6 +39,7 @@ jobs:
           REPO="$GITHUB_REPOSITORY"
           PACKAGE_FROM_INPUTS="${{ inputs.package-name }}"
           PACKAGE="${PACKAGE_FROM_INPUTS:-${REPO#*/}}"
+          echo "Package name: $PACKAGE"
 
           case ${{ runner.os }} in
             Linux)
@@ -56,6 +57,8 @@ jobs:
           echo "Copy checked out package '$PACKAGE' to $ST_LIBS_DIR/$PACKAGE"
           mkdir -p "$ST_LIBS_DIR/$PACKAGE"
           cp -r "./st3/$PACKAGE/" "$ST_LIBS_DIR/$PACKAGE"
+          echo "Overwritten package contents"
+          ls "$ST_LIBS_DIR/$PACKAGE"
           # detached head will crash package control
           rm -rf "$ST_LIBS_DIR/$PACKAGE/.git"
           cd -
