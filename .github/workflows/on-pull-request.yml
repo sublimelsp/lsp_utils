@@ -33,6 +33,30 @@ jobs:
           extra-packages: |
             sublimelsp/LSP@main
             sublimelsp/LSP-pyright@master
+      - name: Overwrite installed dependency with local version
+        shell: bash
+        run: |
+          if [ "${{ inputs.install-package }}" = "true" ]; then
+            case ${{ runner.os }} in
+              Linux)
+                ST_LIBS_DIR="$HOME/.config/sublime-text/Lib/python38";;
+              macOS)
+                ST_LIBS_DIR="$HOME/Library/Application Support/Sublime Text/Lib/python38";;
+              Windows)
+                ST_LIBS_DIR="/c/st/Data/Lib/python38/";;
+              *)
+                exit 1
+            esac;;
+
+            cd "${{ inputs.package-path }}"
+            rm -rf "$ST_LIBS_DIR/$PACKAGE"
+            echo "Copy checked out package '$PACKAGE' to $ST_LIBS_DIR/$PACKAGE"
+            mkdir -p "$ST_LIBS_DIR/$PACKAGE"
+            cp -r "./st3/$PACKAGE/" "$ST_LIBS_DIR/$PACKAGE"
+            # detached head will crash package control
+            rm -rf "$ST_LIBS_DIR/$PACKAGE/.git"
+            cd -
+          fi
       - uses: SublimeText/UnitTesting/actions/run-tests@v1
 
   Lint:
