@@ -36,9 +36,8 @@ jobs:
       - name: Overwrite installed dependency with local version
         shell: bash
         run: |
-          REPO="$GITHUB_REPOSITORY"
-          PACKAGE_FROM_INPUTS="${{ inputs.package-name }}"
-          PACKAGE="${PACKAGE_FROM_INPUTS:-${REPO#*/}}"
+          # Derived from setup step.
+          PACKAGE="${PACKAGE_FROM_INPUTS:-$PACKAGE}"
           echo "Package name: $PACKAGE"
 
           case ${{ runner.os }} in
@@ -56,7 +55,7 @@ jobs:
           rm -rf "$ST_LIBS_DIR/$PACKAGE"
           echo "Copy checked out package '$PACKAGE' to $ST_LIBS_DIR/$PACKAGE"
           mkdir -p "$ST_LIBS_DIR/$PACKAGE"
-          cp -r "./st3/$PACKAGE/" "$ST_LIBS_DIR/$PACKAGE"
+          cp -r "./st3/$PACKAGE/" "$ST_LIBS_DIR"
           echo "Overwritten package contents"
           ls "$ST_LIBS_DIR/$PACKAGE"
           # detached head will crash package control
