@@ -18,6 +18,7 @@ class BaseTestCase(TextDocumentTestCase):
             self.assertIsNotNone(session_view)
             error_region_key = '{}_icon'.format(session_view.diagnostics_key(1, multiline=False))
             yield {'condition': lambda: len(session_view.session_buffer.diagnostics) == 1, 'timeout': TIMEOUT_TIME * 4}
+            print(session_view.session_buffer.diagnostics)
         error_regions = self.view.get_regions(error_region_key)
         self.assertEqual(len(error_regions), 1)
         region = error_regions[0]
