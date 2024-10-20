@@ -56,7 +56,6 @@ jobs:
           echo "Overwriting installed dependency in $ST_LIBS_DIR/$PACKAGE"
           rm -rf "$ST_LIBS_DIR/$PACKAGE"
           mv "./st3/$PACKAGE" "$ST_LIBS_DIR"
-          ls "$ST_LIBS_DIR/$PACKAGE/"
           cd -
       - uses: SublimeText/UnitTesting/actions/run-tests@v1
 
