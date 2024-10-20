@@ -36,8 +36,7 @@ jobs:
       - name: Overwrite installed dependency with local version
         shell: bash
         run: |
-          # Derived from setup step.
-          PACKAGE="${PACKAGE_FROM_INPUTS:-$PACKAGE}"
+          # $SUBLIME_TEXT_PACKAGES and $PACKAGE are exposed from setup step.
           echo "Package name: $PACKAGE"
 
           case ${{ runner.os }} in
@@ -52,14 +51,12 @@ jobs:
           esac
 
           cd ./
-          rm -rf "$ST_LIBS_DIR/$PACKAGE"
-          echo "Copy checked out package '$PACKAGE' to $ST_LIBS_DIR/$PACKAGE"
-          mkdir -p "$ST_LIBS_DIR/$PACKAGE"
-          cp -r "./st3/$PACKAGE/" "$ST_LIBS_DIR"
-          echo "Overwritten package contents"
-          ls "$ST_LIBS_DIR/$PACKAGE"
           # detached head will crash package control
-          rm -rf "$ST_LIBS_DIR/$PACKAGE/.git"
+          rm -rf "./.git"
+          echo "Overwriting installed dependency in $ST_LIBS_DIR/$PACKAGE"
+          rm -rf "$ST_LIBS_DIR/$PACKAGE"
+          mv "./st3/$PACKAGE/st3/$PACKAGE" "$ST_LIBS_DIR"
+          ls "$ST_LIBS_DIR/$PACKAGE/"
           cd -
       - uses: SublimeText/UnitTesting/actions/run-tests@v1
 
