@@ -36,8 +36,7 @@ jobs:
       - name: Overwrite installed dependency with local version
         shell: bash
         run: |
-          # $SUBLIME_TEXT_PACKAGES and $PACKAGE are exposed from setup step.
-          echo "Package name: $PACKAGE"
+          # $PACKAGE is exposed from the setup step.
 
           case ${{ runner.os }} in
             Linux)
