@@ -252,7 +252,7 @@ class NodeRuntimeLocal(NodeRuntime):
     def install_node(self) -> None:
         os.makedirs(os.path.dirname(self._install_in_progress_marker_file), exist_ok=True)
         open(self._install_in_progress_marker_file, 'a').close()
-        with ActivityIndicator(sublime.active_window(), 'Downloading Node.js'):
+        with ActivityIndicator(sublime.active_window(), '[LSP] Setting up local Node.js'):
             install_node = NodeInstaller(self._base_dir, self._node_version)
             install_node.run()
             self._resolve_paths()
@@ -373,7 +373,7 @@ class ElectronRuntimeLocal(NodeRuntime):
     def install_node(self) -> None:
         os.makedirs(os.path.dirname(self._install_in_progress_marker_file), exist_ok=True)
         open(self._install_in_progress_marker_file, 'a').close()
-        with ActivityIndicator(sublime.active_window(), 'Downloading Node.js'):
+        with ActivityIndicator(sublime.active_window(), '[LSP] Setting up local Node.js'):
             install_node = ElectronInstaller(self._base_dir)
             install_node.run()
             self._resolve_paths()
