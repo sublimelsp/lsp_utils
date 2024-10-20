@@ -23,13 +23,13 @@ __all__ = ['NodeRuntime']
 
 IS_WINDOWS_7_OR_LOWER = sys.platform == 'win32' and sys.getwindowsversion()[:2] <= (6, 1)  # type: ignore
 
-NODE_RUNTIME_VERSION = '18.18.1'
+NODE_RUNTIME_VERSION = '20.18.0'
 NODE_DIST_URL = 'https://nodejs.org/dist/v{version}/{filename}'
 
-ELECTRON_RUNTIME_VERSION = '27.0.0'  # includes Node.js v18.17.1
-ELECTRON_NODE_VERSION = '18.17.1'
+ELECTRON_RUNTIME_VERSION = '33.0.0'  # includes Node.js v20.18.0
+ELECTRON_NODE_VERSION = '20.18.0'
 ELECTRON_DIST_URL = 'https://github.com/electron/electron/releases/download/v{version}/{filename}'
-YARN_URL = 'https://github.com/yarnpkg/yarn/releases/download/v1.22.21/yarn-1.22.21.js'
+YARN_URL = 'https://github.com/yarnpkg/yarn/releases/download/v1.22.22/yarn-1.22.22.js'
 
 NO_NODE_FOUND_MESSAGE = 'Could not start {package_name} due to not being able to resolve suitable Node.js \
 runtime on the PATH. Press the "Download Node.js" button to get required Node.js version \
