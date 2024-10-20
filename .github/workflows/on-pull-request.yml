@@ -27,14 +27,35 @@ jobs:
         with:
           node-version: '18'
       - uses: actions/checkout@v4
-      - if: ${{ matrix.os == 'macOS-latest' }}
-        run: brew unlink openssl
       - uses: SublimeText/UnitTesting/actions/setup@v1
         with:
           sublime-text-version: 4
           extra-packages: |
             sublimelsp/LSP@main
             sublimelsp/LSP-pyright@master
+      - name: Overwrite installed dependency with local version
+        shell: bash
+        run: |
+          # $PACKAGE is exposed from the setup step.
+
+          case ${{ runner.os }} in
+            Linux)
+              ST_LIBS_DIR="$HOME/.config/sublime-text/Lib/python38";;
+            macOS)
+              ST_LIBS_DIR="$HOME/Library/Application Support/Sublime Text/Lib/python38";;
+            Windows)
+              ST_LIBS_DIR="/c/st/Data/Lib/python38/";;
+            *)
+              exit 1
+          esac
+
+          cd ./
+          # detached head will crash package control
+          rm -rf "./.git"
+          echo "Overwriting installed dependency in $ST_LIBS_DIR/$PACKAGE"
+          rm -rf "$ST_LIBS_DIR/$PACKAGE"
+          mv "./st3/$PACKAGE" "$ST_LIBS_DIR"
+          cd -
       - uses: SublimeText/UnitTesting/actions/run-tests@v1
 
   Lint:
