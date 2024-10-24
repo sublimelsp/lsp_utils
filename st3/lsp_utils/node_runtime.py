@@ -123,6 +123,20 @@ class NodeRuntime:
                     break
                 except Exception as ex:
                     log_lines.append(' * {}'.format(ex))
+            elif path.basename(runtime_type) == 'node':
+                log_lines.append('Resolving Node.js Runtime from absolute path for package {}...'.format(package_name))
+                path_runtime = NodeRuntimeAbsolute(runtime_type)
+                try:
+                    path_runtime.check_binary_present()
+                except Exception as ex:
+                    log_lines.append(' * Failed: {}'.format(ex))
+                    continue
+                try:
+                    path_runtime.check_satisfies_version(required_node_version)
+                    resolved_runtime = path_runtime
+                    break
+                except Exception as ex:
+                    log_lines.append(' * {}'.format(ex))
         if not resolved_runtime:
             log_lines.append('--- lsp_utils Node.js resolving end ---')
             print('\n'.join(log_lines))
@@ -225,6 +239,14 @@ class NodeRuntime:
             raise Exception('Npm command not initialized')
         return [self._npm]
 
+
+class NodeRuntimeAbsolute(NodeRuntime):
+    def __init__(self, node_binary: str):
+        super().__init__()
+        self._base_dir = path.abspath(path.dirname(node_binary))
+        self._node = path.join(self._base_dir, 'node')
+        self._npm = path.join(self._base_dir, 'npm')
+        self._additional_paths = [path.dirname(self._node)] if self._node else []
 
 class NodeRuntimePATH(NodeRuntime):
     def __init__(self) -> None:
