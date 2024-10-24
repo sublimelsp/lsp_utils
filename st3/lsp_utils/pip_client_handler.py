@@ -48,10 +48,9 @@ class PipClientHandler(GenericClientHandler):
         """
         Returns a binary name or a full path to the Python interpreter used to create environment for the server.
 
-        The default implementation returns `python` on Windows and `python3` on other platforms. When only the binary
-        name is specified then it will be expected that it can be found on the PATH.
+        When only the binary name is specified then it will be expected that it can be found on the PATH.
         """
-        return 'python' if sublime.platform() == 'windows' else 'python3'
+        return 'py' if sublime.platform() == 'windows' else 'python3'
 
     # --- GenericClientHandler handlers -------------------------------------------------------------------------------
 
