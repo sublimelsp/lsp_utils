@@ -3,7 +3,7 @@
 GITHUB_REPO_URL="https://github.com/rbarrois/python-semanticversion"
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-OUTPUT_DIR="${SCRIPT_DIR}/../st3/lsp_utils/third_party"
+OUTPUT_DIR="${SCRIPT_DIR}/../st4_py38/lsp_utils/third_party"
 PACKAGE_NAME="semantic_version"
 
 # -------- #
