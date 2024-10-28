@@ -50,7 +50,11 @@ class PipClientHandler(GenericClientHandler):
 
         When only the binary name is specified then it will be expected that it can be found on the PATH.
         """
-        return 'py' if sublime.platform() == 'windows' else 'python3'
+        if sublime.platform() == 'windows':
+            if shutil.which('py'):
+                return 'py'
+            return 'python'
+        return 'python3'
 
     # --- GenericClientHandler handlers -------------------------------------------------------------------------------
 
