@@ -42,7 +42,7 @@ class ServerNpmResource(ServerResourceInterface):
         required_node_version = options['required_node_version']  # type: Union[str, SemanticVersion]
         skip_npm_install = options['skip_npm_install']
         # Fallback to "minimum_node_version" if "required_node_version" is 0.0.0 (not overridden).
-        if '0.0.0' == required_node_version:
+        if required_node_version == '0.0.0':
             required_node_version = minimum_node_version
         node_runtime = NodeRuntime.get(package_name, storage_path, required_node_version)
         if not node_runtime:
@@ -58,11 +58,10 @@ class ServerNpmResource(ServerResourceInterface):
         self._package_name = package_name
         self._package_storage = package_storage
         self._server_src = 'Packages/{}/{}/'.format(self._package_name, server_directory)
-        node_version = str(node_runtime.resolve_version())
-        self._node_version = node_version
-        self._server_dest = path.join(package_storage, node_version, server_directory)
-        self._binary_path = path.join(package_storage, node_version, server_binary_path)
-        self._installation_marker_file = path.join(package_storage, node_version, '.installing')
+        self._server_dest = path.join(package_storage, server_directory)
+        self._binary_path = path.join(package_storage, server_binary_path)
+        self._installation_marker_file = path.join(package_storage, '.installing')
+        self._node_version_marker_file = path.join(package_storage, '.node-version')
         self._node_runtime = node_runtime
         self._skip_npm_install = skip_npm_install
 
@@ -99,6 +98,11 @@ class ServerNpmResource(ServerResourceInterface):
                 raise Exception('Missing required "package.json" in {}'.format(self._server_src))
             src_hash = md5(src_package_json.read_bytes()).hexdigest()
             try:
+                with open(self._node_version_marker_file) as file:
+                    node_version = str(self._node_runtime.resolve_version())
+                    stored_node_version = file.read()
+                    if node_version != stored_node_version.strip():
+                        return True
                 with open(path.join(self._server_dest, 'package.json'), 'rb') as file:
                     dst_hash = md5(file.read()).hexdigest()
                 if src_hash == dst_hash and not path.isfile(self._installation_marker_file):
@@ -114,13 +118,14 @@ class ServerNpmResource(ServerResourceInterface):
     def install_or_update(self) -> None:
         try:
             self._cleanup_package_storage()
+            node_version = str(self._node_runtime.resolve_version())
             makedirs(path.dirname(self._installation_marker_file), exist_ok=True)
             open(self._installation_marker_file, 'a').close()
-            if path.isdir(self._server_dest):
-                rmtree_ex(self._server_dest)
             ResourcePath(self._server_src).copytree(self._server_dest, exist_ok=True)
             if not self._skip_npm_install:
                 self._node_runtime.run_install(cwd=self._server_dest)
+            with open(self._node_version_marker_file, 'a') as file:
+                file.write(node_version)
             remove(self._installation_marker_file)
         except Exception as error:
             self._status = ServerStatus.ERROR
@@ -130,11 +135,8 @@ class ServerNpmResource(ServerResourceInterface):
     def _cleanup_package_storage(self) -> None:
         if not path.isdir(self._package_storage):
             return
-        """Clean up subdirectories of package storage that belong to other node versions."""
+        # Delete all subdirectories
         subdirectories = next(walk(self._package_storage))[1]
         for directory in subdirectories:
-            if directory == self._node_version:
-                continue
             node_storage_path = path.join(self._package_storage, directory)
-            print('[lsp_utils] Deleting outdated storage directory "{}"'.format(node_storage_path))
             rmtree_ex(node_storage_path)
