@@ -135,8 +135,10 @@ class ServerNpmResource(ServerResourceInterface):
     def _cleanup_package_storage(self) -> None:
         if not path.isdir(self._package_storage):
             return
-        # Delete all subdirectories
-        subdirectories = next(walk(self._package_storage))[1]
-        for directory in subdirectories:
-            node_storage_path = path.join(self._package_storage, directory)
-            rmtree_ex(node_storage_path)
+        # Delete all contents
+        for _, directories, files in walk(self._package_storage):
+            for file in files:
+                remove(path.join(self._package_storage, file))
+            for directory in directories:
+                node_storage_path = path.join(self._package_storage, directory)
+                rmtree_ex(node_storage_path)
