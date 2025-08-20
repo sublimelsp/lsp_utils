@@ -120,11 +120,11 @@ class ServerNpmResource(ServerResourceInterface):
             self._cleanup_package_storage()
             node_version = str(self._node_runtime.resolve_version())
             makedirs(path.dirname(self._installation_marker_file), exist_ok=True)
-            open(self._installation_marker_file, 'a').close()
+            open(self._installation_marker_file, 'w').close()
             ResourcePath(self._server_src).copytree(self._server_dest, exist_ok=True)
             if not self._skip_npm_install:
                 self._node_runtime.run_install(cwd=self._server_dest)
-            with open(self._node_version_marker_file, 'a') as file:
+            with open(self._node_version_marker_file, 'w') as file:
                 file.write(node_version)
             remove(self._installation_marker_file)
         except Exception as error:
