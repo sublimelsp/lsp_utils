@@ -8,7 +8,6 @@ from LSP.plugin.core.typing import Dict, Optional, TypedDict, Union
 from os import makedirs
 from os import path
 from os import remove
-from os import walk
 from sublime_lib import ResourcePath
 
 __all__ = ['ServerNpmResource']
