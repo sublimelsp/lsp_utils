@@ -95,13 +95,13 @@ class ServerNpmResource(ServerResourceInterface):
             src_package_json = ResourcePath(self._server_src, 'package.json')
             if not src_package_json.exists():
                 raise Exception('Missing required "package.json" in {}'.format(self._server_src))
-            src_hash = md5(src_package_json.read_bytes()).hexdigest()
             try:
                 with open(self._node_version_marker_file) as file:
                     node_version = str(self._node_runtime.resolve_version())
                     stored_node_version = file.read()
                     if node_version != stored_node_version.strip():
                         return True
+                src_hash = md5(src_package_json.read_bytes()).hexdigest()
                 with open(path.join(self._server_dest, 'package.json'), 'rb') as file:
                     dst_hash = md5(file.read()).hexdigest()
                 if src_hash == dst_hash and not path.isfile(self._installation_marker_file):
