@@ -116,7 +116,8 @@ class ServerNpmResource(ServerResourceInterface):
 
     def install_or_update(self) -> None:
         try:
-            rmtree_ex(self._package_storage)
+            if path.isdir(self._package_storage):
+                rmtree_ex(self._package_storage)
             node_version = str(self._node_runtime.resolve_version())
             makedirs(self._package_storage, exist_ok=True)
             open(self._installation_marker_file, 'w').close()
