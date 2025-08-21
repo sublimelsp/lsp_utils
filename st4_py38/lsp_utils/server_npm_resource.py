@@ -117,9 +117,9 @@ class ServerNpmResource(ServerResourceInterface):
 
     def install_or_update(self) -> None:
         try:
-            self._cleanup_package_storage()
+            rmtree_ex(self._package_storage)
             node_version = str(self._node_runtime.resolve_version())
-            makedirs(path.dirname(self._installation_marker_file), exist_ok=True)
+            makedirs(self._package_storage, exist_ok=True)
             open(self._installation_marker_file, 'w').close()
             ResourcePath(self._server_src).copytree(self._server_dest, exist_ok=True)
             if not self._skip_npm_install:
@@ -131,14 +131,3 @@ class ServerNpmResource(ServerResourceInterface):
             self._status = ServerStatus.ERROR
             raise Exception('Error installing the server:\n{}'.format(error))
         self._status = ServerStatus.READY
-
-    def _cleanup_package_storage(self) -> None:
-        if not path.isdir(self._package_storage):
-            return
-        # Delete all contents
-        for _, directories, files in walk(self._package_storage):
-            for file in files:
-                remove(path.join(self._package_storage, file))
-            for directory in directories:
-                node_storage_path = path.join(self._package_storage, directory)
-                rmtree_ex(node_storage_path)
