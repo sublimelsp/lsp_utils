@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
       - uses: actions/checkout@v5
       - uses: SublimeText/UnitTesting/actions/setup@v1
         with:
