@@ -1,3 +1,4 @@
+from __future__ import annotations
 from LSP.plugin.core.registry import windows
 from LSP.plugin.core.sessions import Session
 from LSP.plugin.core.types import ClientStates
@@ -35,7 +36,7 @@ def expand(s: str, w: sublime.Window) -> str:
 
 class TextDocumentTestCase(DeferrableTestCase):
 
-    session = None  # type: Session
+    session: Session | None = None
 
     @classmethod
     def get_test_file_name(cls) -> str:

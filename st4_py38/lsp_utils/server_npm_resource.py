@@ -1,14 +1,15 @@
+from __future__ import annotations
 from .helpers import rmtree_ex
 from .helpers import SemanticVersion
 from .node_runtime import NodeRuntime
 from .server_resource_interface import ServerResourceInterface
 from .server_resource_interface import ServerStatus
 from hashlib import md5
-from LSP.plugin.core.typing import Dict, Optional, TypedDict, Union
 from os import makedirs
 from os import path
 from os import remove
 from sublime_lib import ResourcePath
+from typing import Dict, Optional, TypedDict, Union
 
 __all__ = ['ServerNpmResource']
 
@@ -38,7 +39,7 @@ class ServerNpmResource(ServerResourceInterface):
         package_storage = options['package_storage']
         storage_path = options['storage_path']
         minimum_node_version = options['minimum_node_version']
-        required_node_version = options['required_node_version']  # type: Union[str, SemanticVersion]
+        required_node_version: Union[str, SemanticVersion] = options['required_node_version']
         skip_npm_install = options['skip_npm_install']
         # Fallback to "minimum_node_version" if "required_node_version" is 0.0.0 (not overridden).
         if required_node_version == '0.0.0':

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from ._client_handler import ClientHandler
 from .api_wrapper_interface import ApiWrapperInterface
 from .helpers import rmtree_ex
@@ -6,7 +7,7 @@ from abc import ABCMeta
 from LSP.plugin import ClientConfig
 from LSP.plugin import DottedDict
 from LSP.plugin import WorkspaceFolder
-from LSP.plugin.core.typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 import os
 import sublime
 

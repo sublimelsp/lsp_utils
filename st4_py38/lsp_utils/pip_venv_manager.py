@@ -78,6 +78,7 @@ class PipVenvManager:
         run_command_ex(self._python_binary, '-m', 'venv', str(self._venv_path))
         dest_requirements_txt_path = path.join(self._venv_path, 'requirements.txt')
         ResourcePath(self._requirements_resource_path).copy(dest_requirements_txt_path)
-        run_command_ex(str(self._venv_pip_binary), 'install', '-r', dest_requirements_txt_path, '--disable-pip-version-check')
+        run_command_ex(
+            str(self._venv_pip_binary), 'install', '-r', dest_requirements_txt_path, '--disable-pip-version-check')
         with open(self._python_version_path, 'w') as f:
             f.write(run_command_ex(self._python_binary, '--version'))

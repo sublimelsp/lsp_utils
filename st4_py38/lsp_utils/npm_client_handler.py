@@ -1,10 +1,11 @@
+from __future__ import annotations
 from .generic_client_handler import GenericClientHandler
 from .server_npm_resource import ServerNpmResource
 from .server_resource_interface import ServerResourceInterface
 from LSP.plugin import ClientConfig
 from LSP.plugin import WorkspaceFolder
-from LSP.plugin.core.typing import Dict, List, Optional, Tuple
 from os import path
+from typing import Dict, List, Optional, Tuple
 import sublime
 
 __all__ = ['NpmClientHandler']
