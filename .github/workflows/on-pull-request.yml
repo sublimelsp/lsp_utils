@@ -70,7 +70,7 @@ jobs:
       - run: |
           sudo apt update
           sudo apt install --no-install-recommends -y x11-xserver-utils
-      - run: pip3 install mypy==1.19.1 flake8==1.7.1 pyright==1.1.408 --user
+      - run: pip3 install mypy==1.19.1 flake8==7.3.0 pyright==1.1.408 --user
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
       - run: git clone https://github.com/sublimelsp/LSP.git
       - run: git clone https://github.com/SublimeText/sublime_lib.git
