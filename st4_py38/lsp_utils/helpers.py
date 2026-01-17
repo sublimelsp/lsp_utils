@@ -1,4 +1,5 @@
-from LSP.plugin.core.typing import Any, Callable, Dict, List, Optional, Tuple
+from __future__ import annotations
+from typing import Any, Callable, Dict, List, Optional, Tuple
 import os
 import shutil
 import sublime
@@ -9,6 +10,10 @@ StringCallback = Callable[[str], None]
 SemanticVersion = Tuple[int, int, int]
 
 is_windows = sublime.platform() == 'windows'
+
+
+def platform_program_file_extension() -> str:
+    return '.exe' if sublime.platform() == 'windows' else ''
 
 
 def run_command_sync(
@@ -58,6 +63,13 @@ def run_command_async(args: List[str], on_success: StringCallback, on_error: Str
 
     thread = threading.Thread(target=execute, args=(on_success, on_error, args))
     thread.start()
+
+
+def run_command_ex(*cmd: str, cwd: Optional[str] = None) -> str:
+    output, error = run_command_sync(list(cmd), cwd=cwd)
+    if error:
+        raise Exception(error)
+    return output
 
 
 def decode_bytes(data: bytes) -> str:

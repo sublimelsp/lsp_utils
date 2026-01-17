@@ -1,8 +1,10 @@
+from __future__ import annotations
 from .generic_client_handler import GenericClientHandler
 from .server_pip_resource import ServerPipResource
 from .server_resource_interface import ServerResourceInterface
-from LSP.plugin.core.typing import List, Optional
 from os import path
+from typing import List, Optional
+from typing_extensions import override
 import shutil
 import sublime
 
@@ -16,9 +18,9 @@ class PipClientHandler(GenericClientHandler):
     Automatically manages a pip-based server by installing and updating dependencies based on provided
     `requirements.txt` file.
     """
-    __server = None  # type: Optional[ServerPipResource]
+    __server: Optional[ServerPipResource] = None
 
-    requirements_txt_path = ''
+    requirements_txt_path: str = ''
     """
     The path to the `requirements.txt` file containing a list of dependencies required by the server.
 
@@ -36,7 +38,7 @@ class PipClientHandler(GenericClientHandler):
     :required: Yes
     """
 
-    server_filename = ''
+    server_filename: str = ''
     """
     The file name of the binary used to start the server.
 
@@ -59,10 +61,12 @@ class PipClientHandler(GenericClientHandler):
     # --- GenericClientHandler handlers -------------------------------------------------------------------------------
 
     @classmethod
+    @override
     def manages_server(cls) -> bool:
         return True
 
     @classmethod
+    @override
     def get_server(cls) -> Optional[ServerResourceInterface]:
         if not cls.__server:
             python_binary = cls.get_python_binary()
@@ -73,6 +77,7 @@ class PipClientHandler(GenericClientHandler):
         return cls.__server
 
     @classmethod
+    @override
     def get_additional_paths(cls) -> List[str]:
         server = cls.get_server()
         if server:

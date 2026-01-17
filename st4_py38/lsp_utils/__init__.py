@@ -1,3 +1,4 @@
+from __future__ import annotations
 from ._client_handler import ClientHandler
 from ._client_handler import notification_handler
 from ._client_handler import request_handler
@@ -6,6 +7,7 @@ from .constants import SETTINGS_FILENAME
 from .generic_client_handler import GenericClientHandler
 from .node_runtime import NodeRuntime
 from .npm_client_handler import NpmClientHandler
+from .pip_venv_manager import PipVenvManager
 from .server_npm_resource import ServerNpmResource
 from .server_pip_resource import ServerPipResource
 from .server_resource_interface import ServerResourceInterface
@@ -18,6 +20,7 @@ __all__ = [
     'GenericClientHandler',
     'NodeRuntime',
     'NpmClientHandler',
+    'PipVenvManager',
     'ServerResourceInterface',
     'ServerStatus',
     'ServerNpmResource',
