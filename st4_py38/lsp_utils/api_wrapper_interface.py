@@ -1,5 +1,6 @@
+from __future__ import annotations
 from abc import ABCMeta, abstractmethod
-from LSP.plugin.core.typing import Any, Callable
+from typing import Any, Callable
 
 __all__ = ['ApiWrapperInterface']
 

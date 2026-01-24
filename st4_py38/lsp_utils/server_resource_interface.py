@@ -1,6 +1,6 @@
+from __future__ import annotations
 from abc import ABCMeta
 from abc import abstractmethod
-from abc import abstractproperty
 
 __all__ = ['ServerStatus', 'ServerResourceInterface']
 
@@ -58,7 +58,8 @@ class ServerResourceInterface(metaclass=ABCMeta):
         """
         ...
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def binary_path(self) -> str:
         """
         Returns a filesystem path to the server binary.

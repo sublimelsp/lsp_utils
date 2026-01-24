@@ -1,3 +1,4 @@
+from __future__ import annotations
 from ..api_wrapper_interface import ApiWrapperInterface
 from ..server_resource_interface import ServerResourceInterface
 from abc import ABCMeta
@@ -5,7 +6,7 @@ from abc import abstractmethod
 from LSP.plugin import ClientConfig
 from LSP.plugin import DottedDict
 from LSP.plugin import WorkspaceFolder
-from LSP.plugin.core.typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 import sublime
 
 __all__ = ['ClientHandlerInterface']

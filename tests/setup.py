@@ -1,25 +1,22 @@
+from __future__ import annotations
 from LSP.plugin.core.registry import windows
+from LSP.plugin.core.sessions import get_plugin
 from LSP.plugin.core.sessions import Session
 from LSP.plugin.core.types import ClientStates
-from LSP.plugin.core.typing import Any, Dict, Generator, Optional
+from LSP.plugin.documents import DocumentSyncListener
 from lsp_utils import NodeRuntime
 from lsp_utils import SETTINGS_FILENAME
 from os import remove
 from os.path import isfile, join
 from sublime_plugin import view_event_listeners
+from typing import Any, Dict, Generator, Optional
 from unittesting import DeferrableTestCase
 import sublime
 
-try:
-    from LSP.plugin.documents import DocumentSyncListener
-    from LSP.plugin.core.sessions import get_plugin
-    lsp_pyright_class = get_plugin('LSP-pyright')
-    ST3 = False
-except ImportError:
-    from LSP.plugin.core.documents import DocumentSyncListener
-    ST3 = True
-
 TIMEOUT_TIME = 2000
+PACKAGE_NAME = str(__package__).partition(".")[0]
+
+lsp_pyright_class = get_plugin('LSP-pyright')
 
 
 def close_test_view(view: Optional[sublime.View]) -> 'Generator':
@@ -35,7 +32,7 @@ def expand(s: str, w: sublime.Window) -> str:
 
 class TextDocumentTestCase(DeferrableTestCase):
 
-    session = None  # type: Session
+    session: Session | None = None
 
     @classmethod
     def get_test_file_name(cls) -> str:
@@ -43,15 +40,14 @@ class TextDocumentTestCase(DeferrableTestCase):
 
     @classmethod
     def get_session_name(cls) -> str:
-        return 'lsp-pyright' if ST3 else 'LSP-pyright'
+        return 'LSP-pyright'
 
     @classmethod
     def setUpClass(cls) -> Generator:
         super().setUpClass()
-        if not ST3:
-            lsp_pyright_class.setup()
+        lsp_pyright_class.setup()
         window = sublime.active_window()
-        filename = expand(join('$packages', 'lsp_utils', 'tests', cls.get_test_file_name()), window)
+        filename = expand(join('$packages', PACKAGE_NAME, 'tests', cls.get_test_file_name()), window)
         open_view = window.find_open_file(filename)
         yield from close_test_view(open_view)
         cls.wm = windows.lookup(window)
@@ -66,27 +62,22 @@ class TextDocumentTestCase(DeferrableTestCase):
         }
         cls.session = cls.wm.get_session(cls.get_session_name(), filename)
         yield {'condition': lambda: cls.session.state == ClientStates.READY, 'timeout': TIMEOUT_TIME}
-        if not ST3:
-            # Ensure SessionView is created.
-            yield {'condition': lambda: cls.session.session_view_for_view_async(cls.view), 'timeout': TIMEOUT_TIME}
+        # Ensure SessionView is created.
+        yield {'condition': lambda: cls.session.session_view_for_view_async(cls.view), 'timeout': TIMEOUT_TIME}
         yield from close_test_view(cls.view)
 
     def setUp(self) -> Generator:
         window = sublime.active_window()
-        filename = expand(join('$packages', 'lsp_utils', 'tests', self.get_test_file_name()), window)
+        filename = expand(join('$packages', PACKAGE_NAME, 'tests', self.get_test_file_name()), window)
         open_view = window.find_open_file(filename)
         if not open_view:
             self.__class__.view = window.open_file(filename)
             yield {'condition': lambda: not self.view.is_loading(), 'timeout': TIMEOUT_TIME}
-            if ST3:
-                self.assertTrue(self.wm._configs.syntax_supported(self.view))
-            else:
-                self.assertTrue(self.wm.get_config_manager().match_view(self.view))
+            self.assertTrue(self.wm.get_config_manager().match_view(self.view))
         self.init_view_settings()
         yield self.ensure_document_listener_created
-        if not ST3:
-            # Ensure SessionView is created.
-            yield {'condition': lambda: self.session.session_view_for_view_async(self.view), 'timeout': TIMEOUT_TIME}
+        # Ensure SessionView is created.
+        yield {'condition': lambda: self.session.session_view_for_view_async(self.view), 'timeout': TIMEOUT_TIME}
 
     @classmethod
     def init_view_settings(cls) -> None:
@@ -130,18 +121,14 @@ class TextDocumentTestCase(DeferrableTestCase):
     @classmethod
     def tearDownClass(cls) -> 'Generator':
         if cls.session and cls.wm:
-            if ST3:
-                cls.wm.end_config_sessions(cls.get_session_name())
-            else:
-                sublime.set_timeout_async(cls.session.end_async)
+            sublime.set_timeout_async(cls.session.end_async)
             yield lambda: cls.session.state == ClientStates.STOPPING
             if cls.view:
                 yield lambda: cls.wm.get_session(cls.get_session_name(), cls.view.file_name()) is None
         cls.session = None
         cls.wm = None
         cls.remove_lsp_utils_settings()
-        if not ST3:
-            lsp_pyright_class.cleanup()
+        lsp_pyright_class.cleanup()
         super().tearDownClass()
 
     def doCleanups(self) -> 'Generator':

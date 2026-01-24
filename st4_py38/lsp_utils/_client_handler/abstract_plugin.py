@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .._util import weak_method
 from ..api_wrapper_interface import ApiWrapperInterface
 from ..server_resource_interface import ServerStatus
@@ -14,8 +15,8 @@ from LSP.plugin import Session
 from LSP.plugin import unregister_plugin
 from LSP.plugin import WorkspaceFolder
 from LSP.plugin.core.rpc import method2attr
-from LSP.plugin.core.typing import Any, Callable, Dict, List, Optional, Tuple, TypedDict
 from os import path
+from typing import Any, Callable, Dict, List, Optional, Tuple, TypedDict
 from weakref import ref
 import sublime
 

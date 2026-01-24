@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .constants import SETTINGS_FILENAME
 from .helpers import rmtree_ex
 from .helpers import run_command_sync
@@ -6,10 +7,10 @@ from .helpers import version_to_string
 from .third_party.semantic_version import NpmSpec, Version
 from contextlib import contextmanager
 from LSP.plugin.core.logging import debug
-from LSP.plugin.core.typing import cast, Any, Dict, Generator, List, Optional, Tuple, Union
 from os import path
 from os import remove
 from sublime_lib import ActivityIndicator
+from typing import cast, Any, Dict, Generator, List, Optional, Tuple, Union
 import os
 import shutil
 import sublime

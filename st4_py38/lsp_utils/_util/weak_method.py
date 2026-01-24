@@ -1,5 +1,6 @@
-from LSP.plugin.core.typing import Any, Callable
+from __future__ import annotations
 from types import MethodType
+from typing import Any, Callable
 import weakref
 
 

@@ -1,6 +1,7 @@
 {
-    "pythonVersion": "3.11",
+    "pythonVersion": "3.8",
     "reportMissingModuleSource": "none",
+    "reportUnusedCallResult": "none",
     "ignore": ["**/third_party/"],
-    "extraPaths": ["..", "../LSP/stubs", "../sublime_lib/st3"]
+    "extraPaths": ["..", "../LSP/stubs", "../sublime_lib"]
 }
