@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Tuple
 import os
 import shutil
 import sublime
@@ -17,12 +17,12 @@ def platform_program_file_extension() -> str:
 
 
 def run_command_sync(
-    args: List[str],
-    cwd: Optional[str] = None,
-    extra_env: Optional[Dict[str, str]] = None,
-    extra_paths: List[str] = [],
+    args: list[str],
+    cwd: str | None = None,
+    extra_env: dict[str, str] | None = None,
+    extra_paths: list[str] = [],
     shell: bool = is_windows,
-) -> Tuple[str, Optional[str]]:
+) -> tuple[str, str | None]:
     """
     Runs the given command synchronously.
 
@@ -49,7 +49,7 @@ def run_command_sync(
         return ('', decode_bytes(error.output).strip())
 
 
-def run_command_async(args: List[str], on_success: StringCallback, on_error: StringCallback, **kwargs: Any) -> None:
+def run_command_async(args: list[str], on_success: StringCallback, on_error: StringCallback, **kwargs: Any) -> None:
     """
     Runs the given command asynchronously.
 
@@ -57,7 +57,7 @@ def run_command_async(args: List[str], on_success: StringCallback, on_error: Str
     On error calls the provided `on_error` callback with the potential `stderr` output.
     """
 
-    def execute(on_success: StringCallback, on_error: StringCallback, args: List[str]) -> None:
+    def execute(on_success: StringCallback, on_error: StringCallback, args: list[str]) -> None:
         result, error = run_command_sync(args, **kwargs)
         on_error(error) if error is not None else on_success(result)
 
@@ -65,7 +65,7 @@ def run_command_async(args: List[str], on_success: StringCallback, on_error: Str
     thread.start()
 
 
-def run_command_ex(*cmd: str, cwd: Optional[str] = None) -> str:
+def run_command_ex(*cmd: str, cwd: str | None = None) -> str:
     output, error = run_command_sync(list(cmd), cwd=cwd)
     if error:
         raise Exception(error)
@@ -94,7 +94,7 @@ def version_to_string(version: SemanticVersion) -> str:
     return '.'.join([str(c) for c in version])
 
 
-def log_and_show_message(message: str, additional_logs: Optional[str] = None, show_in_status: bool = True) -> None:
+def log_and_show_message(message: str, additional_logs: str | None = None, show_in_status: bool = True) -> None:
     """
     Logs the message in the console and optionally sets it as a status message on the window.
 

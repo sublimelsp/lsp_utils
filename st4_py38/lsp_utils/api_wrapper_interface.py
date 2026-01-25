@@ -2,11 +2,15 @@ from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from typing import Any, Callable
 
-__all__ = ['ApiWrapperInterface']
+__all__ = [
+    'ApiWrapperInterface',
+    'ApiNotificationHandler',
+    'ApiRequestHandler',
+]
 
 
-NotificationHandler = Callable[[Any], None]
-RequestHandler = Callable[[Any, Callable[[Any], None]], None]
+ApiNotificationHandler = Callable[[Any], None]
+ApiRequestHandler = Callable[[Any, Callable[[Any], None]], None]
 
 
 class ApiWrapperInterface(metaclass=ABCMeta):
@@ -16,14 +20,14 @@ class ApiWrapperInterface(metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def on_notification(self, method: str, handler: NotificationHandler) -> None:
+    def on_notification(self, method: str, handler: ApiNotificationHandler) -> None:
         """
         Registers a handler for given notification name. The handler will be called with optional params.
         """
         ...
 
     @abstractmethod
-    def on_request(self, method: str, handler: RequestHandler) -> None:
+    def on_request(self, method: str, handler: ApiRequestHandler) -> None:
         """
         Registers a handler for given request name. The handler will be called with two arguments - first the params
         sent with the request and second the function that must be used to respond to the request. The response

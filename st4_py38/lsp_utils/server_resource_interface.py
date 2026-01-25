@@ -1,10 +1,12 @@
 from __future__ import annotations
 from abc import ABCMeta
 from abc import abstractmethod
+from typing import final
 
 __all__ = ['ServerStatus', 'ServerResourceInterface']
 
 
+@final
 class ServerStatus():
     """
     A :class:`ServerStatus` enum for use as a return value from :func:`ServerResourceInterface.get_status()`.

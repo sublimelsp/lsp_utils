@@ -1,7 +1,7 @@
 from __future__ import annotations
 from ..api_wrapper_interface import ApiWrapperInterface
 from .interface import ClientHandlerInterface
-from typing import Any, Callable, List, Optional, TypeVar, Union
+from typing import Any, Callable, List, TypeVar, Union
 import inspect
 
 __all__ = [
@@ -73,7 +73,7 @@ def register_decorated_handlers(client_handler: ClientHandlerInterface, api: Api
     """
     for _, func in inspect.getmembers(client_handler, predicate=inspect.isroutine):
         for client_event, handler_mark in _HANDLER_MARKS.items():
-            message_methods: Optional[List[str]] = getattr(func, handler_mark, None)
+            message_methods: list[str] | None = getattr(func, handler_mark, None)
             if message_methods is None:
                 continue
 

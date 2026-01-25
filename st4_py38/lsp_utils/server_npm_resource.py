@@ -9,7 +9,8 @@ from os import makedirs
 from os import path
 from os import remove
 from sublime_lib import ResourcePath
-from typing import Dict, Optional, TypedDict, Union
+from typing import TypedDict, final
+from typing_extensions import override
 
 __all__ = ['ServerNpmResource']
 
@@ -25,6 +26,7 @@ ServerNpmResourceCreateOptions = TypedDict('ServerNpmResourceCreateOptions', {
 })
 
 
+@final
 class ServerNpmResource(ServerResourceInterface):
     """
     An implementation of :class:`lsp_utils.ServerResourceInterface` implementing server management for
@@ -39,7 +41,7 @@ class ServerNpmResource(ServerResourceInterface):
         package_storage = options['package_storage']
         storage_path = options['storage_path']
         minimum_node_version = options['minimum_node_version']
-        required_node_version: Union[str, SemanticVersion] = options['required_node_version']
+        required_node_version: str | SemanticVersion = options['required_node_version']
         skip_npm_install = options['skip_npm_install']
         # Fallback to "minimum_node_version" if "required_node_version" is 0.0.0 (not overridden).
         if required_node_version == '0.0.0':
@@ -77,18 +79,21 @@ class ServerNpmResource(ServerResourceInterface):
         return node_bin
 
     @property
-    def node_env(self) -> Optional[Dict[str, str]]:
+    def node_env(self) -> dict[str, str] | None:
         return self._node_runtime.node_env()
 
     # --- ServerResourceInterface -------------------------------------------------------------------------------------
 
     @property
+    @override
     def binary_path(self) -> str:
         return self._binary_path
 
+    @override
     def get_status(self) -> int:
         return self._status
 
+    @override
     def needs_installation(self) -> bool:
         installed = False
         if self._skip_npm_install or path.isdir(path.join(self._server_dest, 'node_modules')):
@@ -115,6 +120,7 @@ class ServerNpmResource(ServerResourceInterface):
             return False
         return True
 
+    @override
     def install_or_update(self) -> None:
         try:
             if path.isdir(self._package_storage):

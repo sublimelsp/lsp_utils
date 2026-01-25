@@ -6,14 +6,13 @@ from abc import abstractmethod
 from LSP.plugin import ClientConfig
 from LSP.plugin import DottedDict
 from LSP.plugin import WorkspaceFolder
-from typing import Dict, List, Optional, Tuple
 import sublime
 
 __all__ = ['ClientHandlerInterface']
 
 
 class ClientHandlerInterface(metaclass=ABCMeta):
-    package_name = ''
+    package_name: str = ''
 
     @classmethod
     @abstractmethod
@@ -37,12 +36,12 @@ class ClientHandlerInterface(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def get_additional_variables(cls) -> Dict[str, str]:
+    def get_additional_variables(cls) -> dict[str, str]:
         ...
 
     @classmethod
     @abstractmethod
-    def get_additional_paths(cls) -> List[str]:
+    def get_additional_paths(cls) -> list[str]:
         ...
 
     @classmethod
@@ -52,7 +51,7 @@ class ClientHandlerInterface(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def get_command(cls) -> List[str]:
+    def get_command(cls) -> list[str]:
         ...
 
     @classmethod
@@ -62,17 +61,17 @@ class ClientHandlerInterface(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def get_server(cls) -> Optional[ServerResourceInterface]:
+    def get_server(cls) -> ServerResourceInterface | None:
         ...
 
     @classmethod
     @abstractmethod
-    def get_binary_arguments(cls) -> List[str]:
+    def get_binary_arguments(cls) -> list[str]:
         ...
 
     @classmethod
     @abstractmethod
-    def read_settings(cls) -> Tuple[sublime.Settings, str]:
+    def read_settings(cls) -> tuple[sublime.Settings, str]:
         ...
 
     @classmethod
@@ -86,9 +85,9 @@ class ClientHandlerInterface(metaclass=ABCMeta):
         cls,
         window: sublime.Window,
         initiating_view: sublime.View,
-        workspace_folders: List[WorkspaceFolder],
+        workspace_folders: list[WorkspaceFolder],
         configuration: ClientConfig,
-    ) -> Optional[str]:
+    ) -> str | None:
         ...
 
     @abstractmethod

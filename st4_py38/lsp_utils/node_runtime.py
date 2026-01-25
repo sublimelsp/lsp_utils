@@ -10,7 +10,8 @@ from LSP.plugin.core.logging import debug
 from os import path
 from os import remove
 from sublime_lib import ActivityIndicator
-from typing import cast, Any, Dict, Generator, List, Optional, Tuple, Union
+from typing import cast, Any, Generator, final
+from typing_extensions import override
 import os
 import shutil
 import sublime
@@ -38,16 +39,16 @@ runtime on the PATH. Press the "Download Node.js" button to get required Node.js
 
 
 class NodeRuntime:
-    _node_runtime_resolved = False
-    _node_runtime = None  # Optional[NodeRuntime]
+    _node_runtime_resolved: bool = False
+    _node_runtime: NodeRuntime | None = None
     """
     Cached instance of resolved Node.js runtime. This is only done once per-session to avoid unnecessary IO.
     """
 
     @classmethod
     def get(
-        cls, package_name: str, storage_path: str, required_node_version: Union[str, SemanticVersion]
-    ) -> Optional['NodeRuntime']:
+        cls, package_name: str, storage_path: str, required_node_version: str | SemanticVersion
+    ) -> 'NodeRuntime | None':
         if isinstance(required_node_version, tuple):
             required_semantic_version = NpmSpec('>={}'.format(version_to_string(required_node_version)))
         else:
@@ -65,10 +66,10 @@ class NodeRuntime:
     def _resolve_node_runtime(
         cls, package_name: str, storage_path: str, required_node_version: NpmSpec
     ) -> 'NodeRuntime':
-        resolved_runtime = None  # type: Optional[NodeRuntime]
+        resolved_runtime: NodeRuntime | None = None
         default_runtimes = ['system', 'local']
         settings = sublime.load_settings(SETTINGS_FILENAME)
-        selected_runtimes = cast(List[str], settings.get('nodejs_runtime') or default_runtimes)
+        selected_runtimes = cast('list[str]', settings.get('nodejs_runtime') or default_runtimes)
         log_lines = ['--- lsp_utils Node.js resolving start ---']
         for runtime_type in selected_runtimes:
             if runtime_type == 'system':
@@ -131,11 +132,12 @@ class NodeRuntime:
         return resolved_runtime
 
     def __init__(self) -> None:
-        self._node = None  # type: Optional[str]
-        self._npm = None  # type: Optional[str]
-        self._version = None  # type: Optional[Version]
-        self._additional_paths = []  # type: List[str]
+        self._node: str | None = None
+        self._npm: str | None = None
+        self._version: Version | None = None
+        self._additional_paths: list[str] = []
 
+    @override
     def __repr__(self) -> str:
         return '{}(node: {}, npm: {}, version: {})'.format(
             self.__class__.__name__, self._node, self._npm, self._version if self._version else None)
@@ -143,13 +145,13 @@ class NodeRuntime:
     def install_node(self) -> None:
         raise Exception('Not supported!')
 
-    def node_bin(self) -> Optional[str]:
+    def node_bin(self) -> str | None:
         return self._node
 
-    def npm_bin(self) -> Optional[str]:
+    def npm_bin(self) -> str | None:
         return self._npm
 
-    def node_env(self) -> Dict[str, str]:
+    def node_env(self) -> dict[str, str]:
         if IS_WINDOWS_7_OR_LOWER:
             return {'NODE_SKIP_PLATFORM_CHECK': '1'}
         return {}
@@ -181,12 +183,12 @@ class NodeRuntime:
 
     def run_node(
         self,
-        args: List[str],
+        args: list[str],
         stdin: int = subprocess.PIPE,
         stdout: int = subprocess.PIPE,
         stderr: int = subprocess.PIPE,
-        env: Dict[str, Any] = {}
-    ) -> Optional['subprocess.Popen[bytes]']:
+        env: dict[str, Any] = {}
+    ) -> 'subprocess.Popen[bytes] | None':
         node_bin = self.node_bin()
         if node_bin is None:
             return None
@@ -221,12 +223,13 @@ class NodeRuntime:
         if error is not None:
             raise Exception('Failed to run npm command "{}":\n{}'.format(' '.join(args), error))
 
-    def npm_command(self) -> List[str]:
+    def npm_command(self) -> list[str]:
         if self._npm is None:
             raise Exception('Npm command not initialized')
         return [self._npm]
 
 
+@final
 class NodeRuntimePATH(NodeRuntime):
     def __init__(self) -> None:
         super().__init__()
@@ -234,7 +237,9 @@ class NodeRuntimePATH(NodeRuntime):
         self._npm = shutil.which('npm')
 
 
+@final
 class NodeRuntimeLocal(NodeRuntime):
+
     def __init__(self, base_dir: str, node_version: str = NODE_RUNTIME_VERSION):
         super().__init__()
         self._base_dir = path.abspath(path.join(base_dir, node_version))
@@ -245,11 +250,13 @@ class NodeRuntimeLocal(NodeRuntime):
 
     # --- NodeRuntime overrides ----------------------------------------------------------------------------------------
 
-    def npm_command(self) -> List[str]:
+    @override
+    def npm_command(self) -> list[str]:
         if not self._node or not self._npm:
             raise Exception('Node.js or Npm command not initialized')
         return [self._node, self._npm]
 
+    @override
     def install_node(self) -> None:
         os.makedirs(os.path.dirname(self._install_in_progress_marker_file), exist_ok=True)
         open(self._install_in_progress_marker_file, 'a').close()
@@ -271,7 +278,7 @@ class NodeRuntimeLocal(NodeRuntime):
         self._npm = path.join(self._node_lib, 'npm', 'bin', 'npm-cli.js')
         self._additional_paths = [path.dirname(self._node)] if self._node else []
 
-    def _resolve_binary(self) -> Optional[str]:
+    def _resolve_binary(self) -> str | None:
         exe_path = path.join(self._node_dir, 'node.exe')
         binary_path = path.join(self._node_dir, 'bin', 'node')
         if path.isfile(exe_path):
@@ -287,6 +294,7 @@ class NodeRuntimeLocal(NodeRuntime):
         return lib_path
 
 
+@final
 class NodeInstaller:
     '''Command to install a local copy of Node.js'''
 
@@ -306,7 +314,7 @@ class NodeInstaller:
             self._download_node(url, archive)
         self._install_node(archive)
 
-    def _node_archive(self) -> Tuple[str, str]:
+    def _node_archive(self) -> tuple[str, str]:
         platform = sublime.platform()
         arch = sublime.arch()
         if platform == 'windows' and arch == 'x64':
@@ -355,6 +363,7 @@ class NodeInstaller:
             remove(archive)
 
 
+@final
 class ElectronRuntimeLocal(NodeRuntime):
     def __init__(self, base_dir: str):
         super().__init__()
@@ -366,11 +375,13 @@ class ElectronRuntimeLocal(NodeRuntime):
 
     # --- NodeRuntime overrides ----------------------------------------------------------------------------------------
 
-    def node_env(self) -> Dict[str, str]:
+    @override
+    def node_env(self) -> dict[str, str]:
         extra_env = super().node_env()
         extra_env.update({'ELECTRON_RUN_AS_NODE': 'true'})
         return extra_env
 
+    @override
     def install_node(self) -> None:
         os.makedirs(os.path.dirname(self._install_in_progress_marker_file), exist_ok=True)
         open(self._install_in_progress_marker_file, 'a').close()
@@ -380,6 +391,7 @@ class ElectronRuntimeLocal(NodeRuntime):
             self._resolve_paths()
         remove(self._install_in_progress_marker_file)
 
+    @override
     def run_install(self, cwd: str) -> None:
         self._run_yarn(['import'], cwd)
         args = [
@@ -398,7 +410,7 @@ class ElectronRuntimeLocal(NodeRuntime):
         self._node = self._resolve_binary()
         self._npm = path.join(self._base_dir, 'yarn.js')
 
-    def _resolve_binary(self) -> Optional[str]:
+    def _resolve_binary(self) -> str | None:
         binary_path = None
         platform = sublime.platform()
         if platform == 'osx':
@@ -409,7 +421,7 @@ class ElectronRuntimeLocal(NodeRuntime):
             binary_path = path.join(self._base_dir, 'electron')
         return binary_path if binary_path and path.isfile(binary_path) else None
 
-    def _run_yarn(self, args: List[str], cwd: str) -> None:
+    def _run_yarn(self, args: list[str], cwd: str) -> None:
         if not path.isdir(cwd):
             raise Exception('Specified working directory "{}" does not exist'.format(cwd))
         if not self._node:
@@ -424,6 +436,7 @@ class ElectronRuntimeLocal(NodeRuntime):
             raise Exception('Failed to run yarn command "{}":\n{}'.format(' '.join(args), error))
 
 
+@final
 class ElectronInstaller:
     '''Command to install a local copy of Node.js'''
 
@@ -446,7 +459,7 @@ class ElectronInstaller:
         self._install(archive)
         self._download_yarn()
 
-    def _node_archive(self) -> Tuple[str, str]:
+    def _node_archive(self) -> tuple[str, str]:
         platform = sublime.platform()
         arch = sublime.arch()
         if platform == 'windows':

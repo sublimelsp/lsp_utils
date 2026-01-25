@@ -3,7 +3,6 @@ from .generic_client_handler import GenericClientHandler
 from .server_pip_resource import ServerPipResource
 from .server_resource_interface import ServerResourceInterface
 from os import path
-from typing import List, Optional
 from typing_extensions import override
 import shutil
 import sublime
@@ -18,7 +17,7 @@ class PipClientHandler(GenericClientHandler):
     Automatically manages a pip-based server by installing and updating dependencies based on provided
     `requirements.txt` file.
     """
-    __server: Optional[ServerPipResource] = None
+    __server: ServerPipResource | None = None
 
     requirements_txt_path: str = ''
     """
@@ -67,7 +66,7 @@ class PipClientHandler(GenericClientHandler):
 
     @classmethod
     @override
-    def get_server(cls) -> Optional[ServerResourceInterface]:
+    def get_server(cls) -> ServerResourceInterface | None:
         if not cls.__server:
             python_binary = cls.get_python_binary()
             if not shutil.which(python_binary):
@@ -78,7 +77,7 @@ class PipClientHandler(GenericClientHandler):
 
     @classmethod
     @override
-    def get_additional_paths(cls) -> List[str]:
+    def get_additional_paths(cls) -> list[str]:
         server = cls.get_server()
         if server:
             return [path.dirname(server.binary_path)]
