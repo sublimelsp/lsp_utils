@@ -1,4 +1,6 @@
 from __future__ import annotations
+from ._util import download_file
+from ._util import extract_archive
 from .constants import SETTINGS_FILENAME
 from .helpers import rmtree_ex
 from .helpers import run_command_sync
@@ -9,6 +11,7 @@ from contextlib import contextmanager
 from LSP.plugin.core.logging import debug
 from os import path
 from os import remove
+from pathlib import Path
 from sublime_lib import ActivityIndicator
 from typing import cast, Any, Generator, final
 from typing_extensions import override
@@ -17,11 +20,10 @@ import shutil
 import sublime
 import subprocess
 import sys
-import tarfile
-import urllib.request
-import zipfile
+
 
 __all__ = ['NodeRuntime']
+
 
 IS_WINDOWS_7_OR_LOWER = sys.platform == 'win32' and sys.getwindowsversion()[:2] <= (6, 1)  # type: ignore
 
@@ -307,11 +309,15 @@ class NodeInstaller:
         self._cache_dir = path.join(self._base_dir, 'cache')
 
     def run(self) -> None:
-        archive, url = self._node_archive()
-        print('[lsp_utils] Downloading Node.js {} from {}'.format(self._node_version, url))
-        if not self._archive_exists(archive):
-            self._download_node(url, archive)
-        self._install_node(archive)
+        cache_directory = Path(self._cache_dir)
+        archive_filename, url = self._node_archive()
+        print(f'[lsp_utils] Downloading Node.js {self._node_version} from {url}')
+        archive_path = cache_directory / archive_filename
+        if not archive_path.is_file():
+            if not cache_directory.is_dir():
+                cache_directory.mkdir()
+            download_file(url, archive_path)
+        self._install_node(archive_path)
 
     def _node_archive(self) -> tuple[str, str]:
         platform = sublime.platform()
@@ -331,35 +337,10 @@ class NodeInstaller:
         dist_url = NODE_DIST_URL.format(version=self._node_version, filename=filename)
         return filename, dist_url
 
-    def _archive_exists(self, filename: str) -> bool:
-        archive = path.join(self._cache_dir, filename)
-        return path.isfile(archive)
-
-    def _download_node(self, url: str, filename: str) -> None:
-        if not path.isdir(self._cache_dir):
-            os.makedirs(self._cache_dir)
-        archive = path.join(self._cache_dir, filename)
-        with urllib.request.urlopen(url) as response:
-            with open(archive, 'wb') as f:
-                shutil.copyfileobj(response, f)
-
-    def _install_node(self, filename: str) -> None:
-        archive = path.join(self._cache_dir, filename)
-        opener = zipfile.ZipFile if filename.endswith('.zip') else tarfile.open  # type: Any
-        try:
-            with opener(archive) as f:
-                names = f.namelist() if hasattr(f, 'namelist') else f.getnames()
-                install_dir, _ = next(x for x in names if '/' in x).split('/', 1)
-                bad_members = [x for x in names if x.startswith('/') or x.startswith('..')]
-                if bad_members:
-                    raise Exception('{} appears to be malicious, bad filenames: {}'.format(filename, bad_members))
-                f.extractall(self._base_dir)
-                with chdir(self._base_dir):
-                    os.rename(install_dir, 'node')
-        except Exception as ex:
-            raise ex
-        finally:
-            remove(archive)
+    def _install_node(self, archive_path: Path) -> None:
+        install_directory = extract_archive(archive_path, Path(self._base_dir))
+        install_directory.rename(install_directory.parent / 'node')
+        archive_path.unlink()
 
 
 @final
@@ -446,16 +427,20 @@ class ElectronInstaller:
         self._cache_dir = path.join(self._base_dir, 'cache')
 
     def run(self) -> None:
-        archive, url = self._node_archive()
+        cache_directory = Path(self._cache_dir)
+        archive_filename, url = self._node_archive()
         print(
             '[lsp_utils] Downloading Electron {} (Node.js runtime {}) from {}'.format(
                 ELECTRON_RUNTIME_VERSION, ELECTRON_NODE_VERSION, url
             )
         )
-        if not self._archive_exists(archive):
-            self._download(url, archive)
-        self._install(archive)
-        self._download_yarn()
+        archive_path = cache_directory / archive_filename
+        if not archive_path.is_file():
+            if not cache_directory.is_dir():
+                cache_directory.mkdir()
+            download_file(url, archive_path)
+        self._install(archive_path)
+        download_file(YARN_URL, Path(self._base_dir, 'yarn.js'))
 
     def _node_archive(self) -> tuple[str, str]:
         platform = sublime.platform()
@@ -472,44 +457,19 @@ class ElectronInstaller:
         dist_url = ELECTRON_DIST_URL.format(version=ELECTRON_RUNTIME_VERSION, filename=filename)
         return filename, dist_url
 
-    def _archive_exists(self, filename: str) -> bool:
-        archive = path.join(self._cache_dir, filename)
-        return path.isfile(archive)
-
-    def _download(self, url: str, filename: str) -> None:
-        if not path.isdir(self._cache_dir):
-            os.makedirs(self._cache_dir)
-        archive = path.join(self._cache_dir, filename)
-        with urllib.request.urlopen(url) as response:
-            with open(archive, 'wb') as f:
-                shutil.copyfileobj(response, f)
-
-    def _install(self, filename: str) -> None:
-        archive = path.join(self._cache_dir, filename)
+    def _install(self, archive_path: Path) -> None:
         try:
             if sublime.platform() == 'windows':
-                with zipfile.ZipFile(archive) as f:
-                    names = f.namelist()
-                    _, _ = next(x for x in names if '/' in x).split('/', 1)
-                    bad_members = [x for x in names if x.startswith('/') or x.startswith('..')]
-                    if bad_members:
-                        raise Exception('{} appears to be malicious, bad filenames: {}'.format(filename, bad_members))
-                    f.extractall(self._base_dir)
+                extract_archive(archive_path, Path(self._base_dir))
             else:
                 # ZipFile doesn't handle symlinks and permissions correctly on Linux and Mac. Use unzip instead.
-                _, error = run_command_sync(['unzip', archive, '-d', self._base_dir], cwd=self._cache_dir)
+                _, error = run_command_sync(['unzip', str(archive_path), '-d', self._base_dir], cwd=self._cache_dir)
                 if error:
-                    raise Exception('Error unzipping electron archive: {}'.format(error))
+                    raise Exception(f'Error unzipping electron archive: {error}')
         except Exception as ex:
             raise ex
         finally:
-            remove(archive)
-
-    def _download_yarn(self) -> None:
-        archive = path.join(self._base_dir, 'yarn.js')
-        with urllib.request.urlopen(YARN_URL) as response:
-            with open(archive, 'wb') as f:
-                shutil.copyfileobj(response, f)
+            archive_path.unlink()
 
 
 @contextmanager
