@@ -210,7 +210,6 @@ class NodeRuntime:
         args = [
             'ci',
             '--omit=dev',
-            '--scripts-prepend-node-path=true',
             '--verbose',
         ]
         stdout, error = run_command_sync(
@@ -398,7 +397,6 @@ class ElectronRuntimeLocal(NodeRuntime):
             'install',
             '--production',
             '--frozen-lockfile',
-            '--scripts-prepend-node-path=true',
             '--cache-folder={}'.format(path.join(self._base_dir, 'cache', 'yarn')),
             # '--verbose',
         ]
