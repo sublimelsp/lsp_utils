@@ -68,7 +68,7 @@ jobs:
           path: lsp_utils
       - uses: actions/setup-python@v6
         with:
-          python-version: '3.13'
+          python-version: '3.14'
       - run: |
           sudo apt update
           sudo apt install --no-install-recommends -y x11-xserver-utils
