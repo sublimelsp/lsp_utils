@@ -2,6 +2,8 @@ from __future__ import annotations
 from ._client_handler import ClientHandler
 from ._client_handler import notification_handler
 from ._client_handler import request_handler
+from ._util import download_file
+from ._util import extract_archive
 from .api_wrapper_interface import ApiWrapperInterface
 from .constants import SETTINGS_FILENAME
 from .generic_client_handler import GenericClientHandler
@@ -12,19 +14,25 @@ from .server_npm_resource import ServerNpmResource
 from .server_pip_resource import ServerPipResource
 from .server_resource_interface import ServerResourceInterface
 from .server_resource_interface import ServerStatus
+from .uv_runner import UvRunner
+from .uv_venv_manager import UvVenvManager
 
 __all__ = [
     'ApiWrapperInterface',
     'ClientHandler',
-    'SETTINGS_FILENAME',
+    'download_file',
+    'extract_archive',
     'GenericClientHandler',
     'NodeRuntime',
+    'notification_handler',
     'NpmClientHandler',
     'PipVenvManager',
-    'ServerResourceInterface',
-    'ServerStatus',
+    'request_handler',
     'ServerNpmResource',
     'ServerPipResource',
-    'notification_handler',
-    'request_handler',
+    'ServerResourceInterface',
+    'ServerStatus',
+    'SETTINGS_FILENAME',
+    'UvRunner',
+    'UvVenvManager'
 ]
