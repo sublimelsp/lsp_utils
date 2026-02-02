@@ -3,7 +3,7 @@ name = "lsp-utils"
 dynamic = ["version"]
 description = "Library with LSP-related utilities for Sublime Text "
 readme = "README.md"
-license = {file = "LICENSE"}
+license-files = ["LICENSE"]
 authors = [{name = "rchl"}]
 classifiers = [
 	"Intended Audience :: Developers",
