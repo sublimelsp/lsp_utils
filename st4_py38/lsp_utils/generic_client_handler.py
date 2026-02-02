@@ -51,7 +51,7 @@ class GenericClientHandler(ClientHandler, metaclass=ABCMeta):
 
         try:
             from package_control import events  # type: ignore
-            if events.remove(cls.package_name):
+            if events.remove(cls.package_name):  # pyright: ignore[reportUnknownMemberType]
                 sublime.set_timeout_async(run_async, 1000)
         except ImportError:
             pass  # Package Control is not required.
