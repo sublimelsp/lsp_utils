@@ -1,5 +1,61 @@
+[project]
+name = "lsp_utils"
+dynamic = ["version"]
+description = "Library with LSP-related utilities for Sublime Text "
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [{name = "rchl"}]
+classifiers = [
+	"Intended Audience :: Developers",
+	"Operating System :: OS Independent",
+	"Programming Language :: Python :: 3",
+	"Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.8"
+
+[build-system]
+requires = ["hatchling>=1.20", "hatch-vcs>=0.4"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+	"/.*",
+	"*.lock",
+]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "lsp_utils/_version.py"
+tag-pattern = "v{version}"
+
+[tool.mypy]
+python_version = "3.11"
+check_untyped_defs = true
+disallow_untyped_defs = true
+# Don't report errors in external packages.
+follow_imports = "silent"
+mypy_path = ["..", "../LSP/stubs", "../sublime_lib"]
+namespace_packages = true
+strict_optional = true
+
+[[tool.mypy.overrides]]
+module = 'tests.*'
+check_untyped_defs = true
+disallow_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = 'lsp_utils.third_party.semantic_version.*'
+ignore_errors = true
+ignore_missing_imports = true
+
 [tool.pyright]
 pythonVersion = "3.8"
+reportMissingModuleSource = "none"
+reportUnusedCallResult = "none"
+ignore = ["**/third_party/"]
+extraPaths = ["..", "../LSP/stubs", "../sublime_lib"]
 
 [tool.ruff]
 line-length = 120
