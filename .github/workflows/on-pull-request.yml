@@ -56,7 +56,7 @@ jobs:
           rm -rf "./.git"
           echo "Overwriting installed dependency in $ST_LIBS_DIR/lsp_utils"
           rm -rf "$ST_LIBS_DIR/lsp_utils"
-          mv "./st4_py38/lsp_utils" "$ST_LIBS_DIR"
+          mv "./lsp_utils" "$ST_LIBS_DIR"
           cd -
       - uses: SublimeText/UnitTesting/actions/run-tests@v1
 
@@ -78,6 +78,6 @@ jobs:
       - run: git clone https://github.com/SublimeText/sublime_lib.git
       - run: |
           cd lsp_utils
-          mypy st4_py38/lsp_utils
-          flake8 st4_py38/lsp_utils tests
-          pyright st4_py38/lsp_utils
+          mypy lsp_utils
+          flake8 lsp_utils tests
+          pyright lsp_utils

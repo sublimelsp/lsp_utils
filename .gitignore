@@ -1,6 +1,18 @@
-*.doctree
-*.pickle
+# caches
+__pycache__
 .mypy_cache
-__pycache__/
+*.pickle
+
+# build artifacts
+dist/
+_version.py
+
+# docs build artifacts
 docs/html/
+docs/doctrees/
 docs/source/modules/
+*.doctree
+
+# editor files
+*.sublime-project
+*.sublime-workspace
