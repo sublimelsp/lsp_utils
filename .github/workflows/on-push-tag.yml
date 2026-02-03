@@ -22,5 +22,20 @@ jobs:
       - name: Build wheel
         run: uv build --wheel
 
+      - name: Get latest release
+        id: release_exists
+        run: |
+          RELEASE_TAG=$(gh release view --json tagName --jq .tagName 2>/dev/null || echo "")
+          if [ "$RELEASE_TAG" = "$GITHUB_REF_NAME" ]; then
+            echo "release_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "release_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload wheel to existing release
+        if: steps.release_exists.outputs.release_exists == 'true'
+        run: gh release upload "$GITHUB_REF_NAME" dist/*.whl --clobber
+
       - name: Create release & upload wheel
+        if: steps.release_exists.outputs.release_exists == 'false'
         run: gh release create --generate-notes --latest -t "$GITHUB_REF_NAME" "$GITHUB_REF_NAME" dist/*.whl
