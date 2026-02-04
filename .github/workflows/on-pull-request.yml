@@ -21,9 +21,9 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     outputs:
-      lsp_tag: ${{ steps.lsp.outputs.tags.lsp }}
-      sublime_lib_tag: ${{ steps.lsp.outputs.tags.sublime_lib }}
-      pyright_tag: ${{ steps.lsp.outputs.tags.pyright }}
+      lsp_tag: ${{ steps.tags.outputs.lsp }}
+      sublime_lib_tag: ${{ steps.tags.outputs.sublime_lib }}
+      pyright_tag: ${{ steps.tags.outputs.pyright }}
     steps:
       - id: tags
         run: |
