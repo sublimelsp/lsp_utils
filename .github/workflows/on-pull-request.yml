@@ -15,8 +15,25 @@ on:
       - "docs/**"
 
 jobs:
-  Unittesting:
+  tags:
+    name: Latest tags
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    outputs:
+      lsp_tag: ${{ $steps.lsp.outputs.tags.lsp }}
+      sublime_lib_tag: ${{ $steps.lsp.outputs.tags.sublime_lib }}
+      pyright_tag: ${{ $steps.lsp.outputs.tags.pyright }}
+    steps:
+      - id: tags
+        run: |
+          echo "lsp=$(gh release view --repo sublimelsp/LSP --json tagName -q .tagName)" >> "$GITHUB_OUTPUT"
+          echo "sublime_lib=$(gh release view --repo sublimelsp/sublime_lib --json tagName -q .tagName)" >> "$GITHUB_OUTPUT"
+          echo "pyright=$(gh release view --repo sublimelsp/LSP-pyright --json tagName -q .tagName)" >> "$GITHUB_OUTPUT"
+
+  unittesting:
     name: Unittesting (${{ matrix.os }})
+    needs: tags
     strategy:
       fail-fast: false
       matrix:
@@ -35,8 +52,8 @@ jobs:
           # Needs to have different name than the dependency to be able to run tests
           package-name: lsp-utils-dep
           extra-packages: |
-            sublimelsp/LSP@4070-
-            sublimelsp/LSP-pyright
+            sublimelsp/LSP@${{ needs.tags.outputs.lsp_tag }}
+            sublimelsp/LSP-pyright@${{ needs.tags.outputs.pyright_tag }}
 
       - name: Overwrite installed dependency with local version
         shell: bash
@@ -65,11 +82,9 @@ jobs:
       - name: Run tests
         uses: SublimeText/UnitTesting/actions/run-tests@v1
 
-  Lint:
+  lint:
     runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ github.token }}
-
+    needs: tags
     steps:
       - uses: actions/checkout@v6
         with:
@@ -83,15 +98,10 @@ jobs:
           sudo apt update
           sudo apt install --no-install-recommends -y x11-xserver-utils
 
-      - name: Clone latest LSP release
+      - name: Clone dependencies for type checking
         run: |
-          TAG=$(gh release view --repo sublimelsp/LSP --json tagName -q .tagName)
-          git clone --branch "$TAG" --depth 1 https://github.com/sublimelsp/LSP.git
-
-      - name: Clone latest sublime_lib release
-        run: |
-          TAG=$(gh release view --repo SublimeText/sublime_lib --json tagName -q .tagName)
-          git clone --branch "$TAG" --depth 1 https://github.com/SublimeText/sublime_lib.git
+          git clone --branch "${{ needs.tags.outputs.lsp_tag }}" --depth 1 https://github.com/sublimelsp/LSP.git
+          git clone --branch "${{ needs.tags.outputs.pyright_tag }}" --depth 1 https://github.com/SublimeText/sublime_lib.git
 
       - run: pip3 install mypy==1.19.1 flake8==7.3.0 pyright==1.1.408 --user
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
