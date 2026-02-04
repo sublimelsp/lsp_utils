@@ -33,8 +33,8 @@ jobs:
           # Needs to have different name than the dependency to be able to run tests
           package-name: lsp-utils-dep
           extra-packages: |
-            sublimelsp/LSP@main
-            sublimelsp/LSP-pyright@master
+            sublimelsp/LSP
+            sublimelsp/LSP-pyright
       - name: Overwrite installed dependency with local version
         shell: bash
         run: |
