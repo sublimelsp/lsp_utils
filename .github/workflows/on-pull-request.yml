@@ -26,7 +26,9 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
+
       - uses: actions/checkout@v6
+
       - uses: SublimeText/UnitTesting/actions/setup@v1
         with:
           sublime-text-version: 4
@@ -35,6 +37,7 @@ jobs:
           extra-packages: |
             sublimelsp/LSP@4070-
             sublimelsp/LSP-pyright
+
       - name: Overwrite installed dependency with local version
         shell: bash
         run: |
@@ -58,7 +61,9 @@ jobs:
           rm -rf "$ST_LIBS_DIR/lsp_utils"
           mv "./lsp_utils" "$ST_LIBS_DIR"
           cd -
-      - uses: SublimeText/UnitTesting/actions/run-tests@v1
+
+      - name: Run tests
+        uses: SublimeText/UnitTesting/actions/run-tests@v1
 
   Lint:
     runs-on: ubuntu-latest
@@ -66,16 +71,28 @@ jobs:
       - uses: actions/checkout@v6
         with:
           path: lsp_utils
+
       - uses: actions/setup-python@v6
         with:
           python-version: '3.14'
+
       - run: |
           sudo apt update
           sudo apt install --no-install-recommends -y x11-xserver-utils
+
+      - name: Clone latest LSP release
+        run: |
+          TAG=$(gh release view --repo sublimelsp/LSP --json tagName -q .tagName)
+          git clone --branch "$TAG" --depth 1 https://github.com/sublimelsp/LSP.git
+
+      - name: Clone latest sublime_lib release
+        run: |
+          TAG=$(gh release view --repo SublimeText/sublime_lib --json tagName -q .tagName)
+          git clone --branch "$TAG" --depth 1 https://github.com/SublimeText/sublime_lib.git
+
       - run: pip3 install mypy==1.19.1 flake8==7.3.0 pyright==1.1.408 --user
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-      - run: git clone https://github.com/sublimelsp/LSP.git
-      - run: git clone https://github.com/SublimeText/sublime_lib.git
+
       - run: |
           cd lsp_utils
           mypy lsp_utils
