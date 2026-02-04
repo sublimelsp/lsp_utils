@@ -1,6 +1,9 @@
 name: main
 
 on:
+  repository_dispatch:
+    types:
+      - new_release
   push:
     branches:
       - main
@@ -15,8 +18,25 @@ on:
       - "docs/**"
 
 jobs:
-  Unittesting:
+  latest_tags:
+    name: Latest tags
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    outputs:
+      lsp: ${{ steps.tags.outputs.lsp }}
+      sublime_lib: ${{ steps.tags.outputs.lib }}
+      pyright: ${{ steps.tags.outputs.pyright }}
+    steps:
+      - id: tags
+        run: |
+          echo "lsp=$(gh release view --repo sublimelsp/LSP --json tagName -q .tagName)" >> "$GITHUB_OUTPUT"
+          echo "lib=$(gh release view --repo SublimeText/sublime_lib --json tagName -q .tagName)" >> "$GITHUB_OUTPUT"
+          echo "pyright=$(gh release view --repo sublimelsp/LSP-pyright --json tagName -q .tagName)" >> "$GITHUB_OUTPUT"
+
+  unittesting:
     name: Unittesting (${{ matrix.os }})
+    needs: latest_tags
     strategy:
       fail-fast: false
       matrix:
@@ -26,15 +46,18 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
+
       - uses: actions/checkout@v6
+
       - uses: SublimeText/UnitTesting/actions/setup@v1
         with:
           sublime-text-version: 4
           # Needs to have different name than the dependency to be able to run tests
           package-name: lsp-utils-dep
           extra-packages: |
-            sublimelsp/LSP@main
-            sublimelsp/LSP-pyright@master
+            sublimelsp/LSP@${{ needs.latest_tags.outputs.lsp }}
+            sublimelsp/LSP-pyright@${{ needs.latest_tags.outputs.pyright }}
+
       - name: Overwrite installed dependency with local version
         shell: bash
         run: |
@@ -58,26 +81,32 @@ jobs:
           rm -rf "$ST_LIBS_DIR/lsp_utils"
           mv "./lsp_utils" "$ST_LIBS_DIR"
           cd -
-      - uses: SublimeText/UnitTesting/actions/run-tests@v1
 
-  Lint:
+      - name: Run tests
+        uses: SublimeText/UnitTesting/actions/run-tests@v1
+
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
+    needs: latest_tags
     steps:
       - uses: actions/checkout@v6
         with:
           path: lsp_utils
+
       - uses: actions/setup-python@v6
         with:
           python-version: '3.14'
+
       - run: |
           sudo apt update
           sudo apt install --no-install-recommends -y x11-xserver-utils
-      - run: pip3 install mypy==1.19.1 flake8==7.3.0 pyright==1.1.408 --user
+
+      - name: Clone dependencies for type checking
+        run: |
+          git clone --branch "${{ needs.latest_tags.outputs.lsp }}" --depth 1 https://github.com/sublimelsp/LSP.git
+          git clone --branch "${{ needs.latest_tags.outputs.sublime_lib }}" --depth 1 https://github.com/SublimeText/sublime_lib.git
+
+      - run: pip3 install tox --user
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-      - run: git clone https://github.com/sublimelsp/LSP.git
-      - run: git clone https://github.com/SublimeText/sublime_lib.git
-      - run: |
-          cd lsp_utils
-          mypy lsp_utils
-          flake8 lsp_utils tests
-          pyright lsp_utils
+      - run: tox
