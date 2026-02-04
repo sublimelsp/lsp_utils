@@ -28,7 +28,7 @@ jobs:
       - id: tags
         run: |
           echo "lsp=$(gh release view --repo sublimelsp/LSP --json tagName -q .tagName)" >> "$GITHUB_OUTPUT"
-          echo "lib=$(gh release view --repo sublimelsp/sublime_lib --json tagName -q .tagName)" >> "$GITHUB_OUTPUT"
+          echo "lib=$(gh release view --repo SublimeText/sublime_lib --json tagName -q .tagName)" >> "$GITHUB_OUTPUT"
           echo "pyright=$(gh release view --repo sublimelsp/LSP-pyright --json tagName -q .tagName)" >> "$GITHUB_OUTPUT"
 
   unittesting:
