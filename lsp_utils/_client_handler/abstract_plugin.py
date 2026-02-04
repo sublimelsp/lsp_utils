@@ -71,10 +71,9 @@ class ApiWrapper(ApiWrapperInterface):
     def send_request(self, method: str, params: Any, handler: Callable[[Any, bool], None]) -> None:
         session = self.__session()
         if session:
-            session.send_request(
-                Request[Any, Any](method, params),
-                lambda result: handler(result, False),
-                lambda result: handler(result, True))
+            request: Request[Any] = Request(method, params)
+            session.send_request(request, lambda result: handler(result, False), lambda result: handler(result, True))
+
         else:
             handler(None, True)
 
