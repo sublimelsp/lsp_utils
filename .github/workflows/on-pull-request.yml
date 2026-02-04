@@ -103,11 +103,6 @@ jobs:
           git clone --branch "${{ needs.latest_tags.outputs.lsp }}" --depth 1 https://github.com/sublimelsp/LSP.git
           git clone --branch "${{ needs.latest_tags.outputs.sublime_lib }}" --depth 1 https://github.com/SublimeText/sublime_lib.git
 
-      - run: pip3 install mypy==1.19.1 flake8==7.3.0 pyright==1.1.408 --user
+      - run: pip3 install tox --user
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - run: |
-          cd lsp_utils
-          mypy lsp_utils
-          flake8 lsp_utils tests
-          pyright lsp_utils
+      - run: tox
