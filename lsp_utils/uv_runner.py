@@ -13,7 +13,7 @@ __all__ = [
 ]
 
 
-UV_TAG = '0.9.26'
+UV_TAG = '0.10.2'
 UV_BINARY = 'uv.exe' if sublime.platform() == 'windows' else 'uv'
 ARTIFACT_URL = 'https://github.com/astral-sh/uv/releases/download/{tag}/{filename}'
 ARTIFACT_ARCH_MAPPING = {
