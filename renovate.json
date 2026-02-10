@@ -2,5 +2,18 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "github>sublimelsp/renovate-preset"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^lsp_utils\/uv_runner\\.py$/"
+      ],
+      "matchStrings": [
+        "UV_TAG = '(?<currentValue>.+?)'"
+      ],
+      "datasourceTemplate": "github-releases",
+      "packageNameTemplate": "astral-sh/uv"
+    }
   ]
 }
