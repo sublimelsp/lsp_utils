@@ -62,9 +62,6 @@ class UvVenvManager:
         return self.venv_path / bin_dir / f'python{platform_program_file_extension()}'
 
     def needs_install_or_update(self) -> bool:
-        print(1, self.venv_path.exists())
-        print(2, is_hash_equal(self._source_resource_path / PYPROJECT_TOML, self._package_storage / PYPROJECT_TOML))
-        print(3, is_hash_equal(self._source_resource_path / UV_LOCK, self._package_storage / UV_LOCK))
         return not self.venv_path.exists() or \
             not is_hash_equal(self._source_resource_path / PYPROJECT_TOML, self._package_storage / PYPROJECT_TOML) or \
             not is_hash_equal(self._source_resource_path / UV_LOCK, self._package_storage / UV_LOCK)
