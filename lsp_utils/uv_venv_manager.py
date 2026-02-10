@@ -57,9 +57,13 @@ class UvVenvManager:
         return self._package_storage / '.venv'
 
     @property
-    def venv_python_path(self) -> Path:
+    def venv_bin_path(self) -> Path:
         bin_dir = 'Scripts' if sublime.platform() == 'windows' else 'bin'
-        return self.venv_path / bin_dir / f'python{platform_program_file_extension()}'
+        return self.venv_path / bin_dir
+
+    @property
+    def venv_python_path(self) -> Path:
+        return self.venv_bin_path / f'python{platform_program_file_extension()}'
 
     def needs_install_or_update(self) -> bool:
         return not self.venv_path.exists() or \
