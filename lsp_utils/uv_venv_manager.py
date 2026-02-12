@@ -1,5 +1,5 @@
 from __future__ import annotations
-from .helpers import platform_program_file_extension, rmtree_ex
+from .helpers import rmtree_ex
 from .uv_runner import UvRunner
 from hashlib import md5
 from pathlib import Path
@@ -60,10 +60,6 @@ class UvVenvManager:
     def venv_bin_path(self) -> Path:
         bin_dir = 'Scripts' if sublime.platform() == 'windows' else 'bin'
         return self.venv_path / bin_dir
-
-    @property
-    def venv_python_path(self) -> Path:
-        return self.venv_bin_path / f'python{platform_program_file_extension()}'
 
     def needs_install_or_update(self) -> bool:
         return not self.venv_path.exists() or \
