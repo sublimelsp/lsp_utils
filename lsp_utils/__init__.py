@@ -7,6 +7,7 @@ from ._util import extract_archive
 from .api_wrapper_interface import ApiWrapperInterface
 from .constants import SETTINGS_FILENAME
 from .generic_client_handler import GenericClientHandler
+from .helpers import rmtree_ex
 from .node_runtime import NodeRuntime
 from .npm_client_handler import NpmClientHandler
 from .pip_venv_manager import PipVenvManager
@@ -28,6 +29,7 @@ __all__ = [
     'NpmClientHandler',
     'PipVenvManager',
     'request_handler',
+    'rmtree_ex',
     'ServerNpmResource',
     'ServerPipResource',
     'ServerResourceInterface',
