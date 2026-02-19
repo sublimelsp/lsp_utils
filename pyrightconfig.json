@@ -1,8 +1,0 @@
-{
-    "pythonVersion": "3.8",
-    "reportMissingModuleSource": "none",
-    "reportUnusedCallResult": "none",
-    "typeCheckingMode": "strict",
-    "ignore": ["**/third_party/"],
-    "extraPaths": ["..", "../LSP/stubs", "../sublime_lib"]
-}

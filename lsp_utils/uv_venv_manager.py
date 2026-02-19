@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from .helpers import rmtree_ex
 from .uv_runner import UvRunner
 from hashlib import md5
@@ -6,7 +7,6 @@ from pathlib import Path
 from sublime_lib import ResourcePath
 from typing import final
 import sublime
-
 
 __all__ = ['UvVenvManager']
 
@@ -21,9 +21,9 @@ def is_hash_equal(resource_path: ResourcePath, filesystem_path: Path) -> bool:
         return True
     if not filesystem_path.exists():
         return False
-    source_hash = md5(resource_path.read_bytes()).hexdigest()
+    source_hash = md5(resource_path.read_bytes()).hexdigest()  # noqa: S324
     try:
-        return source_hash == md5(filesystem_path.read_bytes()).hexdigest()
+        return source_hash == md5(filesystem_path.read_bytes()).hexdigest()  # noqa: S324
     except FileNotFoundError:
         pass
     return False
@@ -31,22 +31,22 @@ def is_hash_equal(resource_path: ResourcePath, filesystem_path: Path) -> bool:
 
 @final
 class UvVenvManager:
-    """
-    Handles installation and update of dependencies specified in pyproject.toml.
-    """
+    """Handles installation and update of dependencies specified in pyproject.toml."""
 
     def __init__(self, package_name: str, project_toml_resource_path: str, storage_path: Path) -> None:
         """
+        UvVenvManager initialize.
+
         :param package_name:               The name of the package that uses this manager.
         :param project_toml_resource_path: The resource path to the `pyproject.toml` file, relative to the
                                            package's directory. If the package `LSP-foo` has a `pyproject.toml` file
                                            inside the `dep` directory then the path should be `dep/pyproject.toml`.
         :param storage_path:               The path of the Package Storage directory.
         """
-
         pyproject_toml_resource_path = ResourcePath(f'Packages/{package_name}/{project_toml_resource_path}')
         if not pyproject_toml_resource_path.exists():
-            raise Exception(f'Expected "{project_toml_resource_path}" resource not found!')
+            msg = f'Expected "{project_toml_resource_path}" resource not found!'
+            raise Exception(msg)
         self._source_resource_path = pyproject_toml_resource_path.parent
         self._storage_path = storage_path
         self._package_storage = Path(self._storage_path, package_name)

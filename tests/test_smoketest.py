@@ -1,28 +1,35 @@
 from __future__ import annotations
-from .setup import TextDocumentTestCase, TIMEOUT_TIME
-from LSP.plugin.session_view import SessionView
-from typing import cast, Generator
+
+from .setup import GeneratorAny
+from .setup import TextDocumentTestCase
+from .setup import TIMEOUT_TIME
+from typing import cast
+from typing import TYPE_CHECKING
+from typing_extensions import override
+
+if TYPE_CHECKING:
+    from LSP.plugin.session_view import SessionView
 
 
 class BaseTestCase(TextDocumentTestCase):
 
-    def test_diagnostics(self) -> Generator:
-        session_view = cast(SessionView, self.session.session_view_for_view_async(self.view))
-        self.assertIsNotNone(session_view)
-        error_region_key = '{}_icon'.format(session_view.diagnostics_key(1, multiline=False))
+    def test_diagnostics(self) -> GeneratorAny:
+        session_view = cast('SessionView', self.session.session_view_for_view_async(self.view))
+        assert session_view is not None
+        error_region_key = f'{session_view.diagnostics_key(1, multiline=False)}_icon'
         yield {'condition': lambda: len(session_view.session_buffer.diagnostics) == 1, 'timeout': TIMEOUT_TIME * 4}
-        print(session_view.session_buffer.diagnostics)
         error_regions = self.view.get_regions(error_region_key)
-        self.assertEqual(len(error_regions), 1)
+        assert len(error_regions) == 1
         region = error_regions[0]
-        self.assertEqual((region.a, region.b), (6, 7))
+        assert (region.a, region.b) == (6, 7)
         self.view.window().run_command('show_panel', {"panel": "console", "toggle": True})
 
 
 class SystemRuntime(BaseTestCase):
 
     @classmethod
-    def setUpClass(cls) -> Generator:
+    @override
+    def setUpClass(cls) -> GeneratorAny:
         cls.set_lsp_utils_settings({
             'nodejs_runtime': ['system'],
         })
@@ -32,10 +39,11 @@ class SystemRuntime(BaseTestCase):
 class LocalNodeRuntime(BaseTestCase):
 
     @classmethod
-    def setUpClass(cls) -> Generator:
+    @override
+    def setUpClass(cls) -> GeneratorAny:
         cls.set_lsp_utils_settings({
             'nodejs_runtime': ['local'],
-            'local_use_electron': False
+            'local_use_electron': False,
         })
         yield from super().setUpClass()
 
@@ -43,9 +51,10 @@ class LocalNodeRuntime(BaseTestCase):
 class LocalElectronRuntime(BaseTestCase):
 
     @classmethod
-    def setUpClass(cls) -> Generator:
+    @override
+    def setUpClass(cls) -> GeneratorAny:
         cls.set_lsp_utils_settings({
             'nodejs_runtime': ['local'],
-            'local_use_electron': True
+            'local_use_electron': True,
         })
         yield from super().setUpClass()

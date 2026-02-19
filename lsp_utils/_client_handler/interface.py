@@ -1,17 +1,21 @@
 from __future__ import annotations
-from ..api_wrapper_interface import ApiWrapperInterface
-from ..server_resource_interface import ServerResourceInterface
-from abc import ABCMeta
+
+from abc import ABC
 from abc import abstractmethod
-from LSP.plugin import ClientConfig
-from LSP.plugin import DottedDict
-from LSP.plugin import WorkspaceFolder
-import sublime
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..api_wrapper_interface import ApiWrapperInterface
+    from ..server_resource_interface import ServerResourceInterface
+    from LSP.plugin import ClientConfig
+    from LSP.plugin import DottedDict
+    from LSP.plugin import WorkspaceFolder
+    import sublime
 
 __all__ = ['ClientHandlerInterface']
 
 
-class ClientHandlerInterface(metaclass=ABCMeta):
+class ClientHandlerInterface(ABC):
     package_name: str = ''
 
     @classmethod

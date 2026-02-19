@@ -1,12 +1,13 @@
 from __future__ import annotations
-from ._util import download_file, extract_archive
+
+from ._util import download_file
+from ._util import extract_archive
 from .helpers import run_command_ex
 from pathlib import Path
 from shutil import which
 from tempfile import TemporaryDirectory
 from typing import final
 import sublime
-
 
 __all__ = [
     'UvRunner',
@@ -32,7 +33,8 @@ def get_uv_artifact_name() -> str:
     sublime_arch = sublime.arch()
     arch = ARTIFACT_ARCH_MAPPING[sublime_arch]
     if arch is False:
-        raise RuntimeError(f'Unsupported architecture: {sublime_arch}')
+        msg = f'Unsupported architecture: {sublime_arch}'
+        raise RuntimeError(msg)
     sublime_platform = sublime.platform()
     platform = ARTIFACT_PLATFORM_MAPPING[sublime_platform]
     extension = 'zip' if sublime_platform == 'windows' else 'tar.gz'

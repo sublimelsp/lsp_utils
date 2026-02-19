@@ -1,13 +1,21 @@
 from __future__ import annotations
-from ..api_wrapper_interface import ApiWrapperInterface
-from .interface import ClientHandlerInterface
-from typing import Any, Callable, List, TypeVar, Union
+
+from typing import Any
+from typing import Callable
+from typing import List
+from typing import TYPE_CHECKING
+from typing import TypeVar
+from typing import Union
 import inspect
+
+if TYPE_CHECKING:
+    from ..api_wrapper_interface import ApiWrapperInterface
+    from .interface import ClientHandlerInterface
 
 __all__ = [
     "notification_handler",
-    "request_handler",
     "register_decorated_handlers",
+    "request_handler",
 ]
 
 T = TypeVar('T')
@@ -24,31 +32,28 @@ _HANDLER_MARKS = {
 
 def notification_handler(notification_methods: MessageMethods) -> Callable[[NotificationHandler], NotificationHandler]:
     """
-    Marks the decorated function as a "notification" message handler.
+    Mark the decorated function as a "notification" message handler.
 
     On server sending the notification, the decorated function will be called with the `params` argument which contains
     the payload.
     """
-
     return _create_handler("notification", notification_methods)
 
 
 def request_handler(request_methods: MessageMethods) -> Callable[[RequestHandler], RequestHandler]:
     """
-    Marks the decorated function as a "request" message handler.
+    Mark the decorated function as a "request" message handler.
 
     On server sending the request, the decorated function will be called with two arguments (`params` and `respond`).
     The first argument (`params`) is the payload of the request and the second argument (`respond`) is the function that
     must be used to respond to the request. The `respond` function takes any data that should be sent back to the
     server.
     """
-
     return _create_handler("request", request_methods)
 
 
 def _create_handler(client_event: str, message_methods: MessageMethods) -> Callable[[T], T]:
-    """ Marks the decorated function as a message handler. """
-
+    """Mark the decorated function as a message handler."""
     message_methods = [message_methods] if isinstance(message_methods, str) else message_methods
 
     def decorator(func: T) -> T:

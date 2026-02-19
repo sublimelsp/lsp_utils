@@ -1,15 +1,18 @@
 from __future__ import annotations
+
 from LSP.plugin.core.registry import windows
 from LSP.plugin.core.sessions import get_plugin
 from LSP.plugin.core.sessions import Session
 from LSP.plugin.core.types import ClientStates
+from LSP.plugin.core.windows import WindowManager
 from LSP.plugin.documents import DocumentSyncListener
 from lsp_utils import NodeRuntime
 from lsp_utils import SETTINGS_FILENAME
-from os import remove
-from os.path import isfile, join
+from pathlib import Path
 from sublime_plugin import view_event_listeners
-from typing import Any, Dict, Generator, Optional
+from typing import Any
+from typing import Generator
+from typing_extensions import TypeAlias
 from unittesting import DeferrableTestCase
 import sublime
 
@@ -18,8 +21,15 @@ PACKAGE_NAME = str(__package__).partition(".")[0]
 
 lsp_pyright_class = get_plugin('LSP-pyright')
 
+GeneratorAny: TypeAlias = Generator[Any, None, None]
 
-def close_test_view(view: Optional[sublime.View]) -> 'Generator':
+
+class PluginNotFound(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__('Plugin not found')
+
+
+def close_test_view(view: sublime.View | None) -> GeneratorAny:
     if view:
         view.set_scratch(True)
         yield {'condition': lambda: not view.is_loading(), 'timeout': TIMEOUT_TIME}
@@ -43,37 +53,50 @@ class TextDocumentTestCase(DeferrableTestCase):
         return 'LSP-pyright'
 
     @classmethod
-    def setUpClass(cls) -> Generator:
+    def setUpClass(cls) -> GeneratorAny:
         super().setUpClass()
+        if not lsp_pyright_class:
+            raise PluginNotFound
         lsp_pyright_class.setup()
         window = sublime.active_window()
-        filename = expand(join('$packages', PACKAGE_NAME, 'tests', cls.get_test_file_name()), window)
+        filename = expand(str(Path('$packages', PACKAGE_NAME, 'tests', cls.get_test_file_name())), window)
         open_view = window.find_open_file(filename)
         yield from close_test_view(open_view)
-        cls.wm = windows.lookup(window)
-        cls.view = window.open_file(filename)
+        cls.view: sublime.View = window.open_file(filename)
         yield {'condition': lambda: not cls.view.is_loading(), 'timeout': TIMEOUT_TIME}
         yield cls.ensure_document_listener_created
         # First start needs time to install the dependencies.
         INSTALL_TIMEOUT = 30000
         yield {
-            'condition': lambda: cls.wm.get_session(cls.get_session_name(), filename) is not None,
-            'timeout': INSTALL_TIMEOUT
+            'condition': lambda: cls.wm().get_session(cls.get_session_name(), filename) is not None,
+            'timeout': INSTALL_TIMEOUT,
         }
-        cls.session = cls.wm.get_session(cls.get_session_name(), filename)
+        cls.session = cls.wm().get_session(cls.get_session_name(), filename)
+        if not cls.session:
+            msg = 'Session not found'
+            raise Exception(msg)
         yield {'condition': lambda: cls.session.state == ClientStates.READY, 'timeout': TIMEOUT_TIME}
         # Ensure SessionView is created.
         yield {'condition': lambda: cls.session.session_view_for_view_async(cls.view), 'timeout': TIMEOUT_TIME}
         yield from close_test_view(cls.view)
 
-    def setUp(self) -> Generator:
+    @classmethod
+    def wm(cls) -> WindowManager:
         window = sublime.active_window()
-        filename = expand(join('$packages', PACKAGE_NAME, 'tests', self.get_test_file_name()), window)
+        wm = windows.lookup(window)
+        if not wm:
+            msg = 'Window Manager not found'
+            raise Exception(msg)
+        return wm
+
+    def setUp(self) -> GeneratorAny:
+        window = sublime.active_window()
+        filename = expand(str(Path('$packages', PACKAGE_NAME, 'tests', self.get_test_file_name())), window)
         open_view = window.find_open_file(filename)
         if not open_view:
             self.__class__.view = window.open_file(filename)
             yield {'condition': lambda: not self.view.is_loading(), 'timeout': TIMEOUT_TIME}
-            self.assertTrue(self.wm.get_config_manager().match_view(self.view))
+            assert self.wm().get_config_manager().match_view(self.view)
         self.init_view_settings()
         yield self.ensure_document_listener_created
         # Ensure SessionView is created.
@@ -92,7 +115,6 @@ class TextDocumentTestCase(DeferrableTestCase):
 
     @classmethod
     def ensure_document_listener_created(cls) -> bool:
-        assert cls.view
         # Bug in ST3? Either that, or CI runs with ST window not in focus and that makes ST3 not trigger some
         # events like on_load_async, on_activated, on_deactivated. That makes things not properly initialize on
         # opening file (manager missing in DocumentSyncListener)
@@ -104,34 +126,36 @@ class TextDocumentTestCase(DeferrableTestCase):
         return False
 
     @classmethod
-    def set_lsp_utils_settings(cls, value: Dict[str, Any]) -> None:
+    def set_lsp_utils_settings(cls, value: dict[str, Any]) -> None:
         settings = sublime.load_settings(SETTINGS_FILENAME)
-        for key, value in value.items():
-            settings.set(key, value)
+        for key, val in value.items():
+            settings.set(key, val)
         sublime.save_settings(SETTINGS_FILENAME)
 
     @classmethod
     def remove_lsp_utils_settings(cls) -> None:
-        settings_filepath = join(sublime.packages_path(), 'User', SETTINGS_FILENAME)
-        if isfile(settings_filepath):
-            remove(settings_filepath)
+        settings_filepath = Path(sublime.packages_path(), 'User', SETTINGS_FILENAME)
+        if settings_filepath.is_file():
+            settings_filepath.unlink()
         sublime.save_settings(SETTINGS_FILENAME)
         NodeRuntime._node_runtime_resolved = False
 
     @classmethod
-    def tearDownClass(cls) -> 'Generator':
-        if cls.session and cls.wm:
+    def tearDownClass(cls) -> GeneratorAny:
+        wm = cls.wm()
+        if cls.session and wm:
             sublime.set_timeout_async(cls.session.end_async)
             yield lambda: cls.session.state == ClientStates.STOPPING
             if cls.view:
-                yield lambda: cls.wm.get_session(cls.get_session_name(), cls.view.file_name()) is None
+                yield lambda: wm.get_session(cls.get_session_name(), cls.view.file_name()) is None
         cls.session = None
-        cls.wm = None
         cls.remove_lsp_utils_settings()
+        if not lsp_pyright_class:
+            raise PluginNotFound
         lsp_pyright_class.cleanup()
         super().tearDownClass()
 
-    def doCleanups(self) -> 'Generator':
+    def doCleanups(self) -> GeneratorAny:
         if self.view and self.view.is_valid():
             yield from close_test_view(self.view)
         yield from super().doCleanups()

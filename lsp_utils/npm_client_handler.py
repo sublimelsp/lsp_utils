@@ -1,12 +1,16 @@
 from __future__ import annotations
+
 from .generic_client_handler import GenericClientHandler
 from .server_npm_resource import ServerNpmResource
-from .server_resource_interface import ServerResourceInterface
-from LSP.plugin import ClientConfig
-from LSP.plugin import WorkspaceFolder
-from os import path
+from pathlib import Path
+from typing import TYPE_CHECKING
 from typing_extensions import override
-import sublime
+
+if TYPE_CHECKING:
+    from .server_resource_interface import ServerResourceInterface
+    from LSP.plugin import ClientConfig
+    from LSP.plugin import WorkspaceFolder
+    import sublime
 
 __all__ = ['NpmClientHandler']
 
@@ -17,6 +21,7 @@ class NpmClientHandler(GenericClientHandler):
 
     Automatically manages an NPM-based server by installing and updating it in the package storage directory.
     """
+
     __server: ServerNpmResource | None = None
 
     server_directory: str = ''
@@ -45,8 +50,9 @@ class NpmClientHandler(GenericClientHandler):
     @classmethod
     def minimum_node_version(cls) -> tuple[int, int, int]:
         """
-        .. deprecated:: 2.1.0
-           Use :meth:`required_node_version` instead.
+        .. deprecated:: 2.1.0.
+
+        Use :meth:`required_node_version` instead.
 
         The minimum Node version required for this plugin.
 
@@ -57,7 +63,7 @@ class NpmClientHandler(GenericClientHandler):
     @classmethod
     def required_node_version(cls) -> str:
         """
-        The NPM semantic version (typically a range) specifying which version of Node is required for this plugin.
+        NPM semantic version (typically a range) specifying which version of Node is required for this plugin.
 
         Examples:
          - `16.1.1` - only allows a single version
@@ -69,6 +75,7 @@ class NpmClientHandler(GenericClientHandler):
         Also see more examples and a testing playground at https://semver.npmjs.com/ .
 
         :returns: Required NPM semantic version. Defaults to :code:`0.0.0` which means "no restrictions".
+
         """
         return '0.0.0'
 
@@ -78,8 +85,7 @@ class NpmClientHandler(GenericClientHandler):
     @override
     def get_additional_variables(cls) -> dict[str, str]:
         """
-        Overrides :meth:`GenericClientHandler.get_additional_variables`, providing additional variable for use in the
-        settings.
+        Provide additional variable for use in the settings.
 
         The additional variables are:
 
@@ -102,15 +108,15 @@ class NpmClientHandler(GenericClientHandler):
     def get_additional_paths(cls) -> list[str]:
         node_bin = cls._node_bin()
         if node_bin:
-            node_path = path.dirname(node_bin)
+            node_path = Path(node_bin).parent
             if node_path:
-                return [node_path]
+                return [str(node_path)]
         return []
 
     @classmethod
     @override
     def get_command(cls) -> list[str]:
-        return [cls._node_bin(), cls.binary_path()] + cls.get_binary_arguments()
+        return [cls._node_bin(), cls.binary_path(), *cls.get_binary_arguments()]
 
     @classmethod
     @override

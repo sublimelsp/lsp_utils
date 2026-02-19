@@ -1,9 +1,9 @@
 from __future__ import annotations
+
 from .helpers import platform_program_file_extension
 from .pip_venv_manager import PipVenvManager
 from .server_resource_interface import ServerResourceInterface
 from .server_resource_interface import ServerStatus
-from os import path
 from pathlib import Path
 from typing import final
 from typing_extensions import override
@@ -14,8 +14,9 @@ __all__ = ['ServerPipResource']
 @final
 class ServerPipResource(ServerResourceInterface):
     """
-    An implementation of :class:`lsp_utils.ServerResourceInterface` implementing server management for
-    pip-based servers. Handles installation and updates of the server in the package storage.
+    Implements server management for pip-based servers.
+
+    Handles installation and updates of the server in the package storage.
 
     :param storage_path: The path to the package storage (pass :meth:`lsp_utils.GenericClientHandler.storage_path()`)
     :param package_name: The package name (used as a directory name for storage)
@@ -33,16 +34,15 @@ class ServerPipResource(ServerResourceInterface):
         self._server_binary_filename = server_binary_filename
         self._status = ServerStatus.UNINITIALIZED
 
-    def _server_binary(self) -> str:
-        return path.join(self._pip_venv_manager.venv_bin_path,
-                         self._server_binary_filename + platform_program_file_extension())
+    def _server_binary(self) -> Path:
+        return self._pip_venv_manager.venv_bin_path / (self._server_binary_filename + platform_program_file_extension())
 
     # --- ServerResourceInterface handlers ----------------------------------------------------------------------------
 
     @property
     @override
     def binary_path(self) -> str:
-        return self._server_binary()
+        return str(self._server_binary())
 
     @override
     def get_status(self) -> int:
@@ -50,7 +50,7 @@ class ServerPipResource(ServerResourceInterface):
 
     @override
     def needs_installation(self) -> bool:
-        if self._pip_venv_manager.needs_install_or_update() or not path.exists(self._server_binary()):
+        if self._pip_venv_manager.needs_install_or_update() or not self._server_binary().exists():
             return True
         self._status = ServerStatus.READY
         return False
@@ -61,5 +61,6 @@ class ServerPipResource(ServerResourceInterface):
             self._pip_venv_manager.install()
         except Exception as error:
             self._status = ServerStatus.ERROR
-            raise Exception(f'Error installing the server:\n{error}')
+            msg = f'Error installing the server:\n{error}'
+            raise Exception(msg) from error
         self._status = ServerStatus.READY

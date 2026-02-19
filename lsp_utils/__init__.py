@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from ._client_handler import ClientHandler
 from ._client_handler import notification_handler
 from ._client_handler import request_handler
@@ -19,22 +20,22 @@ from .uv_runner import UvRunner
 from .uv_venv_manager import UvVenvManager
 
 __all__ = [
+    'SETTINGS_FILENAME',
     'ApiWrapperInterface',
     'ClientHandler',
-    'download_file',
-    'extract_archive',
     'GenericClientHandler',
     'NodeRuntime',
-    'notification_handler',
     'NpmClientHandler',
     'PipVenvManager',
-    'request_handler',
-    'rmtree_ex',
     'ServerNpmResource',
     'ServerPipResource',
     'ServerResourceInterface',
     'ServerStatus',
-    'SETTINGS_FILENAME',
     'UvRunner',
-    'UvVenvManager'
+    'UvVenvManager',
+    'download_file',
+    'extract_archive',
+    'notification_handler',
+    'request_handler',
+    'rmtree_ex',
 ]

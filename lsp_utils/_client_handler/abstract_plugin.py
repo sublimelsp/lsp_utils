@@ -1,11 +1,12 @@
 from __future__ import annotations
+
 from ..api_wrapper_interface import ApiNotificationHandler
 from ..api_wrapper_interface import ApiRequestHandler
 from ..api_wrapper_interface import ApiWrapperInterface
 from ..server_resource_interface import ServerStatus
 from .api_decorator import register_decorated_handlers
 from .interface import ClientHandlerInterface
-from abc import ABCMeta
+from abc import ABC
 from functools import partial
 from LSP.plugin import AbstractPlugin
 from LSP.plugin import ClientConfig
@@ -16,18 +17,23 @@ from LSP.plugin import Response
 from LSP.plugin import Session
 from LSP.plugin import unregister_plugin
 from LSP.plugin import WorkspaceFolder
-from LSP.plugin.core.rpc import method2attr
+from LSP.plugin.core.rpc import method2attr  # pyright: ignore[reportPrivateLocalImportUsage]
 from os import path
-from typing import Any, Callable
+from typing import Any
+from typing import Callable
+from typing import TYPE_CHECKING
 from typing_extensions import override
-from weakref import WeakMethod, ref
-import sublime
+from weakref import ref
+from weakref import WeakMethod
+
+if TYPE_CHECKING:
+    import sublime
 
 __all__ = ['ClientHandler']
 
 
 class ApiWrapper(ApiWrapperInterface):
-    def __init__(self, plugin: 'ref[AbstractPlugin]'):
+    def __init__(self, plugin: ref[AbstractPlugin]) -> None:
         self.__plugin = plugin
 
     def __session(self) -> Session | None:
@@ -72,15 +78,13 @@ class ApiWrapper(ApiWrapperInterface):
         session = self.__session()
         if session:
             request: Request[Any, Any] = Request(method, params)
-            session.send_request(request, lambda result: handler(result, False), lambda result: handler(result, True))
+            session.send_request(request, lambda result: handler(result, False), lambda result: handler(result, True))  # noqa: FBT003
         else:
-            handler(None, True)
+            handler(None, True)  # noqa: FBT003
 
 
-class ClientHandler(AbstractPlugin, ClientHandlerInterface, metaclass=ABCMeta):
-    """
-    The base class for creating an LSP plugin.
-    """
+class ClientHandler(AbstractPlugin, ClientHandlerInterface, ABC):
+    """The base class for creating an LSP plugin."""
 
     # --- AbstractPlugin handlers -------------------------------------------------------------------------------------
 
@@ -121,9 +125,9 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface, metaclass=ABCMeta):
         if cls.manages_server():
             server = cls.get_server()
             if not server or server.get_status() == ServerStatus.ERROR:
-                return "{}: Error installing server dependencies.".format(cls.package_name)
+                return f"{cls.package_name}: Error installing server dependencies."
             if server.get_status() != ServerStatus.READY:
-                return "{}: Server installation in progress...".format(cls.package_name)
+                return f"{cls.package_name}: Server installation in progress..."
         message = cls.is_allowed_to_start(window, initiating_view, workspace_folders, configuration)
         if message:
             return message
@@ -167,6 +171,6 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface, metaclass=ABCMeta):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        api = ApiWrapper(ref(self))  # type: ignore
+        api = ApiWrapper(ref(self))
         register_decorated_handlers(self, api)
         self.on_ready(api)

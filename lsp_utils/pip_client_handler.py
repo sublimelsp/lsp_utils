@@ -1,11 +1,15 @@
 from __future__ import annotations
+
 from .generic_client_handler import GenericClientHandler
 from .server_pip_resource import ServerPipResource
-from .server_resource_interface import ServerResourceInterface
-from os import path
+from pathlib import Path
+from typing import TYPE_CHECKING
 from typing_extensions import override
 import shutil
 import sublime
+
+if TYPE_CHECKING:
+    from .server_resource_interface import ServerResourceInterface
 
 __all__ = ['PipClientHandler']
 
@@ -17,6 +21,7 @@ class PipClientHandler(GenericClientHandler):
     Automatically manages a pip-based server by installing and updating dependencies based on provided
     `requirements.txt` file.
     """
+
     __server: ServerPipResource | None = None
 
     requirements_txt_path: str = ''
@@ -47,7 +52,7 @@ class PipClientHandler(GenericClientHandler):
     @classmethod
     def get_python_binary(cls) -> str:
         """
-        Returns a binary name or a full path to the Python interpreter used to create environment for the server.
+        Return a binary name or a full path to the Python interpreter used to create environment for the server.
 
         When only the binary name is specified then it will be expected that it can be found on the PATH.
         """
@@ -70,7 +75,8 @@ class PipClientHandler(GenericClientHandler):
         if not cls.__server:
             python_binary = cls.get_python_binary()
             if not shutil.which(python_binary):
-                raise Exception('Python binary "{}" not found!'.format(python_binary))
+                msg = f'Python binary "{python_binary}" not found!'
+                raise Exception(msg)
             cls.__server = ServerPipResource(
                 cls.storage_path(), cls.package_name, cls.requirements_txt_path, cls.server_filename, python_binary)
         return cls.__server
@@ -80,5 +86,5 @@ class PipClientHandler(GenericClientHandler):
     def get_additional_paths(cls) -> list[str]:
         server = cls.get_server()
         if server:
-            return [path.dirname(server.binary_path)]
+            return [str(Path(server.binary_path).parent)]
         return []

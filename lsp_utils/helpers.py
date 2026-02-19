@@ -1,11 +1,18 @@
 from __future__ import annotations
-from pathlib import Path
-from typing import Any, Callable, Tuple
+
+from os import PathLike
+from typing import Any
+from typing import Callable
+from typing import Tuple
+from typing import TYPE_CHECKING
 import os
 import shutil
 import sublime
-import subprocess
+import subprocess  # noqa: S404
 import threading
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 StringCallback = Callable[[str], None]
 SemanticVersion = Tuple[int, int, int]
@@ -18,19 +25,22 @@ def platform_program_file_extension() -> str:
 
 
 def run_command_sync(
-    args: list[str],
-    cwd: str | None = None,
+    args: list[str | PathLike[str]],
+    cwd: str | PathLike[str] | None = None,
     extra_env: dict[str, str] | None = None,
-    extra_paths: list[str] = [],
+    extra_paths: list[str] | None = None,
+    *,
     shell: bool = is_windows,
 ) -> tuple[str, str | None]:
     """
-    Runs the given command synchronously.
+    Run the given command synchronously.
 
     :returns: A two-element tuple with the returned value and an optional error. If running the command has failed, the
               first tuple element will be empty string and the second will contain the potential `stderr` output. If the
               command has succeeded then the second tuple element will be `None`.
     """
+    if extra_paths is None:
+        extra_paths = []
     try:
         env = None
         if extra_env or extra_paths:
@@ -41,24 +51,26 @@ def run_command_sync(
                 env['PATH'] = os.path.pathsep.join(extra_paths) + os.path.pathsep + env['PATH']
         startupinfo = None
         if is_windows:
-            startupinfo = subprocess.STARTUPINFO()  # type: ignore
-            startupinfo.dwFlags |= subprocess.SW_HIDE | subprocess.STARTF_USESHOWWINDOW  # type: ignore
-        output = subprocess.check_output(
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.SW_HIDE | subprocess.STARTF_USESHOWWINDOW
+        output = subprocess.check_output(  # noqa: S603
             args, cwd=cwd, shell=shell, stderr=subprocess.STDOUT, env=env, startupinfo=startupinfo)
         return (decode_bytes(output).strip(), None)
     except subprocess.CalledProcessError as error:
         return ('', decode_bytes(error.output).strip())
 
 
-def run_command_async(args: list[str], on_success: StringCallback, on_error: StringCallback, **kwargs: Any) -> None:
+def run_command_async(
+    args: list[str | PathLike[str]], on_success: StringCallback, on_error: StringCallback, **kwargs: Any,
+) -> None:
     """
-    Runs the given command asynchronously.
+    Run the given command asynchronously.
 
     On success calls the provided `on_success` callback with the value the the command has returned.
     On error calls the provided `on_error` callback with the potential `stderr` output.
     """
 
-    def execute(on_success: StringCallback, on_error: StringCallback, args: list[str]) -> None:
+    def execute(on_success: StringCallback, on_error: StringCallback, args: list[str | PathLike[str]]) -> None:
         result, error = run_command_sync(args, **kwargs)
         on_error(error) if error is not None else on_success(result)
 
@@ -66,7 +78,7 @@ def run_command_async(args: list[str], on_success: StringCallback, on_error: Str
     thread.start()
 
 
-def run_command_ex(*cmd: str, cwd: str | None = None) -> str:
+def run_command_ex(*cmd: str | PathLike[str], cwd: str | PathLike[str] | None = None) -> str:
     output, error = run_command_sync(list(cmd), cwd=cwd)
     if error:
         raise Exception(error)
@@ -74,13 +86,11 @@ def run_command_ex(*cmd: str, cwd: str | None = None) -> str:
 
 
 def decode_bytes(data: bytes) -> str:
-    """
-    Decodes provided bytes using `utf-8` decoding, ignoring potential decoding errors.
-    """
+    """Decode provided bytes using `utf-8` decoding, ignoring potential decoding errors."""
     return data.decode('utf-8', 'ignore')
 
 
-def rmtree_ex(path: str | Path, ignore_errors: bool = False) -> None:
+def rmtree_ex(path: str | Path, *, ignore_errors: bool = False) -> None:
     # On Windows, "shutil.rmtree" will raise file not found errors when deleting a long path (>255 chars).
     # See https://stackoverflow.com/a/14076169/4643765
     # See https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
@@ -89,20 +99,5 @@ def rmtree_ex(path: str | Path, ignore_errors: bool = False) -> None:
 
 
 def version_to_string(version: SemanticVersion) -> str:
-    """
-    Returns a string representation of a version tuple.
-    """
+    """Return a string representation of a version tuple."""
     return '.'.join([str(c) for c in version])
-
-
-def log_and_show_message(message: str, additional_logs: str | None = None, show_in_status: bool = True) -> None:
-    """
-    Logs the message in the console and optionally sets it as a status message on the window.
-
-    :param message: The message to log or show in the status.
-    :param additional_logs: The extra value to log on a separate line.
-    :param show_in_status: Whether to briefly show the message in the status bar of the current window.
-    """
-    print(message, '\n', additional_logs) if additional_logs else print(message)
-    if show_in_status:
-        sublime.active_window().status_message(message)

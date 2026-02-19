@@ -1,16 +1,18 @@
 from __future__ import annotations
-from abc import ABCMeta
+
+from abc import ABC
 from abc import abstractmethod
 from typing import final
 
-__all__ = ['ServerStatus', 'ServerResourceInterface']
+__all__ = [
+    'ServerResourceInterface',
+    'ServerStatus',
+]
 
 
 @final
-class ServerStatus():
-    """
-    A :class:`ServerStatus` enum for use as a return value from :func:`ServerResourceInterface.get_status()`.
-    """
+class ServerStatus:
+    """A :class:`ServerStatus` enum for use as a return value from :func:`ServerResourceInterface.get_status()`."""
 
     UNINITIALIZED = 1
     """Initial status of the server."""
@@ -20,9 +22,11 @@ class ServerStatus():
     """Server is ready to provide resources."""
 
 
-class ServerResourceInterface(metaclass=ABCMeta):
+class ServerResourceInterface(ABC):
     """
-    An interface for implementating server resource handlers. Use this interface in plugins that manage their own
+    Interface for implementating server resource handlers.
+
+    Use this interface in plugins that manage their own
     server binary (:func:`GenericClientHandler.manages_server` returns `True`).
 
     After implementing this interface, return an instance of implemented class from
@@ -32,8 +36,7 @@ class ServerResourceInterface(metaclass=ABCMeta):
     @abstractmethod
     def needs_installation(self) -> bool:
         """
-        This is the place to check whether the binary needs an update, or whether it needs to be installed before
-        starting the language server.
+        Check whether the binary needs an update, or whether it needs to be installed before starting server.
 
         :returns: `True` if the server needs to be installed or updated. This will result in calling
                   :meth:`install_or_update()`.
@@ -43,15 +46,18 @@ class ServerResourceInterface(metaclass=ABCMeta):
     @abstractmethod
     def install_or_update(self) -> None:
         """
-        Do the actual update/installation of the server binary. Don't start extra threads to do the work as everything
-        is handled automatically.
+        Do the actual update/installation of the server binary.
+
+        Don't start extra threads to do the work as everything is handled automatically.
         """
         ...
 
     @abstractmethod
     def get_status(self) -> int:
         """
-        Determines the current status of the server. The state changes as the server is being installed, updated or
+        Determine the current status of the server.
+
+        The state changes as the server is being installed, updated or
         runs into an error doing those. Initialize with :attr:`ServerStatus.UNINITIALIZED` and change to either
         Set to :attr:`ServerStatus.ERROR` or :attr:`ServerStatus.READY` depending on if the server was installed
         correctly or is already installed.
@@ -63,7 +69,5 @@ class ServerResourceInterface(metaclass=ABCMeta):
     @property
     @abstractmethod
     def binary_path(self) -> str:
-        """
-        Returns a filesystem path to the server binary.
-        """
+        """Returns a filesystem path to the server binary."""
         ...
