@@ -4,7 +4,7 @@ from ._util import download_file
 from ._util import extract_archive
 from .helpers import run_command_ex
 from pathlib import Path
-from shutil import which
+from shutil import move, which
 from tempfile import TemporaryDirectory
 from typing import final
 import sublime
@@ -69,7 +69,7 @@ class UvRunner:
                     download_file(url, archive_path)
                     source_directory = extract_archive(archive_path, Path(tempdir))
                     target_directory.mkdir(parents=True, exist_ok=True)
-                    source_directory.joinpath(UV_BINARY).replace(target_uv_path)
+                    move(str(source_directory.joinpath(UV_BINARY)), target_uv_path)
                     target_uv_path.chmod(0o744)
                     target_version_path.write_text(UV_TAG)
             self._uv = str(target_uv_path)
