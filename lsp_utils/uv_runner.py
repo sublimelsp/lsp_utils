@@ -64,7 +64,7 @@ class UvRunner:
                     target_version_path.read_text() != UV_TAG:
                 filename = get_uv_artifact_name()
                 url = ARTIFACT_URL.format(tag=UV_TAG, filename=filename)
-                with TemporaryDirectory() as tempdir:
+                with TemporaryDirectory(dir=target_directory) as tempdir:
                     archive_path = Path(tempdir, filename)
                     download_file(url, archive_path)
                     source_directory = extract_archive(archive_path, Path(tempdir))
