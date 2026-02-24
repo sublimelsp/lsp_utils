@@ -28,7 +28,8 @@ def platform_program_file_extension() -> str:
 def run_command_sync(
     args: Sequence[str | PathLike[str]],
     cwd: str | PathLike[str] | None = None,
-    extra_env: dict[str, str] | None = None,
+    env: dict[str, str] | None = None,  # used as is, without merging with process envs
+    extra_env: dict[str, str] | None = None,  # merged with envs obtained from current process
     extra_paths: list[str] | None = None,
     *,
     shell: bool = is_windows,
@@ -43,19 +44,21 @@ def run_command_sync(
     if extra_paths is None:
         extra_paths = []
     try:
-        env = None
-        if extra_env or extra_paths:
-            env = os.environ.copy()
+        final_env = None
+        if env:
+            final_env = env
+        elif extra_env or extra_paths:
+            final_env = os.environ.copy()
             if extra_env:
-                env.update(extra_env)
+                final_env.update(extra_env)
             if extra_paths:
-                env['PATH'] = os.path.pathsep.join(extra_paths) + os.path.pathsep + env['PATH']
+                final_env['PATH'] = os.path.pathsep.join(extra_paths) + os.path.pathsep + final_env['PATH']
         startupinfo = None
         if is_windows:
             startupinfo = subprocess.STARTUPINFO()
             startupinfo.dwFlags |= subprocess.SW_HIDE | subprocess.STARTF_USESHOWWINDOW
         output = subprocess.check_output(  # noqa: S603
-            args, cwd=cwd, shell=shell, stderr=subprocess.STDOUT, env=env, startupinfo=startupinfo)
+            args, cwd=cwd, shell=shell, stderr=subprocess.STDOUT, env=final_env, startupinfo=startupinfo)
         return (decode_bytes(output).strip(), None)
     except subprocess.CalledProcessError as error:
         return ('', decode_bytes(error.output).strip())
