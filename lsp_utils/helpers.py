@@ -12,6 +12,7 @@ import subprocess  # noqa: S404
 import threading
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from pathlib import Path
 
 StringCallback = Callable[[str], None]
@@ -25,7 +26,7 @@ def platform_program_file_extension() -> str:
 
 
 def run_command_sync(
-    args: list[str | PathLike[str]],
+    args: Sequence[str | PathLike[str]],
     cwd: str | PathLike[str] | None = None,
     extra_env: dict[str, str] | None = None,
     extra_paths: list[str] | None = None,
@@ -61,7 +62,7 @@ def run_command_sync(
 
 
 def run_command_async(
-    args: list[str | PathLike[str]], on_success: StringCallback, on_error: StringCallback, **kwargs: Any,
+    args: Sequence[str | PathLike[str]], on_success: StringCallback, on_error: StringCallback, **kwargs: Any,
 ) -> None:
     """
     Run the given command asynchronously.
