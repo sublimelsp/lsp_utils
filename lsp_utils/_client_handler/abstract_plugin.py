@@ -4,7 +4,6 @@ from ..api_wrapper_interface import ApiNotificationHandler
 from ..api_wrapper_interface import ApiRequestHandler
 from ..api_wrapper_interface import ApiWrapperInterface
 from ..server_resource_interface import ServerStatus
-from .api_decorator import register_decorated_handlers
 from .interface import ClientHandlerInterface
 from abc import ABC
 from functools import partial
@@ -172,5 +171,4 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface, ABC):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         api = ApiWrapper(ref(self))
-        register_decorated_handlers(self, api)
         self.on_ready(api)

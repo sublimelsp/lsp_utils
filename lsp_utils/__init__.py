@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from ._client_handler import ClientHandler
-from ._client_handler import notification_handler
-from ._client_handler import request_handler
 from ._util import download_file
 from ._util import extract_archive
 from .api_wrapper_interface import ApiWrapperInterface
@@ -35,7 +33,5 @@ __all__ = [
     'UvVenvManager',
     'download_file',
     'extract_archive',
-    'notification_handler',
-    'request_handler',
     'rmtree_ex',
 ]
