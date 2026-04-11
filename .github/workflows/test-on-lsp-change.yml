@@ -1,4 +1,4 @@
-name: on-dispatch
+name: Test on LSP change
 
 on:
   repository_dispatch:

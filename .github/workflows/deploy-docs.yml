@@ -1,4 +1,4 @@
-name: On Push To Master
+name: Deploy Docs
 
 on:
   push:
