@@ -143,7 +143,7 @@ class ClientHandler(AbstractPlugin, ClientHandlerInterface, ABC):
         extra_paths = cls.get_additional_paths()
         if extra_paths:
             original_path_raw = configuration.env.get('PATH') or ''
-            if isinstance(original_path_raw, str):  # pyright: ignore[reportUnnecessaryIsInstance]
+            if isinstance(original_path_raw, str):
                 original_paths = original_path_raw.split(path.pathsep)
             else:
                 original_paths = original_path_raw
