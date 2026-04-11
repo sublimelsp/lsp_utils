@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from LSP.plugin.core.registry import windows
-from LSP.plugin.core.sessions import get_plugin
 from LSP.plugin.core.sessions import Session
 from LSP.plugin.core.types import ClientStates
+from LSP.plugin.core.windows import get_plugin
 from LSP.plugin.core.windows import WindowManager
 from LSP.plugin.documents import DocumentSyncListener
 from lsp_utils import NodeRuntime

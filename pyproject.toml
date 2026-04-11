@@ -53,6 +53,7 @@ ignore_missing_imports = true
 [tool.pyright]
 pythonVersion = "3.8"
 reportAny = "none"
+reportDeprecated = "none"
 reportExplicitAny = "none"
 reportMissingModuleSource = "none"
 reportUnusedCallResult = "none"
@@ -114,4 +115,18 @@ ignore = [
 	"Q000",  # https://docs.astral.sh/ruff/rules/bad-quotes-inline-string/#bad-quotes-inline-string-q000
 	"TID252",  # https://docs.astral.sh/ruff/rules/relative-imports/
 	"TRY002",  # https://docs.astral.sh/ruff/rules/raise-vanilla-class/
+]
+
+[tool.tox]
+env_list = ["py3"]
+skipsdist = true
+
+[tool.tox.env_run_base]
+deps = [
+    "basedpyright==1.39.0",
+    "ruff==0.15.10",
+]
+commands = [
+    ["basedpyright", "lsp_utils"],
+    ["ruff", "check"],
 ]
