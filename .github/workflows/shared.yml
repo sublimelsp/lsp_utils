@@ -1,21 +1,13 @@
-name: main
+name: CI
 
 on:
-  repository_dispatch:
-    types:
-      - new_release
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - ".github/workflows/docs.yml"
-      - "docs/**"
-  pull_request:
-    branches:
-      - main
-    paths-ignore:
-      - ".github/workflows/docs.yml"
-      - "docs/**"
+  workflow_call:
+    inputs:
+      lsp_use_latest_tag:
+        description: "When true, use the latest LSP release tag; otherwise use the latest commit on the default branch"
+        type: boolean
+        default: true
+        required: false
 
 jobs:
   latest_tags:
@@ -30,7 +22,11 @@ jobs:
     steps:
       - id: tags
         run: |
-          echo "lsp=$(gh release view --repo sublimelsp/LSP --json tagName -q .tagName)" >> "$GITHUB_OUTPUT"
+          if [[ "${{ inputs.lsp_use_latest_tag }}" == "true" ]]; then
+            echo "lsp=$(gh release view --repo sublimelsp/LSP --json tagName -q .tagName)" >> "$GITHUB_OUTPUT"
+          else
+            echo "lsp=$(gh api repos/sublimelsp/LSP -q .default_branch)" >> "$GITHUB_OUTPUT"
+          fi
           echo "lib=$(gh release view --repo SublimeText/sublime_lib --json tagName -q .tagName)" >> "$GITHUB_OUTPUT"
           echo "pyright=$(gh release view --repo sublimelsp/LSP-pyright --json tagName -q .tagName)" >> "$GITHUB_OUTPUT"
 
