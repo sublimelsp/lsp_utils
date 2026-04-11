@@ -51,14 +51,15 @@ ignore_errors = true
 ignore_missing_imports = true
 
 [tool.pyright]
+extraPaths = ["..", "../LSP/stubs", "../sublime_lib"]
+ignore = ["**/third_party/"]
 pythonVersion = "3.8"
 reportAny = "none"
 reportDeprecated = "none"
 reportExplicitAny = "none"
 reportMissingModuleSource = "none"
 reportUnusedCallResult = "none"
-ignore = ["**/third_party/"]
-extraPaths = ["..", "../LSP/stubs", "../sublime_lib"]
+typeCheckingMode = "standard"
 
 [tool.ruff]
 line-length = 120
