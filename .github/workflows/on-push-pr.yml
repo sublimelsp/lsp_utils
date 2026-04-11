@@ -1,0 +1,19 @@
+name: on-push-pr
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - ".github/workflows/docs.yml"
+      - "docs/**"
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - ".github/workflows/docs.yml"
+      - "docs/**"
+
+jobs:
+  ci:
+    uses: ./.github/workflows/shared.yml
