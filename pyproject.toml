@@ -60,6 +60,9 @@ reportExplicitAny = "none"
 reportMissingModuleSource = "none"
 reportUnusedCallResult = "none"
 typeCheckingMode = "standard"
+executionEnvironments = [
+	{ root = "tests", reportIncompatibleMethodOverride = "none" }
+]
 
 [tool.ruff]
 line-length = 120

@@ -4,6 +4,7 @@ from ._util import download_file
 from ._util import extract_archive
 from ._util import logger
 from .constants import HOST_ARCH
+from .constants import INSTALLING_MARKER_FILE
 from .constants import SETTINGS_FILENAME
 from .helpers import rmtree_ex
 from .helpers import run_command_sync
@@ -103,15 +104,6 @@ class NodeRuntime:
                             NO_NODE_FOUND_MESSAGE.format(package_name=package_name), 'Download Node.js'):
                         log_lines.append(' * Download skipped')
                         continue
-                    # Remove outdated runtimes.
-                    if runtime_dir.is_dir():
-                        for directory in next(os.walk(runtime_dir))[1]:
-                            old_dir = runtime_dir / directory
-                            logger.info(f'Deleting outdated Node.js runtime directory "{old_dir}"')
-                            try:
-                                rmtree_ex(old_dir)
-                            except Exception as ex:
-                                log_lines.append(f' * Failed deleting: {ex}')
                     try:
                         local_runtime.install_node()
                     except Exception as ex:
@@ -261,7 +253,7 @@ class NodeRuntimeLocal(NodeRuntime):
         self._base_dir = (base_dir / node_version).resolve()
         self._node_version = node_version
         self._node_dir = self._base_dir / 'node'
-        self._install_in_progress_marker_file = self._base_dir / '.installing'
+        self._install_in_progress_marker_file = self._base_dir / INSTALLING_MARKER_FILE
         self._resolve_paths()
 
     # --- NodeRuntime overrides ----------------------------------------------------------------------------------------
@@ -369,7 +361,7 @@ class ElectronRuntimeLocal(NodeRuntime):
         super().__init__()
         self._base_dir = (base_dir / ELECTRON_NODE_VERSION).resolve()
         self._yarn = self._base_dir / 'yarn.js'
-        self._install_in_progress_marker_file = self._base_dir / '.installing'
+        self._install_in_progress_marker_file = self._base_dir / INSTALLING_MARKER_FILE
         if not self._install_in_progress_marker_file.is_file():
             self._resolve_paths()
 
