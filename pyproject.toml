@@ -78,14 +78,6 @@ skip-magic-trailing-comma = false
 # Automatically detect the appropriate line ending.
 line-ending = "auto"
 
-[tool.ruff.lint.isort]
-case-sensitive = false
-force-single-line = true
-from-first = true
-no-sections = true
-order-by-type = false
-required-imports = ["from __future__ import annotations"]
-
 [tool.ruff.lint]
 # Enable preview rules.
 preview = true
@@ -117,6 +109,14 @@ ignore = [
 	"TID252",  # https://docs.astral.sh/ruff/rules/relative-imports/
 	"TRY002",  # https://docs.astral.sh/ruff/rules/raise-vanilla-class/
 ]
+
+[tool.ruff.lint.isort]
+case-sensitive = false
+force-single-line = true
+from-first = true
+no-sections = true
+order-by-type = false
+required-imports = ["from __future__ import annotations"]
 
 [tool.tox]
 env_list = ["py3"]

@@ -3,6 +3,7 @@ from __future__ import annotations
 from ._util import download_file
 from ._util import extract_archive
 from ._util import logger
+from .constants import HOST_ARCH
 from .constants import SETTINGS_FILENAME
 from .helpers import rmtree_ex
 from .helpers import run_command_sync
@@ -10,14 +11,12 @@ from .helpers import SemanticVersion
 from .helpers import version_to_string
 from .third_party.semantic_version import NpmSpec  # pyright: ignore[reportPrivateLocalImportUsage]
 from .third_party.semantic_version import Version  # pyright: ignore[reportPrivateLocalImportUsage]
-from contextlib import contextmanager
 from LSP.plugin.core.logging import debug
 from pathlib import Path
 from sublime_lib import ActivityIndicator
 from typing import Any
 from typing import cast
 from typing import final
-from typing import Generator
 from typing_extensions import override
 import os
 import shutil
@@ -131,6 +130,7 @@ class NodeRuntime:
                     log_lines.append(f' * {ex}')
         if not resolved_runtime:
             log_lines.append('--- lsp_utils Node.js resolving end ---')
+            logger.debug('\n'.join(log_lines))
             msg = 'Failed resolving Node.js Runtime. Please check in the console for more details.'
             raise Exception(msg)
         return resolved_runtime
@@ -280,7 +280,6 @@ class NodeRuntimeLocal(NodeRuntime):
         with ActivityIndicator(sublime.active_window(), '[LSP] Setting up local Node.js'):
             install_node = NodeInstaller(self._base_dir, self._node_version)
             install_node.run()
-            self._resolve_paths()
         self._install_in_progress_marker_file.unlink()
         self._resolve_paths()
 
@@ -339,8 +338,8 @@ class NodeInstaller:
 
     def _node_archive(self) -> tuple[str, str]:
         platform = sublime.platform()
-        arch = sublime.arch()
-        if platform == 'windows' and arch == 'x64':
+        arch = HOST_ARCH
+        if platform == 'windows':
             node_os = 'win'
             archive = 'zip'
         elif platform == 'linux':
@@ -357,8 +356,10 @@ class NodeInstaller:
         return filename, dist_url
 
     def _install_node(self, archive_path: Path) -> None:
-        install_directory = extract_archive(archive_path, self._base_dir)
-        install_directory.rename(install_directory.parent / 'node')
+        temporary_target_path = self._base_dir / 'node-temp'
+        extracted_path = extract_archive(archive_path, temporary_target_path) or temporary_target_path
+        extracted_path.rename(self._base_dir / 'node')
+        rmtree_ex(temporary_target_path, ignore_errors=True)
         archive_path.unlink()
 
 
@@ -462,7 +463,7 @@ class ElectronInstaller:
 
     def _node_archive(self) -> tuple[str, str]:
         platform = sublime.platform()
-        arch = sublime.arch()
+        arch = HOST_ARCH
         if platform == 'windows':
             platform_code = 'win32'
         elif platform == 'linux':
@@ -488,14 +489,3 @@ class ElectronInstaller:
                     raise Exception(msg)
         finally:
             archive_path.unlink()
-
-
-@contextmanager
-def chdir(new_dir: str) -> Generator[None, None, None]:
-    """Context Manager for changing the working directory."""
-    cur_dir = Path.cwd()
-    os.chdir(new_dir)
-    try:
-        yield
-    finally:
-        os.chdir(cur_dir)

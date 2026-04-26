@@ -6,6 +6,7 @@ from ._client_handler import request_handler
 from ._util import download_file
 from ._util import extract_archive
 from .api_wrapper_interface import ApiWrapperInterface
+from .constants import HOST_ARCH
 from .constants import SETTINGS_FILENAME
 from .generic_client_handler import GenericClientHandler
 from .helpers import rmtree_ex
@@ -20,6 +21,7 @@ from .uv_runner import UvRunner
 from .uv_venv_manager import UvVenvManager
 
 __all__ = [
+    'HOST_ARCH',
     'SETTINGS_FILENAME',
     'ApiWrapperInterface',
     'ClientHandler',
