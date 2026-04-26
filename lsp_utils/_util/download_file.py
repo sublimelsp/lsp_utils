@@ -51,7 +51,10 @@ def extract_files_from_archive(archive: ZipFile | tarfile.TarFile, target_direct
         raise Exception(msg)
     topdir_name = get_top_level_directory(names)
     archive.extractall(str(target_directory))  # noqa: S202
-    return target_directory / topdir_name if topdir_name else None
+    topdir_path = target_directory / topdir_name if topdir_name else None
+    if topdir_path and topdir_path.is_dir():
+        return topdir_path
+    return None
 
 
 def get_top_level_directory(names: list[str]) -> str | None:
