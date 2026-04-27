@@ -68,8 +68,9 @@ class UvRunner:
                 with TemporaryDirectory(dir=target_directory) as tempdir:
                     archive_path = Path(tempdir, filename)
                     download_file(url, archive_path)
-                    source_directory = extract_archive(archive_path, Path(tempdir))
-                    source_directory.joinpath(UV_BINARY).replace(target_uv_path)
+                    temporary_directory_path = Path(tempdir)
+                    extracted_path = extract_archive(archive_path, temporary_directory_path) or temporary_directory_path
+                    extracted_path.joinpath(UV_BINARY).replace(target_uv_path)
                     target_uv_path.chmod(0o744)
                     target_version_path.write_text(UV_TAG)
             self._uv = str(target_uv_path)

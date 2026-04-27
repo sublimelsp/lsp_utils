@@ -21,14 +21,15 @@ def download_file(url: str, target_path: Path) -> None:
         copyfileobj(response, out_file)
 
 
-def extract_archive(archive_file: Path, target_directory: Path) -> Path:
+def extract_archive(archive_file: Path, target_directory: Path) -> Path | None:
     """
     Extract all files from an archive.
 
     :param archive_file: Path to the archive file to extract.
     :param target_directory: Directory where files will be extracted.
-    :return: Path to the extracted directory. If the archive contains a single
-             root directory, the returned path will include that directory.
+    :return: Path to the top-level directory within extracted files or `None`.
+             If the archive contains all files in a single root directory then returns path to that directory.
+             If there is no single parent then returns `None` (means that files are directly under `target_directory`).
     """
     archive_name = archive_file.name
     if archive_name.endswith('.zip'):
@@ -42,7 +43,7 @@ def extract_archive(archive_file: Path, target_directory: Path) -> Path:
         raise Exception(msg)
 
 
-def extract_files_from_archive(archive: ZipFile | tarfile.TarFile, target_directory: Path) -> Path:
+def extract_files_from_archive(archive: ZipFile | tarfile.TarFile, target_directory: Path) -> Path | None:
     names = archive.namelist() if isinstance(archive, ZipFile) else archive.getnames()
     bad_members = [x for x in names if x.startswith(('/', '..'))]
     if bad_members:
@@ -50,9 +51,10 @@ def extract_files_from_archive(archive: ZipFile | tarfile.TarFile, target_direct
         raise Exception(msg)
     topdir_name = get_top_level_directory(names)
     archive.extractall(str(target_directory))  # noqa: S202
-    if topdir_name:
-        return target_directory / topdir_name
-    return target_directory
+    topdir_path = target_directory / topdir_name if topdir_name else None
+    if topdir_path and topdir_path.is_dir():
+        return topdir_path
+    return None
 
 
 def get_top_level_directory(names: list[str]) -> str | None:
