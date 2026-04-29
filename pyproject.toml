@@ -51,6 +51,7 @@ ignore_errors = true
 ignore_missing_imports = true
 
 [tool.pyright]
+extraPaths = ["..", "../LSP/stubs", "../sublime_lib"]
 ignore = ["**/third_party/"]
 pythonVersion = "3.8"
 reportAny = "none"
