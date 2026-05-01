@@ -32,6 +32,9 @@ IS_WINDOWS_7_OR_LOWER = sys.platform == 'win32' and sys.getwindowsversion()[:2] 
 NODE_RUNTIME_VERSION = '22.18.0'
 NODE_DIST_URL = 'https://nodejs.org/dist/v{version}/{filename}'
 
+CUSTOM_NODE_RUNTIME_VERSION = '24.15.0'
+CUSTOM_NODE_DIST_URL = 'https://github.com/sublimelsp/node-pointer-compression-builds/releases/download/v{version}/{filename}'
+
 ELECTRON_RUNTIME_VERSION = '37.3.1'
 ELECTRON_NODE_VERSION = '22.18.0'
 ELECTRON_DIST_URL = 'https://github.com/electron/electron/releases/download/v{version}/{filename}'
@@ -71,7 +74,7 @@ class NodeRuntime:
         cls, package_name: str, storage_path: Path, required_node_version: NpmSpec,
     ) -> NodeRuntime:
         resolved_runtime: NodeRuntime | None = None
-        default_runtimes = ['system', 'local']
+        default_runtimes = ['system', 'local', 'local-test']
         settings = sublime.load_settings(SETTINGS_FILENAME)
         selected_runtimes = cast('list[str]', settings.get('nodejs_runtime') or default_runtimes)
         log_lines = ['--- lsp_utils Node.js resolving start ---']
@@ -90,11 +93,17 @@ class NodeRuntime:
                     break
                 except Exception as ex:
                     log_lines.append(f' * {ex}')
-            elif runtime_type == 'local':
+            elif runtime_type in {'local', 'local-test'}:
                 log_lines.append(f'Resolving Node.js Runtime from lsp_utils for package {package_name}...')
-                use_electron = cast('bool', settings.get('local_use_electron') or False)
+                use_electron = runtime_type == 'local' and cast('bool', settings.get('local_use_electron') or False)
                 runtime_dir = storage_path / 'lsp_utils' / 'node-runtime'
-                local_runtime = ElectronRuntimeLocal(runtime_dir) if use_electron else NodeRuntimeLocal(runtime_dir)
+                node_version = NODE_RUNTIME_VERSION if runtime_type == 'local' else CUSTOM_NODE_RUNTIME_VERSION
+                node_dist_url = NODE_DIST_URL if runtime_type == 'local' else CUSTOM_NODE_DIST_URL
+                local_runtime = (
+                    ElectronRuntimeLocal(runtime_dir)
+                    if use_electron
+                    else NodeRuntimeLocal(runtime_dir, node_version, node_dist_url)
+                )
                 try:
                     local_runtime.check_binary_present()
                 except Exception as ex:
@@ -256,11 +265,14 @@ class NodeRuntimePATH(NodeRuntime):
 @final
 class NodeRuntimeLocal(NodeRuntime):
 
-    def __init__(self, base_dir: Path, node_version: str = NODE_RUNTIME_VERSION) -> None:
+    def __init__(
+        self, base_dir: Path, node_version: str = NODE_RUNTIME_VERSION, node_dist_url: str = NODE_DIST_URL,
+    ) -> None:
         super().__init__()
         self._base_dir = (base_dir / node_version).resolve()
         self._node_version = node_version
         self._node_dir = self._base_dir / 'node'
+        self._node_dist_url = node_dist_url
         self._install_in_progress_marker_file = self._base_dir / '.installing'
         self._resolve_paths()
 
@@ -278,7 +290,7 @@ class NodeRuntimeLocal(NodeRuntime):
         self._install_in_progress_marker_file.parent.mkdir(exist_ok=True, parents=True)
         self._install_in_progress_marker_file.open('a', encoding='utf-8').close()
         with ActivityIndicator(sublime.active_window(), '[LSP] Setting up local Node.js'):
-            install_node = NodeInstaller(self._base_dir, self._node_version)
+            install_node = NodeInstaller(self._base_dir, self._node_version, self._node_dist_url)
             install_node.run()
         self._install_in_progress_marker_file.unlink()
         self._resolve_paths()
@@ -314,7 +326,7 @@ class NodeRuntimeLocal(NodeRuntime):
 class NodeInstaller:
     """Command to install a local copy of Node.js."""
 
-    def __init__(self, base_dir: Path, node_version: str = NODE_RUNTIME_VERSION) -> None:
+    def __init__(self, base_dir: Path, node_version: str, node_dist_url: str) -> None:
         """
         Init NodeInstaller.
 
@@ -323,6 +335,7 @@ class NodeInstaller:
         """
         self._base_dir = base_dir
         self._node_version = node_version
+        self._node_dist_url = node_dist_url
         self._cache_dir = self._base_dir / 'cache'
 
     def run(self) -> None:
@@ -352,7 +365,7 @@ class NodeInstaller:
             msg = f'{arch} {platform} is not supported'
             raise Exception(msg)
         filename = f'node-v{self._node_version}-{node_os}-{arch}.{archive}'
-        dist_url = NODE_DIST_URL.format(version=self._node_version, filename=filename)
+        dist_url = self._node_dist_url.format(version=self._node_version, filename=filename)
         return filename, dist_url
 
     def _install_node(self, archive_path: Path) -> None:
