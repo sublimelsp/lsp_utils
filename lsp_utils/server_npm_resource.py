@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .constants import INSTALLING_MARKER_FILE
 from .helpers import rmtree_ex
 from .helpers import SemanticVersion
 from .node_runtime import NodeRuntime
@@ -66,7 +67,7 @@ class ServerNpmResource(ServerResourceInterface):
         self._server_src = f'Packages/{self._package_name}/{server_directory}/'
         self._server_dest = Path(package_storage, server_directory)
         self._binary_path = Path(package_storage, server_binary_path)
-        self._installation_marker_file = Path(package_storage, '.installing')
+        self._installation_marker_file = Path(package_storage, INSTALLING_MARKER_FILE)
         self._node_version_marker_file = Path(package_storage, '.node-version')
         self._node_runtime = node_runtime
         self._skip_npm_install = skip_npm_install

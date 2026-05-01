@@ -4,6 +4,7 @@ from ._util import download_file
 from ._util import extract_archive
 from ._util import logger
 from .constants import HOST_ARCH
+from .constants import INSTALLING_MARKER_FILE
 from .constants import SETTINGS_FILENAME
 from .helpers import rmtree_ex
 from .helpers import run_command_sync
@@ -273,7 +274,7 @@ class NodeRuntimeLocal(NodeRuntime):
         self._node_version = node_version
         self._node_dir = self._base_dir / 'node'
         self._node_dist_url = node_dist_url
-        self._install_in_progress_marker_file = self._base_dir / '.installing'
+        self._install_in_progress_marker_file = self._base_dir / INSTALLING_MARKER_FILE
         self._resolve_paths()
 
     # --- NodeRuntime overrides ----------------------------------------------------------------------------------------
@@ -382,7 +383,7 @@ class ElectronRuntimeLocal(NodeRuntime):
         super().__init__()
         self._base_dir = (base_dir / ELECTRON_NODE_VERSION).resolve()
         self._yarn = self._base_dir / 'yarn.js'
-        self._install_in_progress_marker_file = self._base_dir / '.installing'
+        self._install_in_progress_marker_file = self._base_dir / INSTALLING_MARKER_FILE
         if not self._install_in_progress_marker_file.is_file():
             self._resolve_paths()
 
