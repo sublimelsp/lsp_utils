@@ -3,6 +3,7 @@ from __future__ import annotations
 from ._util import download_file
 from ._util import extract_archive
 from .helpers import run_command_ex
+from LSP.plugin import ST_STORAGE_PATH
 from pathlib import Path
 from shutil import which
 from tempfile import TemporaryDirectory
@@ -51,13 +52,12 @@ class UvRunner:
     downloading uv.
     """
 
-    def __init__(self, storage_path: Path) -> None:
-        self._storage_path = storage_path
+    def __init__(self) -> None:
         self._uv: str
         if which('uv'):
             self._uv = 'uv'
         else:
-            target_directory = self._storage_path / 'lsp_utils' / 'uv'
+            target_directory = Path(ST_STORAGE_PATH) / 'lsp_utils' / 'uv'
             target_version_path = target_directory / 'VERSION'
             target_uv_path = target_directory / UV_BINARY
             if not target_uv_path.exists() or not target_version_path.exists() or \

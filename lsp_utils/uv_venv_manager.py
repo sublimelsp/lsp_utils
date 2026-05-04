@@ -3,10 +3,15 @@ from __future__ import annotations
 from .helpers import rmtree_ex
 from .uv_runner import UvRunner
 from hashlib import md5
-from pathlib import Path
-from sublime_lib import ResourcePath
+from os import pathsep
 from typing import final
+from typing import TYPE_CHECKING
 import sublime
+
+if TYPE_CHECKING:
+    from LSP.plugin import OnPreStartContext
+    from pathlib import Path
+    from sublime_lib import ResourcePath
 
 __all__ = ['UvVenvManager']
 
@@ -33,47 +38,86 @@ def is_hash_equal(resource_path: ResourcePath, filesystem_path: Path) -> bool:
 class UvVenvManager:
     """Handles installation and update of dependencies specified in pyproject.toml."""
 
-    def __init__(self, package_name: str, project_toml_resource_path: str, storage_path: Path) -> None:
+    @classmethod
+    def on_pre_start_async(
+        cls,
+        context: OnPreStartContext,
+        plugin_storage: Path,
+        pyproject_dir_resource_path: ResourcePath,
+        server_binary_name: str,
+    ) -> None:
         """
-        UvVenvManager initialize.
+        Initialize UvVenvManager from an LspPlugin.
 
-        :param package_name:               The name of the package that uses this manager.
-        :param project_toml_resource_path: The resource path to the `pyproject.toml` file, relative to the
-                                           package's directory. If the package `LSP-foo` has a `pyproject.toml` file
-                                           inside the `dep` directory then the path should be `dep/pyproject.toml`.
-        :param storage_path:               The path of the Package Storage directory.
+        It automatically adds support for a root `server_path` package setting that defaults to "auto" meaning that
+        package-managed server instance will be used but it can be overridden to use a custom server binary.
+
+        It also extends the PATH to include venv directory if managed server instance is used.
+
+        :param context:                     The plugin context.
+        :param plugin_storage:              The path to plugin's storage (`cls.plugin_storage_path`).
+        :param pyproject_dir_resource_path: The resource path to the directory that contains the `pyproject.toml` file.
+                                            ResourcePath needs to have a `Packages/<package_name>/' prefix and be
+                                            followed by a path to the directory that contains `pyproject.toml` file
+                                            within the package.
+        :param server_binary_name:          The name of the binary used to start the server within venv's scripts/bin
+                                            directory.
         """
-        pyproject_toml_resource_path = ResourcePath(f'Packages/{package_name}/{project_toml_resource_path}')
-        if not pyproject_toml_resource_path.exists():
-            msg = f'Expected "{project_toml_resource_path}" resource not found!'
+        if not context.configuration.server_path or context.configuration.server_path == 'auto':
+            uv_venv_manager = UvVenvManager(plugin_storage, pyproject_dir_resource_path, server_binary_name)
+            uv_venv_manager.install_async()
+            path = context.configuration.env.get('PATH', '')
+            context.configuration.env['PATH'] = f'{uv_venv_manager.venv_bin_path}{pathsep}{path}'
+            context.variables['server_path'] = str(uv_venv_manager.venv_bin_path / server_binary_name)
+        else:
+            context.variables['server_path'] = context.configuration.server_path
+
+    def __init__(
+        self, plugin_storage: Path, pyproject_dir_resource_path: ResourcePath, server_binary_name: str,
+    ) -> None:
+        """
+        Initialize UvVenvManager.
+
+        :param plugin_storage:              The path to plugin's storage (`cls.plugin_storage_path`).
+        :param pyproject_dir_resource_path: The resource path to the directory that contains the `pyproject.toml` file.
+                                            ResourcePath needs to have a `Packages/<package_name>/' prefix and be
+                                            followed by a path to the directory that contains `pyproject.toml` file
+                                            within the package.
+        :param server_binary_name:          The name of the binary used to start the server within venv's scripts/bin
+                                            directory.
+        """
+        if not (pyproject_dir_resource_path / PYPROJECT_TOML).exists():
+            msg = f'Expected "{pyproject_dir_resource_path / PYPROJECT_TOML}" resource not found!'
             raise Exception(msg)
-        self._source_resource_path = pyproject_toml_resource_path.parent
-        self._storage_path = storage_path
-        self._package_storage = Path(self._storage_path, package_name)
+        self._source_resource_path = pyproject_dir_resource_path
+        self._plugin_storage = plugin_storage
+        self._server_binary_name = server_binary_name
         self._uv: UvRunner | None = None
 
     @property
     def venv_path(self) -> Path:
-        return self._package_storage / '.venv'
+        return self._plugin_storage / '.venv'
 
     @property
     def venv_bin_path(self) -> Path:
         bin_dir = 'Scripts' if sublime.platform() == 'windows' else 'bin'
         return self.venv_path / bin_dir
 
-    def needs_install_or_update(self) -> bool:
-        return not self.venv_path.exists() or \
-            not is_hash_equal(self._source_resource_path / PYPROJECT_TOML, self._package_storage / PYPROJECT_TOML) or \
-            not is_hash_equal(self._source_resource_path / UV_LOCK, self._package_storage / UV_LOCK)
-
-    def install(self) -> None:
+    def install_async(self) -> None:
+        if (
+            self.venv_path.exists()
+            and is_hash_equal(self._source_resource_path / PYPROJECT_TOML, self._plugin_storage / PYPROJECT_TOML)
+            and is_hash_equal(self._source_resource_path / UV_LOCK, self._plugin_storage / UV_LOCK)
+            and (self.venv_bin_path / self._server_binary_name).is_file()
+        ):
+            return
         if not self._uv:
-            self._uv = UvRunner(self._storage_path)
-        (self._package_storage / PYPROJECT_TOML).unlink(missing_ok=True)
-        (self._package_storage / UV_LOCK).unlink(missing_ok=True)
+            self._uv = UvRunner()
+        (self._plugin_storage / PYPROJECT_TOML).unlink(missing_ok=True)
+        (self._plugin_storage / UV_LOCK).unlink(missing_ok=True)
         rmtree_ex(self.venv_path, ignore_errors=True)
-        self._package_storage.mkdir(parents=True, exist_ok=True)
-        (self._source_resource_path / PYPROJECT_TOML).copy(str(self._package_storage / PYPROJECT_TOML))
+        self._plugin_storage.mkdir(parents=True, exist_ok=True)
+        (self._source_resource_path / PYPROJECT_TOML).copy(str(self._plugin_storage / PYPROJECT_TOML))
         if (self._source_resource_path / UV_LOCK).exists():
-            (self._source_resource_path / UV_LOCK).copy(self._package_storage / UV_LOCK)
-        self._uv.run_command('sync', cwd=str(self._package_storage))
+            (self._source_resource_path / UV_LOCK).copy(self._plugin_storage / UV_LOCK)
+        self._uv.run_command('sync', cwd=str(self._plugin_storage))
