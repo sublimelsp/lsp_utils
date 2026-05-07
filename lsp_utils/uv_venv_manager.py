@@ -47,12 +47,12 @@ class UvVenvManager:
         server_binary_name: str,
     ) -> None:
         """
-        Initialize UvVenvManager from an LspPlugin.
+        Initialize UvVenvManager for an LspPlugin.
 
-        It automatically adds support for a root `server_path` package setting that defaults to "auto" meaning that
-        package-managed server instance will be used but it can be overridden to use a custom server binary.
+        Automatically adds support for a root `server_path` package setting that defaults to "auto" meaning that
+        package-managed server instance will be used. It can be overridden to use a custom server binary.
 
-        It also extends the PATH to include venv directory if managed server instance is used.
+        Also extends the PATH to include venv directory if managed server instance is used.
 
         :param context:                     The plugin context.
         :param plugin_storage:              The path to plugin's storage (`cls.plugin_storage_path`).
