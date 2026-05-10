@@ -49,19 +49,18 @@ class UvVenvManager:
         """
         Initialize UvVenvManager for an LspPlugin.
 
-        Automatically adds support for a root `server_path` package setting that defaults to "auto" meaning that
-        package-managed server instance will be used. It can be overridden to use a custom server binary.
+        Automatically adds support for a root `server_path` package setting that defaults to `"auto"`, meaning
+        that the package-managed server instance will be used. It can be overridden to use a custom server binary.
 
-        Also extends the PATH to include venv directory if managed server instance is used.
+        Also extends the PATH to include the venv directory if the managed server instance is used.
 
-        :param context:                     The plugin context.
-        :param plugin_storage_path:         The path to plugin's storage (`cls.plugin_storage_path`).
-        :param pyproject_directory_resource_path: The resource path to the directory that contains the `pyproject.toml`
-                                            file. ResourcePath needs to have a `Packages/<package_name>/' prefix and be
-                                            followed by a path to the directory that contains `pyproject.toml` file
-                                            within the package.
-        :param server_binary_name:          The name of the binary used to start the server within venv's scripts/bin
-                                            directory.
+        :param context: The plugin context.
+        :param plugin_storage_path: The path to the plugin's storage (`cls.plugin_storage_path`).
+        :param pyproject_directory_resource_path: The `ResourcePath` to the directory that contains the
+            `pyproject.toml` file. Must have a `Packages/<package_name>/` prefix followed by the path to
+            the directory containing `pyproject.toml` within the package.
+        :param server_binary_name: The name of the binary used to start the server within the venv's
+            `scripts/bin` directory.
         """
         if not context.configuration.server_path or context.configuration.server_path == 'auto':
             uv_venv_manager = UvVenvManager(plugin_storage_path, pyproject_directory_resource_path, server_binary_name)
@@ -78,13 +77,12 @@ class UvVenvManager:
         """
         Initialize UvVenvManager.
 
-        :param plugin_storage_path:         The path to plugin's storage (`cls.plugin_storage_path`).
-        :param pyproject_directory_resource_path: The resource path to the directory that contains the `pyproject.toml`
-                                            file. ResourcePath needs to have a `Packages/<package_name>/' prefix and be
-                                            followed by a path to the directory that contains `pyproject.toml` file
-                                            within the package.
-        :param server_binary_name:          The name of the binary used to start the server within venv's scripts/bin
-                                            directory.
+        :param plugin_storage_path: The path to the plugin's storage (`cls.plugin_storage_path`).
+        :param pyproject_directory_resource_path: The resource path to the directory that contains the
+            `pyproject.toml` file. Must have a `Packages/<package_name>/` prefix followed by the path to
+            the directory containing `pyproject.toml` within the package.
+        :param server_binary_name: The name of the binary used to start the server within the venv's
+            `scripts/bin` directory.
         """
         if not (pyproject_directory_resource_path / PYPROJECT_TOML).exists():
             msg = f'Expected "{pyproject_directory_resource_path / PYPROJECT_TOML}" resource not found!'
