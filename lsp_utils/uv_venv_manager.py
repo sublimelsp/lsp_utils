@@ -42,8 +42,8 @@ class UvVenvManager:
     def on_pre_start_async(
         cls,
         context: OnPreStartContext,
-        plugin_storage: Path,
-        pyproject_dir_resource_path: ResourcePath,
+        plugin_storage_path: Path,
+        pyproject_directory_resource_path: ResourcePath,
         server_binary_name: str,
     ) -> None:
         """
@@ -55,16 +55,16 @@ class UvVenvManager:
         Also extends the PATH to include venv directory if managed server instance is used.
 
         :param context:                     The plugin context.
-        :param plugin_storage:              The path to plugin's storage (`cls.plugin_storage_path`).
-        :param pyproject_dir_resource_path: The resource path to the directory that contains the `pyproject.toml` file.
-                                            ResourcePath needs to have a `Packages/<package_name>/' prefix and be
+        :param plugin_storage_path:         The path to plugin's storage (`cls.plugin_storage_path`).
+        :param pyproject_directory_resource_path: The resource path to the directory that contains the `pyproject.toml`
+                                            file. ResourcePath needs to have a `Packages/<package_name>/' prefix and be
                                             followed by a path to the directory that contains `pyproject.toml` file
                                             within the package.
         :param server_binary_name:          The name of the binary used to start the server within venv's scripts/bin
                                             directory.
         """
         if not context.configuration.server_path or context.configuration.server_path == 'auto':
-            uv_venv_manager = UvVenvManager(plugin_storage, pyproject_dir_resource_path, server_binary_name)
+            uv_venv_manager = UvVenvManager(plugin_storage_path, pyproject_directory_resource_path, server_binary_name)
             uv_venv_manager.install_async()
             path = context.configuration.env.get('PATH', '')
             context.configuration.env['PATH'] = f'{uv_venv_manager.venv_bin_path}{pathsep}{path}'
@@ -73,30 +73,30 @@ class UvVenvManager:
             context.variables['server_path'] = context.configuration.server_path
 
     def __init__(
-        self, plugin_storage: Path, pyproject_dir_resource_path: ResourcePath, server_binary_name: str,
+        self, plugin_storage_path: Path, pyproject_directory_resource_path: ResourcePath, server_binary_name: str,
     ) -> None:
         """
         Initialize UvVenvManager.
 
-        :param plugin_storage:              The path to plugin's storage (`cls.plugin_storage_path`).
-        :param pyproject_dir_resource_path: The resource path to the directory that contains the `pyproject.toml` file.
-                                            ResourcePath needs to have a `Packages/<package_name>/' prefix and be
+        :param plugin_storage_path:         The path to plugin's storage (`cls.plugin_storage_path`).
+        :param pyproject_directory_resource_path: The resource path to the directory that contains the `pyproject.toml`
+                                            file. ResourcePath needs to have a `Packages/<package_name>/' prefix and be
                                             followed by a path to the directory that contains `pyproject.toml` file
                                             within the package.
         :param server_binary_name:          The name of the binary used to start the server within venv's scripts/bin
                                             directory.
         """
-        if not (pyproject_dir_resource_path / PYPROJECT_TOML).exists():
-            msg = f'Expected "{pyproject_dir_resource_path / PYPROJECT_TOML}" resource not found!'
+        if not (pyproject_directory_resource_path / PYPROJECT_TOML).exists():
+            msg = f'Expected "{pyproject_directory_resource_path / PYPROJECT_TOML}" resource not found!'
             raise Exception(msg)
-        self._source_resource_path = pyproject_dir_resource_path
-        self._plugin_storage = plugin_storage
+        self._source_resource_path = pyproject_directory_resource_path
+        self._plugin_storage_path = plugin_storage_path
         self._server_binary_name = server_binary_name
         self._uv: UvRunner | None = None
 
     @property
     def venv_path(self) -> Path:
-        return self._plugin_storage / '.venv'
+        return self._plugin_storage_path / '.venv'
 
     @property
     def venv_bin_path(self) -> Path:
@@ -106,18 +106,18 @@ class UvVenvManager:
     def install_async(self) -> None:
         if (
             self.venv_path.exists()
-            and is_hash_equal(self._source_resource_path / PYPROJECT_TOML, self._plugin_storage / PYPROJECT_TOML)
-            and is_hash_equal(self._source_resource_path / UV_LOCK, self._plugin_storage / UV_LOCK)
+            and is_hash_equal(self._source_resource_path / PYPROJECT_TOML, self._plugin_storage_path / PYPROJECT_TOML)
+            and is_hash_equal(self._source_resource_path / UV_LOCK, self._plugin_storage_path / UV_LOCK)
             and (self.venv_bin_path / self._server_binary_name).is_file()
         ):
             return
         if not self._uv:
             self._uv = UvRunner()
-        (self._plugin_storage / PYPROJECT_TOML).unlink(missing_ok=True)
-        (self._plugin_storage / UV_LOCK).unlink(missing_ok=True)
+        (self._plugin_storage_path / PYPROJECT_TOML).unlink(missing_ok=True)
+        (self._plugin_storage_path / UV_LOCK).unlink(missing_ok=True)
         rmtree_ex(self.venv_path, ignore_errors=True)
-        self._plugin_storage.mkdir(parents=True, exist_ok=True)
-        (self._source_resource_path / PYPROJECT_TOML).copy(str(self._plugin_storage / PYPROJECT_TOML))
+        self._plugin_storage_path.mkdir(parents=True, exist_ok=True)
+        (self._source_resource_path / PYPROJECT_TOML).copy(str(self._plugin_storage_path / PYPROJECT_TOML))
         if (self._source_resource_path / UV_LOCK).exists():
-            (self._source_resource_path / UV_LOCK).copy(self._plugin_storage / UV_LOCK)
-        self._uv.run_command('sync', cwd=str(self._plugin_storage))
+            (self._source_resource_path / UV_LOCK).copy(self._plugin_storage_path / UV_LOCK)
+        self._uv.run_command('sync', cwd=str(self._plugin_storage_path))
