@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from ._client_handler import ClientHandler
+from ._node.node_manager import NodeManager
+from ._node.node_runner import NodeRunner
 from ._util import download_file
 from ._util import extract_archive
 from .api_wrapper_interface import ApiWrapperInterface
@@ -24,6 +26,8 @@ __all__ = [
     'ApiWrapperInterface',
     'ClientHandler',
     'GenericClientHandler',
+    'NodeManager',
+    'NodeRunner',
     'NodeRuntime',
     'NpmClientHandler',
     'PipVenvManager',

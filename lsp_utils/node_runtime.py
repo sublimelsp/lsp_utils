@@ -9,6 +9,7 @@ from .constants import SETTINGS_FILENAME
 from .helpers import rmtree_ex
 from .helpers import run_command_sync
 from .helpers import SemanticVersion
+from .helpers import start_process
 from .helpers import version_to_string
 from .third_party.semantic_version import NpmSpec  # pyright: ignore[reportPrivateLocalImportUsage]
 from .third_party.semantic_version import Version  # pyright: ignore[reportPrivateLocalImportUsage]
@@ -113,15 +114,6 @@ class NodeRuntime:
                             NO_NODE_FOUND_MESSAGE.format(package_name=package_name), 'Download Node.js'):
                         log_lines.append(' * Download skipped')
                         continue
-                    # Remove outdated runtimes.
-                    if runtime_dir.is_dir():
-                        for directory in next(os.walk(runtime_dir))[1]:
-                            old_dir = runtime_dir / directory
-                            logger.info(f'Deleting outdated Node.js runtime directory "{old_dir}"')
-                            try:
-                                rmtree_ex(old_dir)
-                            except Exception as ex:
-                                log_lines.append(f' * Failed deleting: {ex}')
                     try:
                         local_runtime.install_node()
                     except Exception as ex:
@@ -210,18 +202,11 @@ class NodeRuntime:
     ) -> subprocess.Popen[bytes] | None:
         if env is None:
             env = {}
+        env.update(self.node_env())
         node_bin = self.node_bin()
         if node_bin is None:
             return None
-        os_env = os.environ.copy()
-        os_env.update(self.node_env())
-        os_env.update(env)
-        startupinfo = None
-        if sys.platform == 'win32':
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.SW_HIDE | subprocess.STARTF_USESHOWWINDOW
-        return subprocess.Popen(  # noqa: S603
-            [node_bin, *args], stdin=stdin, stdout=stdout, stderr=stderr, env=os_env, startupinfo=startupinfo)
+        return start_process([node_bin, *args], stdin=stdin, stdout=stdout, stderr=stderr, extra_env=env)
 
     def run_install(self, cwd: str | os.PathLike[str]) -> None:
         if not Path(cwd).is_dir():
