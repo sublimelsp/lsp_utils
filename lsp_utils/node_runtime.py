@@ -19,12 +19,15 @@ from sublime_lib import ActivityIndicator
 from typing import Any
 from typing import cast
 from typing import final
+from typing import TYPE_CHECKING
 from typing_extensions import override
-import os
 import shutil
 import sublime
 import subprocess  # noqa: S404
 import sys
+
+if TYPE_CHECKING:
+    import os
 
 __all__ = ['NodeRuntime']
 
