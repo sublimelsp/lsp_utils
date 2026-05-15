@@ -9,6 +9,7 @@ import os
 import shutil
 import sublime
 import subprocess  # noqa: S404
+import sys
 import threading
 
 if TYPE_CHECKING:
@@ -23,6 +24,26 @@ is_windows = sublime.platform() == 'windows'
 
 def platform_program_file_extension() -> str:
     return '.exe' if sublime.platform() == 'windows' else ''
+
+
+def start_process(
+    args: Sequence[str | PathLike[str]],
+    *,
+    stdin: int = subprocess.PIPE,
+    stdout: int = subprocess.PIPE,
+    stderr: int = subprocess.PIPE,
+    cwd: str | PathLike[str] | None = None,
+    extra_env: dict[str, str] | None = None,  # merged with envs obtained from current process
+) -> subprocess.Popen[bytes]:
+    env = os.environ.copy()
+    if extra_env:
+        env.update(extra_env)
+    startupinfo = None
+    if sys.platform == 'win32':
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.SW_HIDE | subprocess.STARTF_USESHOWWINDOW
+    return subprocess.Popen(  # noqa: S603
+        args, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd, env=env, startupinfo=startupinfo)
 
 
 def run_command_sync(
