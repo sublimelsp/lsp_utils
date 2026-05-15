@@ -76,4 +76,4 @@ class UvVenvManager:
         (self._source_resource_path / PYPROJECT_TOML).copy(str(self._package_storage / PYPROJECT_TOML))
         if (self._source_resource_path / UV_LOCK).exists():
             (self._source_resource_path / UV_LOCK).copy(self._package_storage / UV_LOCK)
-        self._uv.run_command('sync', cwd=str(self._package_storage))
+        self._uv.run_command('sync', '--frozen', cwd=str(self._package_storage))
