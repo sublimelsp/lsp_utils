@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .constants import INSTALLING_MARKER_FILE
 from .helpers import rmtree_ex
 from .uv_runner import UvRunner
 from hashlib import md5
@@ -102,15 +103,19 @@ class UvVenvManager:
         return self.venv_path / bin_dir
 
     def install_async(self) -> None:
-        if (
-            self.venv_path.exists()
+        installation_marker_file_path = self._plugin_storage_path / INSTALLING_MARKER_FILE
+        installed_and_up_to_date = (
+            not installation_marker_file_path.is_file()
+            and self.venv_path.exists()
             and is_hash_equal(self._source_resource_path / PYPROJECT_TOML, self._plugin_storage_path / PYPROJECT_TOML)
             and is_hash_equal(self._source_resource_path / UV_LOCK, self._plugin_storage_path / UV_LOCK)
             and (self.venv_bin_path / self._server_binary_name).is_file()
-        ):
+        )
+        if installed_and_up_to_date:
             return
         if not self._uv:
             self._uv = UvRunner()
+        installation_marker_file_path.open('w', encoding='utf-8').close()
         (self._plugin_storage_path / PYPROJECT_TOML).unlink(missing_ok=True)
         (self._plugin_storage_path / UV_LOCK).unlink(missing_ok=True)
         rmtree_ex(self.venv_path, ignore_errors=True)
@@ -119,3 +124,4 @@ class UvVenvManager:
         if (self._source_resource_path / UV_LOCK).exists():
             (self._source_resource_path / UV_LOCK).copy(self._plugin_storage_path / UV_LOCK)
         self._uv.run_command('sync', '--frozen', cwd=str(self._plugin_storage_path))
+        installation_marker_file_path.unlink()
