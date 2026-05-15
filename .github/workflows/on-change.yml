@@ -15,5 +15,12 @@ on:
       - "docs/**"
 
 jobs:
-  ci:
+  ci-latest-tag:
     uses: ./.github/workflows/shared.yml
+    with:
+      lsp_use_latest_tag: true
+
+  ci-latest-commit:
+    uses: ./.github/workflows/shared.yml
+    with:
+      lsp_use_latest_tag: false
