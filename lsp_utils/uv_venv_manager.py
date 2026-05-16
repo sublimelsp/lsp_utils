@@ -115,6 +115,7 @@ class UvVenvManager:
             return
         if not self._uv:
             self._uv = UvRunner()
+        self._plugin_storage_path.mkdir(parents=True, exist_ok=True)
         installation_marker_file_path.open('w', encoding='utf-8').close()
         (self._plugin_storage_path / PYPROJECT_TOML).unlink(missing_ok=True)
         (self._plugin_storage_path / UV_LOCK).unlink(missing_ok=True)
