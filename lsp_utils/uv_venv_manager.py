@@ -104,11 +104,15 @@ class UvVenvManager:
 
     def install_async(self) -> None:
         installation_marker_file_path = self._plugin_storage_path / INSTALLING_MARKER_FILE
+        source_pyproject_path = self._source_resource_path / PYPROJECT_TOML
+        source_uv_lock_path = self._source_resource_path / UV_LOCK
+        target_pyproject_path = self._plugin_storage_path / PYPROJECT_TOML
+        target_uv_lock_path = self._plugin_storage_path / UV_LOCK
         installed_and_up_to_date = (
             not installation_marker_file_path.is_file()
             and self.venv_path.exists()
-            and is_hash_equal(self._source_resource_path / PYPROJECT_TOML, self._plugin_storage_path / PYPROJECT_TOML)
-            and is_hash_equal(self._source_resource_path / UV_LOCK, self._plugin_storage_path / UV_LOCK)
+            and is_hash_equal(source_pyproject_path, target_pyproject_path)
+            and is_hash_equal(source_uv_lock_path, target_uv_lock_path)
             and (self.venv_bin_path / self._server_binary_name).is_file()
         )
         if installed_and_up_to_date:
@@ -117,12 +121,11 @@ class UvVenvManager:
             self._uv = UvRunner()
         self._plugin_storage_path.mkdir(parents=True, exist_ok=True)
         installation_marker_file_path.open('w', encoding='utf-8').close()
-        (self._plugin_storage_path / PYPROJECT_TOML).unlink(missing_ok=True)
-        (self._plugin_storage_path / UV_LOCK).unlink(missing_ok=True)
+        target_pyproject_path.unlink(missing_ok=True)
+        target_uv_lock_path.unlink(missing_ok=True)
         rmtree_ex(self.venv_path, ignore_errors=True)
-        self._plugin_storage_path.mkdir(parents=True, exist_ok=True)
-        (self._source_resource_path / PYPROJECT_TOML).copy(str(self._plugin_storage_path / PYPROJECT_TOML))
-        if (self._source_resource_path / UV_LOCK).exists():
-            (self._source_resource_path / UV_LOCK).copy(self._plugin_storage_path / UV_LOCK)
+        source_pyproject_path.copy(target_pyproject_path)
+        if source_uv_lock_path.exists():
+            source_uv_lock_path.copy(target_uv_lock_path)
         self._uv.run_command('sync', '--frozen', cwd=str(self._plugin_storage_path))
         installation_marker_file_path.unlink()
