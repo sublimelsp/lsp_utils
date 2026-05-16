@@ -39,8 +39,6 @@ class NodeManager:
         Automatically adds support for a root `server_path` package setting that defaults to `"auto"`, meaning
         that the package-managed server instance will be used. It can be overridden to use a custom server binary.
 
-        Also extends the PATH to include the venv directory if the managed server instance is used.
-
         :param context: The plugin context.
         :param plugin_storage_path: The path to the plugin's storage (`cls.plugin_storage_path`).
         :param server_directory_resource_path: The `ResourcePath` to the directory that contains the server's
@@ -60,12 +58,15 @@ class NodeManager:
         """
         package_name = plugin_storage_path.name
         node_runner = NodeManager.resolve(package_name, node_version_requirement)
-        destination_server_directory = plugin_storage_path / server_directory_resource_path.name
-        node_runner.install_project_dependencies(server_directory_resource_path, destination_server_directory)
+        server_path = context.configuration.server_path
+        if not server_path or server_path == 'auto':
+            destination_server_directory = plugin_storage_path / server_directory_resource_path.name
+            node_runner.install_project_dependencies(server_directory_resource_path, destination_server_directory)
+            server_path = str(destination_server_directory / server_binary_path)
         context.configuration.env.update(node_runner.node_env())
         context.variables.update({
             'node_bin': str(node_runner.node_binary_path()),
-            'server_path': str(destination_server_directory / server_binary_path),
+            'server_path': str(server_path),
         })
 
     @classmethod
