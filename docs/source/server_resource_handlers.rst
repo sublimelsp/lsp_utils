@@ -10,8 +10,3 @@ ServerResourceInterface
 -----------------------
 
 .. autoclass:: lsp_utils.ServerResourceInterface
-
-ServerPipResource
------------------
-
-.. autoclass:: lsp_utils.ServerPipResource
