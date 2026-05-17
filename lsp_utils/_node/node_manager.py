@@ -32,6 +32,8 @@ class NodeManager:
         server_directory_resource_path: ResourcePath,
         server_binary_path: Path,
         node_version_requirement: str,
+        *,
+        skip_npm_install: bool = False,
     ) -> None:
         """
         Initialize NodeManager for an LspPlugin.
@@ -61,7 +63,8 @@ class NodeManager:
         server_path = context.configuration.server_path
         if not server_path or server_path == 'auto':
             destination_server_directory = plugin_storage_path / server_directory_resource_path.name
-            node_runner.install_project_dependencies(server_directory_resource_path, destination_server_directory)
+            if not skip_npm_install:
+                node_runner.install_project_dependencies(server_directory_resource_path, destination_server_directory)
             server_path = str(destination_server_directory / server_binary_path)
         context.configuration.env.update(node_runner.node_env())
         context.variables.update({
