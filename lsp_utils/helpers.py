@@ -22,10 +22,6 @@ SemanticVersion = Tuple[int, int, int]
 is_windows = sublime.platform() == 'windows'
 
 
-def platform_program_file_extension() -> str:
-    return '.exe' if sublime.platform() == 'windows' else ''
-
-
 def start_process(
     args: Sequence[str | PathLike[str]],
     *,

@@ -113,7 +113,10 @@ class UvVenvManager:
             and self.venv_path.exists()
             and is_hash_equal(source_pyproject_path, target_pyproject_path)
             and is_hash_equal(source_uv_lock_path, target_uv_lock_path)
-            and (self.venv_bin_path / self._server_binary_name).is_file()
+            and (
+                (self.venv_bin_path / self._server_binary_name).is_file()
+                or (self.venv_bin_path / f'{self._server_binary_name}.exe').is_file()
+            )
         )
         if installed_and_up_to_date:
             return
