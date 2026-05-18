@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from .constants import INSTALLING_MARKER_FILE
+from .helpers import is_hash_equal
 from .helpers import rmtree_ex
 from .uv_runner import UvRunner
-from hashlib import md5
 from os import pathsep
 from typing import final
 from typing import TYPE_CHECKING
@@ -19,20 +19,6 @@ __all__ = ['UvVenvManager']
 
 PYPROJECT_TOML = 'pyproject.toml'
 UV_LOCK = 'uv.lock'
-
-
-def is_hash_equal(resource_path: ResourcePath, filesystem_path: Path) -> bool:
-    if not resource_path.exists():
-        # If source resource doesn't exist then return "equal" since we don't care about that file then.
-        return True
-    if not filesystem_path.exists():
-        return False
-    source_hash = md5(resource_path.read_bytes()).hexdigest()  # noqa: S324
-    try:
-        return source_hash == md5(filesystem_path.read_bytes()).hexdigest()  # noqa: S324
-    except FileNotFoundError:
-        pass
-    return False
 
 
 @final
@@ -112,7 +98,7 @@ class UvVenvManager:
             not installation_marker_file_path.is_file()
             and self.venv_path.exists()
             and is_hash_equal(source_pyproject_path, target_pyproject_path)
-            and is_hash_equal(source_uv_lock_path, target_uv_lock_path)
+            and is_hash_equal(source_uv_lock_path, target_uv_lock_path, ignore_missing_source=True)
             and (
                 (self.venv_bin_path / self._server_binary_name).is_file()
                 or (self.venv_bin_path / f'{self._server_binary_name}.exe').is_file()

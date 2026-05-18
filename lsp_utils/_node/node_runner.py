@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from .._util import logger
 from ..constants import INSTALLING_MARKER_FILE
+from ..helpers import is_hash_equal
 from ..helpers import rmtree_ex
 from ..helpers import run_command_sync
 from ..helpers import start_process
@@ -9,7 +10,6 @@ from ..third_party.semantic_version import NpmSpec  # pyright: ignore[reportPriv
 from ..third_party.semantic_version import Version  # pyright: ignore[reportPrivateLocalImportUsage]
 from .node_constants import NODE_RUNTIME_VERSION
 from .node_installer import NodeInstaller
-from hashlib import md5
 from pathlib import Path
 from sublime_lib import ActivityIndicator
 from typing import Any
@@ -32,6 +32,10 @@ NODE_VERSION_MARKER_FILE = '.node-version'
 
 class NodeNotInitializedError(Exception):
     pass
+
+
+def create_version(version: str) -> Version:
+    return Version(version.replace('v', ''))
 
 
 class NodeRunner:
@@ -82,7 +86,7 @@ class NodeRunner:
         # In this case we have fully resolved binary path already so shouldn't need `shell` on Windows.
         version, error = run_command_sync([self._node, '--version'], extra_env=self.node_env(), shell=False)
         if error is None:
-            self._version = Version(version.replace('v', ''))
+            self._version = create_version(version)
         else:
             msg = f'Failed resolving Node.js version. Error:\n{error}'
             raise Exception(msg)
@@ -133,12 +137,18 @@ class NodeRunner:
         return [self._npm]
 
     def install_project_dependencies(self, source_path: ResourcePath, target_path: Path) -> None:
-        if self._are_project_dependencies_installed(source_path, target_path):
+        node_version = str(self.resolve_version())
+        if (
+            not (target_path / INSTALLING_MARKER_FILE).is_file()
+            and (target_path / 'node_modules').is_dir()
+            and is_hash_equal(source_path / 'package.json', target_path / 'package.json')
+            and (marker_file_path := target_path / NODE_VERSION_MARKER_FILE).is_file()
+            and node_version == marker_file_path.read_text(encoding='utf-8').strip()
+        ):
             return
         try:
             if target_path.is_dir():
                 rmtree_ex(target_path)
-            node_version = str(self.resolve_version())
             target_path.mkdir(exist_ok=True, parents=True)
             (target_path / INSTALLING_MARKER_FILE).open('w', encoding='utf-8').close()
             source_path.copytree(target_path, exist_ok=True)
@@ -147,32 +157,7 @@ class NodeRunner:
             (target_path / INSTALLING_MARKER_FILE).unlink()
         except Exception as error:
             msg = f'Error installing the server:\n{error}'
-            raise Exception(msg) from error
-
-    def _are_project_dependencies_installed(self, source_path: ResourcePath, target_path: Path) -> bool:
-        if not (target_path / 'node_modules').is_dir():
-            return False
-        # Server already installed. Check if version has changed or last installation did not complete.
-        src_package_json = source_path / 'package.json'
-        if not src_package_json.exists():
-            msg = f'Missing required "package.json" in {source_path}'
-            raise Exception(msg)
-        if (target_path / INSTALLING_MARKER_FILE).is_file():
-            # Detected installation that was not completed.
-            return False
-        try:
-            node_version = str(self.resolve_version())
-            stored_node_version = (target_path / NODE_VERSION_MARKER_FILE).read_text(encoding='utf-8').strip()
-            if node_version != stored_node_version:
-                return False
-            dst_package_json = target_path / 'package.json'
-            src_hash = md5(src_package_json.read_bytes()).hexdigest()  # noqa: S324
-            dst_hash = md5(dst_package_json.read_bytes()).hexdigest()  # noqa: S324
-            if src_hash != dst_hash:
-                return False
-        except FileNotFoundError:
-            return False
-        return True
+            raise RuntimeError(msg) from error
 
 
 @final
@@ -194,6 +179,8 @@ class NodeRunnerLocal(NodeRunner):
         self._node_version = node_version
         self._node_dir = self._base_dir / 'node'
         self._resolve_paths()
+        # We know the version so can skip calling into node.
+        self._version = create_version(node_version)
 
     # --- NodeRunner overrides ---------------------------------------------------------------------------------------
 

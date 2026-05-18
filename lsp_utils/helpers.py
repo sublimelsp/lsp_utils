@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from hashlib import md5
 from os import PathLike
+from sublime_lib import ResourcePath
 from typing import Any
 from typing import Callable
 from typing import Tuple
@@ -122,3 +124,19 @@ def rmtree_ex(path: str | Path, *, ignore_errors: bool = False) -> None:
 def version_to_string(version: SemanticVersion) -> str:
     """Return a string representation of a version tuple."""
     return '.'.join([str(c) for c in version])
+
+
+def is_hash_equal(resource_path: ResourcePath, filesystem_path: Path, *, ignore_missing_source: bool = False) -> bool:
+    if not resource_path.exists():
+        if ignore_missing_source:
+            return True
+        msg = f'Resource "{resource_path}" does not exist inside the package'
+        raise RuntimeError(msg)
+    if not filesystem_path.exists():
+        return False
+    source_hash = md5(resource_path.read_bytes()).hexdigest()  # noqa: S324
+    try:
+        return source_hash == md5(filesystem_path.read_bytes()).hexdigest()  # noqa: S324
+    except FileNotFoundError:
+        pass
+    return False
