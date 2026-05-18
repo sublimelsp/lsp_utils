@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from hashlib import md5
 from os import PathLike
-from sublime_lib import ResourcePath
 from typing import Any
 from typing import Callable
 from typing import Tuple
@@ -17,6 +16,7 @@ import threading
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from pathlib import Path
+    from sublime_lib import ResourcePath
 
 StringCallback = Callable[[str], None]
 SemanticVersion = Tuple[int, int, int]
