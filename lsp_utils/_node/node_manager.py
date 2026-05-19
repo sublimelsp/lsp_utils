@@ -34,7 +34,7 @@ class NodeManager:
         node_version_requirement: str,
         *,
         skip_npm_install: bool = False,
-    ) -> None:
+    ) -> Path | None:
         """
         Initialize NodeManager for an LspPlugin.
 
@@ -57,10 +57,13 @@ class NodeManager:
             - `16 - 18` - allows any version between 16 and 18 inclusive (spaces around the dash are required)
 
             See also: https://semver.npmjs.com/
+
+        :returns: Path to the server directory (containing 'package.json') if the server is managed.
         """
         package_name = plugin_storage_path.name
         node_runner = NodeManager.resolve(package_name, node_version_requirement)
         server_path = context.configuration.server_path
+        destination_server_directory = None
         if not server_path or server_path == 'auto':
             destination_server_directory = plugin_storage_path / server_directory_resource_path.name
             if not skip_npm_install:
@@ -71,6 +74,7 @@ class NodeManager:
             'node_bin': str(node_runner.node_binary_path()),
             'server_path': str(server_path),
         })
+        return destination_server_directory
 
     @classmethod
     def resolve(cls, package_name: str, required_node_version: str) -> NodeRunner:
