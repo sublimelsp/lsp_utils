@@ -137,7 +137,7 @@ class NodeRunner:
         return [self._npm]
 
     def install_project_dependencies(
-        self, source_path: ResourcePath, target_path: Path, skip_npm_install: bool = False,
+        self, source_path: ResourcePath, target_path: Path, *, skip_npm_install: bool = False,
     ) -> None:
         node_version = str(self.resolve_version())
         if (
