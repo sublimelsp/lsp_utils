@@ -136,7 +136,9 @@ class NodeRunner:
             raise NodeNotInitializedError(msg)
         return [self._npm]
 
-    def install_project_dependencies(self, source_path: ResourcePath, target_path: Path) -> None:
+    def install_project_dependencies(
+        self, source_path: ResourcePath, target_path: Path, skip_npm_install: bool = False,
+    ) -> None:
         node_version = str(self.resolve_version())
         if (
             not (target_path / INSTALLING_MARKER_FILE).is_file()
@@ -152,7 +154,8 @@ class NodeRunner:
             target_path.mkdir(exist_ok=True, parents=True)
             (target_path / INSTALLING_MARKER_FILE).open('w', encoding='utf-8').close()
             source_path.copytree(target_path, exist_ok=True)
-            self.run_install(cwd=target_path)
+            if not skip_npm_install:
+                self.run_install(cwd=target_path)
             (target_path / NODE_VERSION_MARKER_FILE).write_text(node_version, encoding='utf-8')
             (target_path / INSTALLING_MARKER_FILE).unlink()
         except Exception as error:
