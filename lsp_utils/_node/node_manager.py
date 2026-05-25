@@ -62,7 +62,7 @@ class NodeManager:
         """
         package_name = plugin_storage_path.name
         node_runner = NodeManager.resolve(package_name, node_version_requirement)
-        server_path = context.configuration.server_path
+        server_path = context.configuration.root_settings.get('server_path')
         destination_server_directory = None
         if not server_path or server_path == 'auto':
             destination_server_directory = plugin_storage_path / server_directory_resource_path.name

@@ -49,14 +49,15 @@ class UvVenvManager:
         :param server_binary_name: The name of the binary used to start the server within the venv's
             `scripts/bin` directory.
         """
-        if not context.configuration.server_path or context.configuration.server_path == 'auto':
+        server_path: str | None = context.configuration.root_settings.get('server_path')
+        if not server_path or server_path == 'auto':
             uv_venv_manager = UvVenvManager(plugin_storage_path, pyproject_directory_resource_path, server_binary_name)
             uv_venv_manager.install_async()
             path = context.configuration.env.get('PATH', '')
             context.configuration.env['PATH'] = f'{uv_venv_manager.venv_bin_path}{pathsep}{path}'
             context.variables['server_path'] = str(uv_venv_manager.venv_bin_path / server_binary_name)
         else:
-            context.variables['server_path'] = context.configuration.server_path
+            context.variables['server_path'] = server_path
 
     def __init__(
         self, plugin_storage_path: Path, pyproject_directory_resource_path: ResourcePath, server_binary_name: str,
