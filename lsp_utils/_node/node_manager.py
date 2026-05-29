@@ -66,8 +66,8 @@ class NodeManager:
         destination_server_directory = None
         if not server_path or server_path == 'auto':
             destination_server_directory = plugin_storage_path / server_directory_resource_path.name
-            if not skip_npm_install:
-                node_runner.install_project_dependencies(server_directory_resource_path, destination_server_directory)
+            node_runner.install_project_dependencies(
+                server_directory_resource_path, destination_server_directory, skip_npm_install=skip_npm_install)
             server_path = str(destination_server_directory / server_binary_path)
         context.configuration.env.update(node_runner.node_env())
         context.variables.update({
