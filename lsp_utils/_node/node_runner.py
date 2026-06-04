@@ -13,6 +13,7 @@ from .node_installer import NodeInstaller
 from pathlib import Path
 from sublime_lib import ActivityIndicator
 from typing import Any
+from typing import Callable
 from typing import final
 from typing import TYPE_CHECKING
 from typing_extensions import override
@@ -28,6 +29,8 @@ if TYPE_CHECKING:
 
 IS_WINDOWS_7_OR_LOWER = sys.platform == 'win32' and sys.getwindowsversion()[:2] <= (6, 1)
 NODE_VERSION_MARKER_FILE = '.node-version'
+
+ServerInstalledCallback = Callable[[Path], None]
 
 
 class NodeNotInitializedError(Exception):
@@ -137,7 +140,11 @@ class NodeRunner:
         return [self._npm]
 
     def install_project_dependencies(
-        self, source_path: ResourcePath, target_path: Path, *, skip_npm_install: bool = False,
+        self, source_path: ResourcePath,
+        target_path: Path,
+        *,
+        skip_npm_install: bool = False,
+        on_server_installed: ServerInstalledCallback | None = None,
     ) -> None:
         node_version = str(self.resolve_version())
         if (
@@ -161,6 +168,8 @@ class NodeRunner:
         except Exception as error:
             msg = f'Error installing the server:\n{error}'
             raise RuntimeError(msg) from error
+        if on_server_installed:
+            on_server_installed(target_path)
 
 
 @final

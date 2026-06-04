@@ -6,6 +6,7 @@ from ..third_party.semantic_version import NpmSpec  # pyright: ignore[reportPriv
 from .node_runner import NodeRunner
 from .node_runner import NodeRunnerLocal
 from .node_runner import NodeRunnerPath
+from .node_runner import ServerInstalledCallback
 from LSP.plugin import ST_STORAGE_PATH
 from LSP.plugin.core.logging import debug
 from pathlib import Path
@@ -34,6 +35,7 @@ class NodeManager:
         node_version_requirement: str,
         *,
         skip_npm_install: bool = False,
+        on_server_installed: ServerInstalledCallback | None = None,
     ) -> Path | None:
         """
         Initialize NodeManager for an LspPlugin.
@@ -57,6 +59,8 @@ class NodeManager:
             - `16 - 18` - allows any version between 16 and 18 inclusive (spaces around the dash are required)
 
             See also: https://semver.npmjs.com/
+        :param on_server_installed: Callback called when the server gets installed or updated. Gets passed the Path to
+            the server directory (containing 'package.json').
 
         :returns: Path to the server directory (containing 'package.json') if the server is managed.
         """
@@ -72,7 +76,8 @@ class NodeManager:
         if not server_path or server_path == 'auto':
             destination_server_directory = plugin_storage_path / server_directory_resource_path.name
             node_runner.install_project_dependencies(
-                server_directory_resource_path, destination_server_directory, skip_npm_install=skip_npm_install)
+                server_directory_resource_path, destination_server_directory, skip_npm_install=skip_npm_install,
+                on_server_installed=on_server_installed)
             server_path = str(destination_server_directory / server_binary_path)
         context.configuration.env.update(node_runner.node_env())
         context.variables.update({
