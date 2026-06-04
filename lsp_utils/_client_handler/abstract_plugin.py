@@ -54,16 +54,14 @@ class ApiWrapper(ApiWrapperInterface):
     @override
     def on_request(self, method: str, handler: ApiRequestHandler) -> None:
         def send_response(request_id: Any, result: Any) -> None:
-            session = self.__session()
-            if session:
-                session.send_response(Response(request_id, result))
+            if session := session self.__session():
+                session.create_task(session.send_response(Response(request_id, result)))
 
         def on_response(weak_handler: WeakMethod[ApiRequestHandler], params: Any, request_id: Any) -> None:
             if handler := weak_handler():
                 handler(params, lambda result: send_response(request_id, result))
 
-        plugin = self.__plugin()
-        if plugin:
+        if plugin := self.__plugin():
             setattr(plugin, method2attr(method), partial(on_response, WeakMethod(handler)))
 
     @override
