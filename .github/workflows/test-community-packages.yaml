@@ -27,7 +27,7 @@ jobs:
 
       - name: Use checkout of lsp_utils from PR
         run: |
-          mv ${{ github.workspace }}/lsp_utils lsp_maintainers/repositories
+          mv ${{ github.workspace }}/lsp_utils/lsp_utils lsp_maintainers/repositories
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v8.2.0
