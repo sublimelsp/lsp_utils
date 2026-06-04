@@ -32,8 +32,8 @@ class NodeManager:
         plugin_storage_path: Path,
         server_directory_resource_path: ResourcePath,
         server_binary_path: Path,
-        node_version_requirement: str,
         *,
+        node_version_requirement: str,
         skip_npm_install: bool = False,
         on_server_installed: ServerInstalledCallback | None = None,
     ) -> Path | None:
