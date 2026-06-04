@@ -1,29 +1,23 @@
 from __future__ import annotations
 
-from ..api_wrapper_interface import ApiNotificationHandler
-from ..api_wrapper_interface import ApiRequestHandler
 from ..api_wrapper_interface import ApiWrapperInterface
 from ..server_resource_interface import ServerStatus
 from .interface import ClientHandlerInterface
 from abc import ABC
-from functools import partial
 from LSP.plugin import AbstractPlugin
 from LSP.plugin import ClientConfig
 from LSP.plugin import Notification
 from LSP.plugin import register_plugin
 from LSP.plugin import Request
-from LSP.plugin import Response
 from LSP.plugin import Session
 from LSP.plugin import unregister_plugin
 from LSP.plugin import WorkspaceFolder
-from LSP.plugin.core.rpc import method2attr  # pyright: ignore[reportPrivateLocalImportUsage]
 from os import path
 from typing import Any
 from typing import Callable
 from typing import TYPE_CHECKING
 from typing_extensions import override
 from weakref import ref
-from weakref import WeakMethod
 
 if TYPE_CHECKING:
     import sublime
@@ -40,31 +34,6 @@ class ApiWrapper(ApiWrapperInterface):
         return plugin.weaksession() if plugin else None
 
     # --- ApiWrapperInterface -----------------------------------------------------------------------------------------
-
-    @override
-    def on_notification(self, method: str, handler: ApiNotificationHandler) -> None:
-        def handle_notification(weak_handler: WeakMethod[ApiNotificationHandler], params: Any) -> None:
-            if handler := weak_handler():
-                handler(params)
-
-        plugin = self.__plugin()
-        if plugin:
-            setattr(plugin, method2attr(method), partial(handle_notification, WeakMethod(handler)))
-
-    @override
-    def on_request(self, method: str, handler: ApiRequestHandler) -> None:
-        def send_response(request_id: Any, result: Any) -> None:
-            session = self.__session()
-            if session:
-                session.send_response(Response(request_id, result))
-
-        def on_response(weak_handler: WeakMethod[ApiRequestHandler], params: Any, request_id: Any) -> None:
-            if handler := weak_handler():
-                handler(params, lambda result: send_response(request_id, result))
-
-        plugin = self.__plugin()
-        if plugin:
-            setattr(plugin, method2attr(method), partial(on_response, WeakMethod(handler)))
 
     @override
     def send_notification(self, method: str, params: Any) -> None:

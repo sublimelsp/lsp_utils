@@ -6,14 +6,8 @@ from typing import Any
 from typing import Callable
 
 __all__ = [
-    'ApiNotificationHandler',
-    'ApiRequestHandler',
     'ApiWrapperInterface',
 ]
-
-
-ApiNotificationHandler = Callable[[Any], None]
-ApiRequestHandler = Callable[[Any, Callable[[Any], None]], None]
 
 
 class ApiWrapperInterface(ABC):
@@ -22,26 +16,6 @@ class ApiWrapperInterface(ABC):
 
     An implementation of it is available through the :func:`GenericClientHandler.on_ready()` override.
     """
-
-    @abstractmethod
-    def on_notification(self, method: str, handler: ApiNotificationHandler) -> None:
-        """
-        Register a handler for given notification name.
-
-        The handler will be called with optional params.
-        """
-        ...
-
-    @abstractmethod
-    def on_request(self, method: str, handler: ApiRequestHandler) -> None:
-        """
-        Register a handler for given request name.
-
-        The handler will be called with two arguments - first the params
-        sent with the request and second the function that must be used to respond to the request. The response
-        function takes params to respond with.
-        """
-        ...
 
     @abstractmethod
     def send_notification(self, method: str, params: Any) -> None:
