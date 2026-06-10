@@ -1,3 +1,3 @@
 from __future__ import annotations
 
-foo: str = 1
+foo: str = 1;

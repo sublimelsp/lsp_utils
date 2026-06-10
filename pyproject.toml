@@ -52,7 +52,10 @@ ignore_missing_imports = true
 
 [tool.pyright]
 extraPaths = ["..", "../LSP/stubs", "../sublime_lib"]
-ignore = ["**/third_party/"]
+ignore = [
+	"**/third_party/",
+	"**/tests/assets/"
+]
 pythonVersion = "3.8"
 reportAny = "none"
 reportDeprecated = "none"
@@ -70,6 +73,7 @@ target-version = "py38"
 exclude = [
 	"docs",
 	"lsp_utils/third_party",
+	"tests/assets"
 ]
 
 [tool.ruff.format]

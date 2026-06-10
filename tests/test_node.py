@@ -4,6 +4,7 @@ from .setup import GeneratorAny
 from .setup import TextDocumentTestCase
 from .setup import TIMEOUT_TIME
 from LSP.protocol import DiagnosticSeverity
+from pathlib import Path
 from typing import cast
 from typing import TYPE_CHECKING
 from typing_extensions import override
@@ -11,26 +12,36 @@ from typing_extensions import override
 if TYPE_CHECKING:
     from LSP.plugin.session_view import SessionView
 
+SCRIPT_DIR = Path(__file__).parent
+TEST_FILE_PATH = str(SCRIPT_DIR / 'assets' / 'sample.py')
 
-class BaseTestCase(TextDocumentTestCase):
+
+class NodeTestsuite(TextDocumentTestCase):
+
+    @classmethod
+    def get_test_file_path(cls) -> str:
+        return TEST_FILE_PATH
+
+    @classmethod
+    def get_server_name(cls) -> str:
+        return 'LSP-pyright'
 
     def test_diagnostics(self) -> GeneratorAny:
         session = self.session
         assert session, 'Expected Session'
         session_view = cast('SessionView', session.session_view_for_view_async(self.view))
         assert session_view is not None
-        error_region_key = f'{session_view.diagnostics_key(DiagnosticSeverity.Error, multiline=False)}_icon'
         yield {'condition': lambda: len(session_view.session_buffer.diagnostics) == 1, 'timeout': TIMEOUT_TIME * 4}
+        (diagnostic, _) = session_view.session_buffer.diagnostics[0]
+        assert diagnostic.get('source') == 'pyright'
+        error_region_key = f'{session_view.diagnostics_key(DiagnosticSeverity.Error, multiline=False)}_icon'
         error_regions = self.view.get_regions(error_region_key)
         assert len(error_regions) == 1
         region = error_regions[0]
         assert (region.a, region.b) == (6, 7)
-        window = self.view.window()
-        assert window, 'Expected Window to be present'
-        window.run_command('show_panel', {"panel": "console", "toggle": True})
 
 
-class SystemRuntime(BaseTestCase):
+class SystemRuntime(NodeTestsuite):
 
     @classmethod
     @override
@@ -41,7 +52,7 @@ class SystemRuntime(BaseTestCase):
         yield from super().setUpClass()
 
 
-class LocalNodeRuntime(BaseTestCase):
+class LocalNodeRuntime(NodeTestsuite):
 
     @classmethod
     @override
