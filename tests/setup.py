@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from abc import ABC
+from abc import abstractmethod
 from LSP.plugin.core.registry import windows
 from LSP.plugin.core.types import ClientStates
 from LSP.plugin.core.windows import get_plugin
@@ -22,8 +24,6 @@ TIMEOUT_TIME = 2000
 INSTALL_SERVER_TIMEOUT = 30000
 PACKAGE_NAME = str(__package__).partition(".")[0]
 SCRIPT_DIR = Path(__file__).parent
-TEST_FILE_PATH = str(SCRIPT_DIR / 'sample.py')
-SERVER_NAME = 'LSP-pyright'
 
 GeneratorAny: TypeAlias = Generator[Any, None, None]
 
@@ -35,28 +35,40 @@ def close_test_view(view: sublime.View | None) -> GeneratorAny:
         view.close()
 
 
-class TextDocumentTestCase(DeferrableTestCase):
+class TextDocumentTestCase(DeferrableTestCase, ABC):
 
     session: Session | None = None
 
     @classmethod
+    @abstractmethod
+    def get_test_file_path(cls) -> str:
+        ...
+
+    @classmethod
+    @abstractmethod
+    def get_server_name(cls) -> str:
+        ...
+
+    @classmethod
     def setUpClass(cls) -> GeneratorAny:
-        if not get_plugin(SERVER_NAME):
-            msg = 'Plugin not found'
-            raise RuntimeError(msg)
         super().setUpClass()
+        server_name = cls.get_server_name()
+        test_file_path = cls.get_test_file_path()
+        if not get_plugin(server_name):
+            msg = f'Plugin {server_name} not found'
+            raise RuntimeError(msg)
         window = sublime.active_window()
-        open_view = window.find_open_file(TEST_FILE_PATH)
+        open_view = window.find_open_file(test_file_path)
         yield from close_test_view(open_view)
-        cls.view = window.open_file(TEST_FILE_PATH)
+        cls.view = window.open_file(test_file_path)
         yield {'condition': lambda: not cls.view.is_loading(), 'timeout': TIMEOUT_TIME}
         yield cls.ensure_document_listener_created
         # First start needs time to install the dependencies.
         yield {
-            'condition': lambda: cls.wm().get_session(SERVER_NAME, TEST_FILE_PATH) is not None,
+            'condition': lambda: cls.wm().get_session(server_name, test_file_path) is not None,
             'timeout': INSTALL_SERVER_TIMEOUT,
         }
-        session = cls.session = cls.wm().get_session(SERVER_NAME, TEST_FILE_PATH)
+        session = cls.session = cls.wm().get_session(server_name, test_file_path)
         if not session:
             msg = 'Session not found'
             raise RuntimeError(msg)
@@ -75,9 +87,9 @@ class TextDocumentTestCase(DeferrableTestCase):
 
     def setUp(self) -> GeneratorAny:
         window = sublime.active_window()
-        open_view = window.find_open_file(TEST_FILE_PATH)
+        open_view = window.find_open_file(self.get_test_file_path())
         if not open_view:
-            self.__class__.view = window.open_file(TEST_FILE_PATH)
+            self.__class__.view = window.open_file(self.get_test_file_path())
             yield {'condition': lambda: not self.view.is_loading(), 'timeout': TIMEOUT_TIME}
             assert self.wm().get_config_manager().match_view(self.view, [])
         self.init_view_settings()
@@ -132,7 +144,7 @@ class TextDocumentTestCase(DeferrableTestCase):
             sublime.set_timeout_async(session.end_async)
             yield lambda: session.state == ClientStates.STOPPING
             if cls.view:
-                yield lambda: wm.get_session(SERVER_NAME, cls.view.file_name()) is None
+                yield lambda: wm.get_session(cls.get_server_name(), cls.view.file_name()) is None
         cls.remove_lsp_utils_settings()
         super().tearDownClass()
 
