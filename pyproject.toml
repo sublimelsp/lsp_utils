@@ -70,7 +70,6 @@ target-version = "py38"
 exclude = [
 	"docs",
 	"lsp_utils/third_party",
-	"tests",
 ]
 
 [tool.ruff.format]
@@ -109,6 +108,7 @@ ignore = [
 	"PLR1702",  # https://docs.astral.sh/ruff/rules/too-many-nested-blocks/
 	"PLR6301",  # https://docs.astral.sh/ruff/rules/no-self-use/
 	"Q000",  # https://docs.astral.sh/ruff/rules/bad-quotes-inline-string/#bad-quotes-inline-string-q000
+	"S101",
 	"TID252",  # https://docs.astral.sh/ruff/rules/relative-imports/
 	"TRY002",  # https://docs.astral.sh/ruff/rules/raise-vanilla-class/
 ]
