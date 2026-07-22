@@ -39,7 +39,7 @@ jobs:
           mv ${{ github.workspace }}/lsp_utils/lsp_utils lsp_maintainers/repositories
 
       - name: Setup uv
-        uses: astral-sh/setup-uv@v8.2.0
+        uses: astral-sh/setup-uv@v8.3.2
 
       - name: Sync venv and type check
         run: |
