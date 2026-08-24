@@ -10,9 +10,6 @@ from .constants import HOST_ARCH
 from .constants import SETTINGS_FILENAME
 from .generic_client_handler import GenericClientHandler
 from .helpers import rmtree_ex
-from .node_runtime import NodeRuntime
-from .npm_client_handler import NpmClientHandler
-from .server_npm_resource import ServerNpmResource
 from .server_resource_interface import ServerResourceInterface
 from .server_resource_interface import ServerStatus
 from .uv_runner import UvRunner
@@ -26,9 +23,6 @@ __all__ = [
     'GenericClientHandler',
     'NodeManager',
     'NodeRunner',
-    'NodeRuntime',
-    'NpmClientHandler',
-    'ServerNpmResource',
     'ServerResourceInterface',
     'ServerStatus',
     'UvRunner',
