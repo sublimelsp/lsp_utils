@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from LSP.plugin.session_view import SessionView
 
 SCRIPT_DIR = Path(__file__).parent
-TEST_FILE_PATH = str(SCRIPT_DIR / 'assets' / 'sample.py')
+TEST_FILE_PATH = str(SCRIPT_DIR / 'assets' / 'sample_ruff.py')
 
 
 class UvTestsuite(TextDocumentTestCase):
@@ -32,3 +32,5 @@ class UvTestsuite(TextDocumentTestCase):
         yield {'condition': lambda: len(session_view.session_buffer.diagnostics) == 1, 'timeout': TIMEOUT_TIME * 4}
         (diagnostic, _) = session_view.session_buffer.diagnostics[0]
         assert diagnostic.get('source') == 'Ruff'
+        # F401 (unused import) is part of ruff's default rule set.
+        assert diagnostic.get('code') == 'F401'
