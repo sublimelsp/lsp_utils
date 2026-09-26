@@ -25,6 +25,7 @@ jobs:
         run: |
           python3 scripts/checkout-repos.py \
             --preferred-branch ${{ github.head_ref }} \
+            --no-collect-dependencies \
             --exclude lsp_utils \
             --exclude Chialisp \
             --exclude LSP-aurelia \
@@ -39,11 +40,16 @@ jobs:
         run: |
           mv ${{ github.workspace }}/lsp_utils/lsp_utils lsp_maintainers/repositories
 
+      - name: Collect dependencies of packages
+        run: python3 scripts/collect-dependencies.py
+        working-directory: lsp_maintainers
+
       - name: Setup uv
         uses: astral-sh/setup-uv@v10.2.0
 
       - name: Sync venv and type check
         run: |
           uv sync
+          uv pip install -r requirements-packages.txt
           uv run basedpyright
         working-directory: lsp_maintainers/repositories
