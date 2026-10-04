@@ -25,8 +25,7 @@ jobs:
         run: |
           python3 scripts/checkout-repos.py \
             --preferred-branch ${{ github.head_ref }} \
-            --no-collect-dependencies \
-            --exclude lsp_utils \
+            --local lsp_utils=${{ github.workspace }}/lsp_utils \
             --exclude Chialisp \
             --exclude LSP-aurelia \
             --exclude LSP-gnols \
@@ -34,14 +33,6 @@ jobs:
             --exclude LSP-pyvoice \
             --exclude LSP-vale-ls \
             --exclude WolframLanguage
-        working-directory: lsp_maintainers
-
-      - name: Use checkout of lsp_utils from PR
-        run: |
-          mv ${{ github.workspace }}/lsp_utils/lsp_utils lsp_maintainers/repositories
-
-      - name: Collect dependencies of packages
-        run: python3 scripts/collect-dependencies.py
         working-directory: lsp_maintainers
 
       - name: Setup uv
