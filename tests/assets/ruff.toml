@@ -1,4 +1,0 @@
-# Test assets are linted by the LSP-ruff test, so they must not inherit the project configuration, which excludes this
-# directory. Only enable the rule that the test expects to be reported.
-[lint]
-select = ["F401"]
