@@ -57,7 +57,6 @@ jobs:
             sublimelsp/LSP-ruff
           local-libraries: lsp_utils=lsp_utils/lsp_utils
           fixture-dir: |
-            lsp_utils/tests/smoke/pyright
             lsp_utils/tests/smoke/pyright-system-node
             lsp_utils/tests/smoke/pyright-local-node
             lsp_utils/tests/smoke/ruff
