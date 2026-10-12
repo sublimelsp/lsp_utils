@@ -9,6 +9,12 @@ on:
     branches:
       - main
 
+# A new push to a pull request cancels the run that is still going for the previous one. On main, every commit gets its
+# own group, so runs there are never cancelled or queued behind each other.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   ci-latest-tag:
     uses: ./.github/workflows/shared.yml
