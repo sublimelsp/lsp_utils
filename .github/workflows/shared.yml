@@ -18,8 +18,6 @@ jobs:
     outputs:
       lsp: ${{ steps.tags.outputs.lsp }}
       sublime_lib: ${{ steps.tags.outputs.lib }}
-      pyright: ${{ steps.tags.outputs.pyright }}
-      ruff: ${{ steps.tags.outputs.ruff }}
     steps:
       - id: tags
         run: |
@@ -29,11 +27,9 @@ jobs:
             echo "lsp=$(gh api repos/sublimelsp/LSP -q .default_branch)" >> "$GITHUB_OUTPUT"
           fi
           echo "lib=$(gh release view --repo SublimeText/sublime_lib --json tagName -q .tagName)" >> "$GITHUB_OUTPUT"
-          echo "pyright=$(gh release view --repo sublimelsp/LSP-pyright --json tagName -q .tagName)" >> "$GITHUB_OUTPUT"
-          echo "ruff=$(gh release view --repo sublimelsp/LSP-ruff --json tagName -q .tagName)" >> "$GITHUB_OUTPUT"
 
-  unittesting:
-    name: Unittesting (${{ matrix.os }})
+  smoke:
+    name: Smoke test (${{ matrix.os }})
     needs: latest_tags
     strategy:
       fail-fast: false
@@ -41,48 +37,30 @@ jobs:
         os: ["ubuntu-latest", "macOS-latest"]
     runs-on: ${{ matrix.os }}
     steps:
+      # Used by the test that runs LSP-pyright with the system Node.js.
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
 
       - uses: actions/checkout@v7
-
-      - uses: SublimeText/UnitTesting/actions/setup@v1
         with:
-          sublime-text-version: 4
-          # Needs to have different name than the dependency to be able to run tests
-          package-name: lsp-utils-dep
+          path: lsp_utils
+
+      # Tests lsp_utils through the latest releases of LSP-pyright and LSP-ruff, with the published lsp_utils replaced
+      # by this checkout. See https://github.com/sublimelsp/lsp_smoke_test.
+      - uses: sublimelsp/lsp_smoke_test@v1
+        with:
+          install-package: false
+          lsp-ref: ${{ needs.latest_tags.outputs.lsp }}
           extra-packages: |
-            sublimelsp/LSP@${{ needs.latest_tags.outputs.lsp }}
-            sublimelsp/LSP-pyright@${{ needs.latest_tags.outputs.pyright }}
-            sublimelsp/LSP-ruff@${{ needs.latest_tags.outputs.ruff }}
-
-      - name: Overwrite installed dependency with local version
-        shell: bash
-        run: |
-          # $PACKAGE is exposed from the setup step.
-
-          case ${{ runner.os }} in
-            Linux)
-              ST_LIBS_DIR="$HOME/.config/sublime-text/Lib/python38";;
-            macOS)
-              ST_LIBS_DIR="$HOME/Library/Application Support/Sublime Text/Lib/python38";;
-            Windows)
-              ST_LIBS_DIR="/c/st/Data/Lib/python38/";;
-            *)
-              exit 1
-          esac
-
-          cd ./
-          # detached head will crash package control
-          rm -rf "./.git"
-          echo "Overwriting installed dependency in $ST_LIBS_DIR/lsp_utils"
-          rm -rf "$ST_LIBS_DIR/lsp_utils"
-          mv "./lsp_utils" "$ST_LIBS_DIR"
-          cd -
-
-      - name: Run tests
-        uses: SublimeText/UnitTesting/actions/run-tests@v1
+            sublimelsp/LSP-pyright
+            sublimelsp/LSP-ruff
+          local-libraries: lsp_utils=lsp_utils/lsp_utils
+          fixture-dir: |
+            lsp_utils/tests/smoke/pyright
+            lsp_utils/tests/smoke/pyright-system-node
+            lsp_utils/tests/smoke/pyright-local-node
+            lsp_utils/tests/smoke/ruff
 
   lint:
     name: Lint
