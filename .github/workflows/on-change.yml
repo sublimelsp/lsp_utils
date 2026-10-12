@@ -1,18 +1,13 @@
 name: Test
 
+# No path filters: the CI job below is a required check, so the workflow has to run for every pull request.
 on:
   push:
     branches:
       - main
-    paths-ignore:
-      - ".github/workflows/docs.yml"
-      - "docs/**"
   pull_request:
     branches:
       - main
-    paths-ignore:
-      - ".github/workflows/docs.yml"
-      - "docs/**"
 
 jobs:
   ci-latest-tag:
@@ -24,3 +19,21 @@ jobs:
     uses: ./.github/workflows/shared.yml
     with:
       lsp_use_latest_tag: false
+
+  # The check that branch protection requires, so that it doesn't need updating when the jobs above change.
+  ci:
+    name: CI
+    if: always()
+    needs:
+      - ci-latest-tag
+      - ci-latest-commit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check that all jobs succeeded
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Results: $RESULTS"
+          for result in $RESULTS; do
+            [ "$result" = success ] || exit 1
+          done
