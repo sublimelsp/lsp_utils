@@ -25,10 +25,11 @@ exclude = [
 
 [tool.hatch.version]
 source = "vcs"
+# Releases from main are tagged "X.Y.Z" (older ones "vX.Y.Z"), releases from the py38 branch "py38-X.Y.Z".
+tag-pattern = "^(?:v|py38-)?(?P<version>\\d+(?:\\.\\d+)*)$"
 
 [tool.hatch.build.hooks.vcs]
 version-file = "lsp_utils/_version.py"
-tag-pattern = "v{version}"
 
 [tool.mypy]
 python_version = "3.11"
