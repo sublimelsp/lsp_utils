@@ -53,8 +53,8 @@ jobs:
           install-package: false
           lsp-ref: ${{ needs.latest_tags.outputs.lsp }}
           extra-packages: |
-            sublimelsp/LSP-pyright
-            sublimelsp/LSP-ruff
+            LSP-pyright
+            LSP-ruff
           local-libraries: lsp_utils=lsp_utils/lsp_utils
           fixture-dir: |
             lsp_utils/tests/smoke/pyright-system-node
