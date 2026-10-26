@@ -3,6 +3,7 @@ from __future__ import annotations
 from .._util import logger
 from ..constants import SETTINGS_FILENAME
 from ..third_party.semantic_version import NpmSpec  # pyright: ignore[reportPrivateLocalImportUsage]
+from .node_installer import remove_obsolete_node_runtimes
 from .node_runner import NodeRunner
 from .node_runner import NodeRunnerLocal
 from .node_runner import NodeRunnerPath
@@ -98,6 +99,8 @@ class NodeManager:
         default_runtimes = ['system', 'local', 'local-test']
         settings = sublime.load_settings(SETTINGS_FILENAME)
         selected_runtimes = cast('list[str]', settings.get('nodejs_runtime') or default_runtimes)
+        runtime_dir = Path(ST_STORAGE_PATH) / 'lsp_utils' / 'node-runtime'
+        remove_obsolete_node_runtimes(runtime_dir)
         log_lines = ['--- lsp_utils Node.js resolving start ---']
         for runtime_type in selected_runtimes:
             if runtime_type == 'system':
@@ -116,7 +119,6 @@ class NodeManager:
                     log_lines.append(f' * {ex}')
             elif runtime_type in {'local', 'local-test'}:
                 log_lines.append(f'Resolving Node.js Runtime from lsp_utils for package {package_name}...')
-                runtime_dir = Path(ST_STORAGE_PATH) / 'lsp_utils' / 'node-runtime'
                 local_runner = NodeRunnerLocal(runtime_dir)
                 try:
                     local_runner.check_binary_present()

@@ -8,12 +8,35 @@ from ..constants import INSTALLING_MARKER_FILE
 from ..helpers import rmtree_ex
 from .node_constants import NODE_DIST_URL
 from .node_constants import NODE_RUNTIME_VERSION
+from .node_constants import OBSOLETE_NODE_RUNTIME_VERSIONS
 from typing import final
 from typing import TYPE_CHECKING
 import sublime
+import threading
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+_obsolete_runtimes_removed = False
+
+
+def remove_obsolete_node_runtimes(runtime_dir: Path) -> None:
+    """Remove Node.js runtimes installed by previous lsp_utils releases. Runs in the background once per session."""
+    global _obsolete_runtimes_removed  # noqa: PLW0603
+    if _obsolete_runtimes_removed:
+        return
+    _obsolete_runtimes_removed = True
+    obsolete_dirs = [runtime_dir / version for version in OBSOLETE_NODE_RUNTIME_VERSIONS]
+    obsolete_dirs = [path for path in obsolete_dirs if path.is_dir()]
+    if not obsolete_dirs:
+        return
+
+    def remove() -> None:
+        for version_dir in obsolete_dirs:
+            logger.info(f'Removing obsolete Node.js runtime: {version_dir}')
+            rmtree_ex(version_dir, ignore_errors=True)
+
+    threading.Thread(target=remove, daemon=True).start()
 
 
 @final
