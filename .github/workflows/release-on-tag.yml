@@ -3,7 +3,10 @@ name: Release On Push Tag
 on:
   push:
     tags:
-      - v*
+      # Releases for the Python 3.13 and 3.14 plugin hosts, made from main.
+      - '[0-9]*'
+      # Releases for the Python 3.8 plugin host, made from the py38 branch.
+      - 'py38-*'
 
 jobs:
   release:
@@ -22,11 +25,10 @@ jobs:
       - name: Build wheel
         run: uv build --wheel
 
-      - name: Get latest release
+      - name: Check if release exists
         id: release_exists
         run: |
-          RELEASE_TAG=$(gh release view --json tagName --jq .tagName 2>/dev/null || echo "")
-          if [ "$RELEASE_TAG" = "$GITHUB_REF_NAME" ]; then
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             echo "release_exists=true" >> $GITHUB_OUTPUT
           else
             echo "release_exists=false" >> $GITHUB_OUTPUT
@@ -38,4 +40,11 @@ jobs:
 
       - name: Create release & upload wheel
         if: steps.release_exists.outputs.release_exists == 'false'
-        run: gh release create --generate-notes --latest -t "$GITHUB_REF_NAME" "$GITHUB_REF_NAME" dist/*.whl
+        run: |
+          # Only releases from main are marked as latest so that py38 releases don't take over the "latest" badge.
+          if [[ "$GITHUB_REF_NAME" == py38-* ]]; then
+            LATEST=false
+          else
+            LATEST=true
+          fi
+          gh release create --generate-notes --latest=$LATEST -t "$GITHUB_REF_NAME" "$GITHUB_REF_NAME" dist/*.whl
