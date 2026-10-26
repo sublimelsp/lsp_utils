@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/sublimelsp/lsp_smoke_test/v1/smoke.schema.json
+file: sample.py
+session_name: LSP-ruff
+expected_diagnostics:
+  source: Ruff
+  # F401 (unused import) is the only rule enabled in ruff.toml.
+  code: F401

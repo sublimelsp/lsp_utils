@@ -5,35 +5,20 @@ on:
     branches:
       - main
 
+# A new push to a pull request cancels the run that is still going for the previous one.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   type-check:
     name: Type-check community packages
     runs-on: macOS-latest
     steps:
       - name: Check out PR branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
+
+      - name: Type-check community packages
+        uses: sublimelsp/lsp_maintainers@main
         with:
-          path: lsp_utils
-
-      - name: Check out lsp_maintainers
-        uses: actions/checkout@v6
-        with:
-          repository: sublimelsp/lsp_maintainers
-          path: lsp_maintainers
-
-      - name: Check out community package repositories
-        run: python3 scripts/checkout-repos.py --preferred-branch ${{ github.head_ref }} --exclude lsp_utils --exclude LSP-pyvoice --exclude WolframLanguage
-        working-directory: lsp_maintainers
-
-      - name: Use checkout of lsp_utils from PR
-        run: |
-          mv ${{ github.workspace }}/lsp_utils/lsp_utils lsp_maintainers/repositories
-
-      - name: Setup uv
-        uses: astral-sh/setup-uv@v8.2.0
-
-      - name: Sync venv and type check
-        run: |
-          uv sync
-          uv run basedpyright
-        working-directory: lsp_maintainers/repositories
+          local: lsp_utils=.
