@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from .._install_dirs import compute_install_hash
+from .._install_dirs import prepare_install_dir
 from .._util import logger
 from ..constants import INSTALLING_MARKER_FILE
 from ..helpers import is_hash_equal
@@ -198,6 +200,47 @@ class NodeRunner:
         (target_path / NODE_VERSION_MARKER_FILE).write_text(node_version, encoding='utf-8')
         (target_path / INSTALLING_MARKER_FILE).unlink()
 
+    def install_versioned_project_dependencies(
+        self, source_path: ResourcePath,
+        parent_path: Path,
+        *,
+        skip_npm_install: bool = False,
+        on_server_installed: ServerInstalledCallback | None = None,
+    ) -> Path:
+        """
+        Install the server into a `<parent_path>/<source directory name>-<hash>` directory.
+
+        The hash depends on `package.json`, `package-lock.json` and the Node.js version so an update installs into a
+        new directory instead of replacing files of a server that might still be running.
+
+        :returns: The path to the server directory.
+        """
+        package_json_path = source_path / 'package.json'
+        if not package_json_path.exists():
+            msg = f'Resource "{package_json_path}" does not exist inside the package'
+            raise RuntimeError(msg)
+        package_lock_path = source_path / 'package-lock.json'
+        install_hash = compute_install_hash(
+            package_json_path.read_bytes(),
+            package_lock_path.read_bytes() if package_lock_path.exists() else b'',
+            str(self.resolve_version()),
+            'skip-npm-install' if skip_npm_install else '',
+        )
+
+        def install(target_path: Path) -> None:
+            try:
+                source_path.copytree(target_path, exist_ok=True)
+                if not skip_npm_install:
+                    self.run_install(cwd=target_path)
+                if on_server_installed:
+                    on_server_installed(target_path)
+            except Exception as error:
+                msg = f'Error installing the server:\n{error}'
+                raise RuntimeError(msg) from error
+
+        return prepare_install_dir(
+            parent_path, source_path.name, install_hash, install, legacy_dirs=[parent_path / source_path.name])
+
 
 @final
 class NodeRunnerPath(NodeRunner):
@@ -246,6 +289,10 @@ class NodeRunnerLocal(NodeRunner):
         if self._npm and not self._npm.is_file():
             msg = '"npm" binary not found'
             raise NodeNotInitializedError(msg)
+
+    @property
+    def install_path(self) -> Path:
+        return self._base_dir
 
     # --- private methods ----------------------------------------------------------------------------------------------
 

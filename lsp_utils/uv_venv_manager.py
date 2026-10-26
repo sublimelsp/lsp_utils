@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+from ._install_dirs import compute_install_hash
+from ._install_dirs import prepare_install_dir
 from .constants import INSTALLING_MARKER_FILE
-from .helpers import is_hash_equal
 from .helpers import prepend_to_path
-from .helpers import rmtree_ex
+from .uv_runner import get_uv_id
 from .uv_runner import UvRunner
+from contextlib import suppress
+from os import pathsep
 from typing import final
 from typing import TYPE_CHECKING
 import sublime
@@ -83,11 +86,20 @@ class UvVenvManager:
         self._source_resource_path = pyproject_directory_resource_path
         self._plugin_storage_path = plugin_storage_path
         self._server_binary_name = server_binary_name
+        self._install_name = f'{pyproject_directory_resource_path.name}-venv'
+        self._install_hash = self._compute_install_hash()
+        self._install_path = plugin_storage_path / f'{self._install_name}-{self._install_hash}'
         self._uv: UvRunner | None = None
 
     @property
     def venv_path(self) -> Path:
-        return self._plugin_storage_path / '.venv'
+        """
+        The path to the venv.
+
+        Depends on the contents of `pyproject.toml` and `uv.lock` and on the version of uv so changes when those are
+        updated.
+        """
+        return self._install_path / '.venv'
 
     @property
     def venv_bin_path(self) -> Path:
@@ -95,32 +107,40 @@ class UvVenvManager:
         return self.venv_path / bin_dir
 
     def install_async(self) -> None:
-        installation_marker_file_path = self._plugin_storage_path / INSTALLING_MARKER_FILE
         source_pyproject_path = self._source_resource_path / PYPROJECT_TOML
         source_uv_lock_path = self._source_resource_path / UV_LOCK
-        target_pyproject_path = self._plugin_storage_path / PYPROJECT_TOML
-        target_uv_lock_path = self._plugin_storage_path / UV_LOCK
-        installed_and_up_to_date = (
-            not installation_marker_file_path.is_file()
-            and self.venv_path.exists()
-            and is_hash_equal(source_pyproject_path, target_pyproject_path)
-            and is_hash_equal(source_uv_lock_path, target_uv_lock_path, ignore_missing_source=True)
-            and (
-                (self.venv_bin_path / self._server_binary_name).is_file()
-                or (self.venv_bin_path / f'{self._server_binary_name}.exe').is_file()
-            )
+
+        def install(target_path: Path) -> None:
+            if not self._uv:
+                self._uv = UvRunner()
+            source_pyproject_path.copy(target_path / PYPROJECT_TOML)
+            if source_uv_lock_path.exists():
+                source_uv_lock_path.copy(target_path / UV_LOCK)
+            self._uv.run_command('sync', '--frozen', cwd=str(target_path))
+            bin_path = target_path / self.venv_bin_path.relative_to(self._install_path)
+            binary_name = self._server_binary_name
+            if not (bin_path / binary_name).is_file() and not (bin_path / f'{binary_name}.exe').is_file():
+                msg = f'Expected "{binary_name}" binary not found in "{bin_path}" after installation'
+                raise RuntimeError(msg)
+
+        self._install_path = prepare_install_dir(
+            self._plugin_storage_path, self._install_name, self._install_hash, install,
+            legacy_dirs=[self._plugin_storage_path / '.venv'])
+        self._remove_legacy_files()
+
+    def _compute_install_hash(self) -> str:
+        source_uv_lock_path = self._source_resource_path / UV_LOCK
+        return compute_install_hash(
+            (self._source_resource_path / PYPROJECT_TOML).read_bytes(),
+            source_uv_lock_path.read_bytes() if source_uv_lock_path.exists() else b'',
+            get_uv_id(),
         )
-        if installed_and_up_to_date:
+
+    def _remove_legacy_files(self) -> None:
+        # Older lsp_utils versions installed directly into the plugin storage. Remove the remaining files once the
+        # legacy venv itself is removed.
+        if (self._plugin_storage_path / '.venv').exists():
             return
-        if not self._uv:
-            self._uv = UvRunner()
-        self._plugin_storage_path.mkdir(parents=True, exist_ok=True)
-        installation_marker_file_path.open('w', encoding='utf-8').close()
-        target_pyproject_path.unlink(missing_ok=True)
-        target_uv_lock_path.unlink(missing_ok=True)
-        rmtree_ex(self.venv_path, ignore_errors=True)
-        source_pyproject_path.copy(target_pyproject_path)
-        if source_uv_lock_path.exists():
-            source_uv_lock_path.copy(target_uv_lock_path)
-        self._uv.run_command('sync', '--frozen', cwd=str(self._plugin_storage_path))
-        installation_marker_file_path.unlink()
+        for filename in (PYPROJECT_TOML, UV_LOCK, INSTALLING_MARKER_FILE):
+            with suppress(OSError):
+                (self._plugin_storage_path / filename).unlink(missing_ok=True)

@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+from ._install_dirs import INSTALLED_MARKER_FILE
+from ._install_dirs import mark_in_use
+from ._install_dirs import remove_unused_install_dirs_async
 from ._util import download_file
 from ._util import extract_archive
 from .helpers import run_command_ex
+from contextlib import suppress
 from LSP.plugin import ST_STORAGE_PATH
 from pathlib import Path
 from shutil import which
 from tempfile import TemporaryDirectory
 from typing import final
+import re
 import sublime
 
 __all__ = [
@@ -17,6 +22,7 @@ __all__ = [
 
 UV_TAG = '0.13.0'
 UV_BINARY = 'uv.exe' if sublime.platform() == 'windows' else 'uv'
+UV_RUNTIME_DIR = Path(ST_STORAGE_PATH) / 'lsp_utils' / 'uv'
 ARTIFACT_URL = 'https://github.com/astral-sh/uv/releases/download/{tag}/{filename}'
 ARTIFACT_ARCH_MAPPING = {
     'x64': 'x86_64',
@@ -42,6 +48,18 @@ def get_uv_artifact_name() -> str:
     return f'uv-{arch}-{platform}.{extension}'
 
 
+def get_uv_id() -> str:
+    """Identify the uv instance that :class:`UvRunner` uses, without installing it."""
+    return 'system' if which('uv') else f'managed-{UV_TAG}'
+
+
+def remove_legacy_uv_files() -> None:
+    # Older lsp_utils versions installed uv directly into the runtime directory.
+    for legacy_file in (UV_RUNTIME_DIR / UV_BINARY, UV_RUNTIME_DIR / 'VERSION'):
+        with suppress(OSError):
+            legacy_file.unlink(missing_ok=True)
+
+
 @final
 class UvRunner:
     """
@@ -57,11 +75,10 @@ class UvRunner:
         if which('uv'):
             self._uv = 'uv'
         else:
-            target_directory = Path(ST_STORAGE_PATH) / 'lsp_utils' / 'uv'
-            target_version_path = target_directory / 'VERSION'
+            target_directory = UV_RUNTIME_DIR / UV_TAG
             target_uv_path = target_directory / UV_BINARY
-            if not target_uv_path.exists() or not target_version_path.exists() or \
-                    target_version_path.read_text() != UV_TAG:
+            installed_marker_path = target_directory / INSTALLED_MARKER_FILE
+            if not installed_marker_path.is_file():
                 filename = get_uv_artifact_name()
                 url = ARTIFACT_URL.format(tag=UV_TAG, filename=filename)
                 target_directory.mkdir(parents=True, exist_ok=True)
@@ -72,7 +89,10 @@ class UvRunner:
                     extracted_path = extract_archive(archive_path, temporary_directory_path) or temporary_directory_path
                     extracted_path.joinpath(UV_BINARY).replace(target_uv_path)
                     target_uv_path.chmod(0o744)
-                    target_version_path.write_text(UV_TAG)
+                    installed_marker_path.touch()
+            mark_in_use(target_directory)
+            remove_unused_install_dirs_async(UV_RUNTIME_DIR, re.compile(r'\d+\.\d+\.\d+'), keep=target_directory)
+            remove_legacy_uv_files()
             self._uv = str(target_uv_path)
 
     def run_command(self, *args: str, cwd: str) -> None:

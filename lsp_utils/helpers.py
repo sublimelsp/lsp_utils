@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from ._util import logger
 from hashlib import md5
 from os import PathLike
 from typing import Any
@@ -8,10 +9,12 @@ from typing import Tuple
 from typing import TYPE_CHECKING
 import os
 import shutil
+import stat
 import sublime
 import subprocess  # ruff: ignore[suspicious-subprocess-import]
 import sys
 import threading
+import time
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -132,7 +135,38 @@ def rmtree_ex(path: str | Path, *, ignore_errors: bool = False) -> None:
     # See https://stackoverflow.com/a/14076169/4643765
     # See https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
     path = fR'\\?\{path}' if sublime.platform() == 'windows' else path
-    shutil.rmtree(path, ignore_errors)
+
+    def on_error(func: Callable[[str], object], failed_path: str, _exc_info: object) -> None:
+        # Read-only files can't be removed on Windows. Make the file writable and try again.
+        try:
+            os.chmod(failed_path, stat.S_IWRITE)  # noqa: PTH101
+            func(failed_path)
+        except OSError:
+            if not ignore_errors:
+                raise
+
+    shutil.rmtree(path, onerror=on_error)  # pyright: ignore[reportDeprecated]
+
+
+def try_rmtree(path: Path, *, attempts: int = 3, delay: float = 1.0) -> bool:
+    """
+    Remove the directory tree, retrying when files are temporarily locked (by antivirus software, for example).
+
+    :returns: `True` if the directory no longer exists.
+    """
+    for attempt in range(1, attempts + 1):
+        try:
+            rmtree_ex(path)
+        except FileNotFoundError:  # noqa: PERF203
+            return True
+        except OSError as error:
+            if attempt == attempts:
+                logger.warning(f'Failed removing "{path}": {error}')
+                return False
+            time.sleep(delay * attempt)
+        else:
+            return True
+    return False
 
 
 def version_to_string(version: SemanticVersion) -> str:
