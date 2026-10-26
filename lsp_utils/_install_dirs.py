@@ -34,8 +34,6 @@ __all__ = [
 INSTALL_LAYOUT_VERSION = '1'
 INSTALLED_MARKER_FILE = '.lsp_utils-installed'
 LAST_USED_MARKER_FILE = '.lsp_utils-last-used'
-# How many alternative directories to try when a directory of an interrupted installation can't be removed.
-MAX_INSTALL_DIR_SUFFIX = 5
 
 _swept_patterns: set[str] = set()
 
@@ -102,20 +100,17 @@ def prepare_install_dir(
     :param legacy_dirs: Unversioned installation directories of older lsp_utils versions to remove once unused.
     :returns: The path to the complete installation.
     """
-    base_name = f'{name}-{install_hash}'
-    candidates = [parent / base_name, *(parent / f'{base_name}-{i}' for i in range(1, MAX_INSTALL_DIR_SUFFIX + 1))]
-    target = next((path for path in candidates if (path / INSTALLED_MARKER_FILE).is_file()), None)
-    if not target:
-        # Directories without the marker are leftovers of interrupted installations or removals.
-        target = next((path for path in candidates if try_rmtree(path, attempts=1)), None)
-        if not target:
-            msg = f'Failed preparing installation directory "{parent / base_name}"'
+    target = parent / f'{name}-{install_hash}'
+    if not (target / INSTALLED_MARKER_FILE).is_file():
+        # A directory without the marker is a leftover of an interrupted installation or removal.
+        if not try_rmtree(target):
+            msg = f'Failed removing incomplete installation directory "{target}"'
             raise RuntimeError(msg)
         target.mkdir(parents=True)
         install(target)
         (target / INSTALLED_MARKER_FILE).touch()
     mark_in_use(target)
-    pattern = re.compile(rf'{re.escape(name)}-[0-9a-f]{{8}}(-\d+)?')
+    pattern = re.compile(rf'{re.escape(name)}-[0-9a-f]{{8}}')
     remove_unused_install_dirs_async(parent, pattern, keep=target, legacy_dirs=legacy_dirs)
     return target
 

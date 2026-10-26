@@ -280,16 +280,6 @@ class NodeRunnerLocal(NodeRunner):
             install_node.run()
         self._resolve_paths()
 
-    @override
-    def check_binary_present(self) -> None:
-        super().check_binary_present()
-        if (self._base_dir / INSTALLING_MARKER_FILE).exists():
-            msg = 'Node.js installation is incomplete'
-            raise NodeNotInitializedError(msg)
-        if self._npm and not self._npm.is_file():
-            msg = '"npm" binary not found'
-            raise NodeNotInitializedError(msg)
-
     @property
     def install_path(self) -> Path:
         return self._base_dir

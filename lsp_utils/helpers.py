@@ -14,7 +14,6 @@ import sublime
 import subprocess  # ruff: ignore[suspicious-subprocess-import]
 import sys
 import threading
-import time
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -148,25 +147,20 @@ def rmtree_ex(path: str | Path, *, ignore_errors: bool = False) -> None:
     shutil.rmtree(path, onerror=on_error)  # pyright: ignore[reportDeprecated]
 
 
-def try_rmtree(path: Path, *, attempts: int = 3, delay: float = 1.0) -> bool:
+def try_rmtree(path: Path) -> bool:
     """
-    Remove the directory tree, retrying when files are temporarily locked (by antivirus software, for example).
+    Remove the directory tree, logging instead of raising on failure.
 
     :returns: `True` if the directory no longer exists.
     """
-    for attempt in range(1, attempts + 1):
-        try:
-            rmtree_ex(path)
-        except FileNotFoundError:  # noqa: PERF203
-            return True
-        except OSError as error:
-            if attempt == attempts:
-                logger.warning(f'Failed removing "{path}": {error}')
-                return False
-            time.sleep(delay * attempt)
-        else:
-            return True
-    return False
+    try:
+        rmtree_ex(path)
+    except FileNotFoundError:
+        pass
+    except OSError as error:
+        logger.warning(f'Failed removing "{path}": {error}')
+        return False
+    return True
 
 
 def version_to_string(version: SemanticVersion) -> str:

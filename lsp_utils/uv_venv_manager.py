@@ -117,13 +117,13 @@ class UvVenvManager:
             if source_uv_lock_path.exists():
                 source_uv_lock_path.copy(target_path / UV_LOCK)
             self._uv.run_command('sync', '--frozen', cwd=str(target_path))
-            bin_path = target_path / self.venv_bin_path.relative_to(self._install_path)
+            bin_path = self.venv_bin_path
             binary_name = self._server_binary_name
             if not (bin_path / binary_name).is_file() and not (bin_path / f'{binary_name}.exe').is_file():
                 msg = f'Expected "{binary_name}" binary not found in "{bin_path}" after installation'
                 raise RuntimeError(msg)
 
-        self._install_path = prepare_install_dir(
+        prepare_install_dir(
             self._plugin_storage_path, self._install_name, self._install_hash, install,
             legacy_dirs=[self._plugin_storage_path / '.venv'])
         self._remove_legacy_files()
