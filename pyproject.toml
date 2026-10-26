@@ -1,34 +1,34 @@
 [project]
 name = "lsp-utils"
-dynamic = ["version"]
 description = "Library with LSP-related utilities for Sublime Text "
 readme = "README.md"
-license-files = ["LICENSE"]
-authors = [{name = "rchl"}]
-classifiers = [
-	"Intended Audience :: Developers",
-	"Operating System :: OS Independent",
-	"Programming Language :: Python :: 3",
-	"Topic :: Software Development :: Libraries :: Python Modules",
-]
 requires-python = ">=3.8"
+license-files = ["LICENSE"]
+authors = [{ name = "rchl" }]
+classifiers = [
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dynamic = ["version"]
 
 [build-system]
-requires = ["hatchling>=1.20", "hatch-vcs>=0.4"]
+requires = ["hatch-vcs>=0.4", "hatchling>=1.20"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.sdist]
 exclude = [
-	"/.*",
-	"*.lock",
+  "/.*",
+  "*.lock",
 ]
-
-[tool.hatch.version]
-source = "vcs"
 
 [tool.hatch.build.hooks.vcs]
 version-file = "lsp_utils/_version.py"
 tag-pattern = "v{version}"
+
+[tool.hatch.version]
+source = "vcs"
 
 [tool.mypy]
 python_version = "3.11"
@@ -36,36 +36,39 @@ check_untyped_defs = true
 disallow_untyped_defs = true
 # Don't report errors in external packages.
 follow_imports = "silent"
-mypy_path = ["..", "../LSP/stubs", "../sublime_lib"]
+mypy_path = [
+  "..",
+  "../LSP/stubs",
+  "../sublime_lib",
+]
 namespace_packages = true
 strict_optional = true
 
 [[tool.mypy.overrides]]
-module = 'lsp_utils.third_party.semantic_version.*'
+module = "lsp_utils.third_party.semantic_version.*"
 ignore_errors = true
 ignore_missing_imports = true
 
 [tool.pyright]
-extraPaths = ["..", "../LSP/stubs", "../sublime_lib"]
+extraPaths = [
+  "..",
+  "../LSP/stubs",
+  "../sublime_lib",
+]
 ignore = [
-	"**/third_party/",
-	"**/tests/smoke/"
+  "**/third_party/",
+  "**/tests/smoke/",
 ]
 pythonVersion = "3.8"
-reportAny = "none"
-reportDeprecated = "none"
-reportExplicitAny = "none"
-reportMissingModuleSource = "none"
-reportUnusedCallResult = "none"
 typeCheckingMode = "standard"
 
 [tool.ruff]
 line-length = 120
 target-version = "py38"
 exclude = [
-	"docs",
-	"lsp_utils/third_party",
-	"tests/smoke"
+  "docs",
+  "lsp_utils/third_party",
+  "tests/smoke",
 ]
 
 [tool.ruff.format]
@@ -83,30 +86,30 @@ preview = true
 fixable = ["ALL"]
 select = ["ALL"]
 ignore = [
-	"ANN401",  # https://docs.astral.sh/ruff/rules/any-type/
-	"BLE001",  # https://docs.astral.sh/ruff/rules/blind-except/
-	"CPY001",  # https://docs.astral.sh/ruff/rules/missing-copyright-notice/
-	"C901",  # https://docs.astral.sh/ruff/rules/complex-structure/
-	"D100",  # https://docs.astral.sh/ruff/rules/undocumented-public-module/
-	"D101",  # https://docs.astral.sh/ruff/rules/undocumented-public-class/
-	"D102",  # https://docs.astral.sh/ruff/rules/undocumented-public-method/
-	"D103",  # https://docs.astral.sh/ruff/rules/undocumented-public-function/
-	"D104",  # https://docs.astral.sh/ruff/rules/undocumented-public-package/
-	"D107",  # https://docs.astral.sh/ruff/rules/undocumented-public-init/
-	"D203",
-	"D212",
-	"DOC201",  # https://docs.astral.sh/ruff/rules/docstring-missing-returns/
-	"DOC501",  # https://docs.astral.sh/ruff/rules/docstring-missing-exception/
-	"PLC0415",  # https://docs.astral.sh/ruff/rules/import-outside-top-level/
-	"PLR0912",  # https://docs.astral.sh/ruff/rules/too-many-branches/
-	"PLR0913",  # https://docs.astral.sh/ruff/rules/too-many-arguments/
-	"PLR0915",  # https://docs.astral.sh/ruff/rules/too-many-statements/
-	"PLR1702",  # https://docs.astral.sh/ruff/rules/too-many-nested-blocks/
-	"PLR6301",  # https://docs.astral.sh/ruff/rules/no-self-use/
-	"Q000",  # https://docs.astral.sh/ruff/rules/bad-quotes-inline-string/#bad-quotes-inline-string-q000
-	"S101",
-	"TID252",  # https://docs.astral.sh/ruff/rules/relative-imports/
-	"TRY002",  # https://docs.astral.sh/ruff/rules/raise-vanilla-class/
+  "any-type",  # https://docs.astral.sh/ruff/rules/any-type/
+  "blind-except",  # https://docs.astral.sh/ruff/rules/blind-except/
+  "missing-copyright-notice",  # https://docs.astral.sh/ruff/rules/missing-copyright-notice/
+  "complex-structure",  # https://docs.astral.sh/ruff/rules/complex-structure/
+  "undocumented-public-module",  # https://docs.astral.sh/ruff/rules/undocumented-public-module/
+  "undocumented-public-class",  # https://docs.astral.sh/ruff/rules/undocumented-public-class/
+  "undocumented-public-method",  # https://docs.astral.sh/ruff/rules/undocumented-public-method/
+  "undocumented-public-function",  # https://docs.astral.sh/ruff/rules/undocumented-public-function/
+  "undocumented-public-package",  # https://docs.astral.sh/ruff/rules/undocumented-public-package/
+  "undocumented-public-init",  # https://docs.astral.sh/ruff/rules/undocumented-public-init/
+  "incorrect-blank-line-before-class",
+  "multi-line-summary-first-line",
+  "docstring-missing-returns",  # https://docs.astral.sh/ruff/rules/docstring-missing-returns/
+  "docstring-missing-exception",  # https://docs.astral.sh/ruff/rules/docstring-missing-exception/
+  "import-outside-top-level",  # https://docs.astral.sh/ruff/rules/import-outside-top-level/
+  "too-many-branches",  # https://docs.astral.sh/ruff/rules/too-many-branches/
+  "too-many-arguments",  # https://docs.astral.sh/ruff/rules/too-many-arguments/
+  "too-many-statements",  # https://docs.astral.sh/ruff/rules/too-many-statements/
+  "too-many-nested-blocks",  # https://docs.astral.sh/ruff/rules/too-many-nested-blocks/
+  "no-self-use",  # https://docs.astral.sh/ruff/rules/no-self-use/
+  "bad-quotes-inline-string",  # https://docs.astral.sh/ruff/rules/bad-quotes-inline-string/#bad-quotes-inline-string-q000
+  "assert",
+  "relative-imports",  # https://docs.astral.sh/ruff/rules/relative-imports/
+  "raise-vanilla-class",  # https://docs.astral.sh/ruff/rules/raise-vanilla-class/
 ]
 
 [tool.ruff.lint.isort]
@@ -123,10 +126,10 @@ skipsdist = true
 
 [tool.tox.env_run_base]
 deps = [
-    "basedpyright==1.39.0",
-    "ruff==0.15.10",
+  "basedpyright==1.40.2",
+  "ruff==0.17.2",
 ]
 commands = [
-    ["basedpyright", "lsp_utils"],
-    ["ruff", "check"],
+  ["basedpyright", "lsp_utils"],
+  ["ruff", "check"],
 ]
