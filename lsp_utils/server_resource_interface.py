@@ -69,5 +69,5 @@ class ServerResourceInterface(ABC):
     @property
     @abstractmethod
     def binary_path(self) -> str:
-        """Returns a filesystem path to the server binary."""
+        """Filesystem path to the server binary."""
         ...

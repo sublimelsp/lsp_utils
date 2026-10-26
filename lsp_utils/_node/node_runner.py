@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 from typing_extensions import override
 import shutil
 import sublime
-import subprocess  # noqa: S404
+import subprocess  # ruff: ignore[suspicious-subprocess-import]
 import sys
 
 if TYPE_CHECKING:
@@ -156,20 +156,25 @@ class NodeRunner:
         ):
             return
         try:
-            if target_path.is_dir():
-                rmtree_ex(target_path)
-            target_path.mkdir(exist_ok=True, parents=True)
-            (target_path / INSTALLING_MARKER_FILE).open('w', encoding='utf-8').close()
-            source_path.copytree(target_path, exist_ok=True)
-            if not skip_npm_install:
-                self.run_install(cwd=target_path)
-            (target_path / NODE_VERSION_MARKER_FILE).write_text(node_version, encoding='utf-8')
-            (target_path / INSTALLING_MARKER_FILE).unlink()
+            self._copy_and_install(source_path, target_path, node_version, skip_npm_install=skip_npm_install)
         except Exception as error:
             msg = f'Error installing the server:\n{error}'
             raise RuntimeError(msg) from error
         if on_server_installed:
             on_server_installed(target_path)
+
+    def _copy_and_install(
+        self, source_path: ResourcePath, target_path: Path, node_version: str, *, skip_npm_install: bool,
+    ) -> None:
+        if target_path.is_dir():
+            rmtree_ex(target_path)
+        target_path.mkdir(exist_ok=True, parents=True)
+        (target_path / INSTALLING_MARKER_FILE).open('w', encoding='utf-8').close()
+        source_path.copytree(target_path, exist_ok=True)
+        if not skip_npm_install:
+            self.run_install(cwd=target_path)
+        (target_path / NODE_VERSION_MARKER_FILE).write_text(node_version, encoding='utf-8')
+        (target_path / INSTALLING_MARKER_FILE).unlink()
 
 
 @final

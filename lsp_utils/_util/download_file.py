@@ -17,7 +17,7 @@ __all__ = [
 
 def download_file(url: str, target_path: Path) -> None:
     """Download given URL to the specified target file path."""
-    with urlopen(url) as response, target_path.open('wb') as out_file:  # noqa: S310
+    with urlopen(url) as response, target_path.open('wb') as out_file:  # ruff: ignore[suspicious-url-open-usage]
         copyfileobj(response, out_file)
 
 
@@ -50,7 +50,7 @@ def extract_files_from_archive(archive: ZipFile | tarfile.TarFile, target_direct
         msg = f'archive appears to be malicious, bad filenames: {bad_members}'
         raise Exception(msg)
     topdir_name = get_top_level_directory(names)
-    archive.extractall(str(target_directory))  # noqa: S202
+    archive.extractall(str(target_directory))  # ruff: ignore[tarfile-unsafe-members]
     topdir_path = target_directory / topdir_name if topdir_name else None
     if topdir_path and topdir_path.is_dir():
         return topdir_path

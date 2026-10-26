@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import os
 import shutil
 import sublime
-import subprocess  # noqa: S404
+import subprocess  # ruff: ignore[suspicious-subprocess-import]
 import sys
 import threading
 
@@ -40,7 +40,7 @@ def start_process(
     if sys.platform == 'win32':
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.SW_HIDE | subprocess.STARTF_USESHOWWINDOW
-    return subprocess.Popen(  # noqa: S603
+    return subprocess.Popen(  # ruff: ignore[subprocess-without-shell-equals-true]
         args, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd, env=env, startupinfo=startupinfo)
 
 
@@ -62,25 +62,25 @@ def run_command_sync(
     """
     if extra_paths is None:
         extra_paths = []
+    final_env = None
+    if env:
+        final_env = env
+    elif extra_env or extra_paths:
+        final_env = os.environ.copy()
+        if extra_env:
+            final_env.update(extra_env)
+        if extra_paths:
+            final_env['PATH'] = os.path.pathsep.join(extra_paths) + os.path.pathsep + final_env['PATH']
+    startupinfo = None
+    if is_windows:
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.SW_HIDE | subprocess.STARTF_USESHOWWINDOW
     try:
-        final_env = None
-        if env:
-            final_env = env
-        elif extra_env or extra_paths:
-            final_env = os.environ.copy()
-            if extra_env:
-                final_env.update(extra_env)
-            if extra_paths:
-                final_env['PATH'] = os.path.pathsep.join(extra_paths) + os.path.pathsep + final_env['PATH']
-        startupinfo = None
-        if is_windows:
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.SW_HIDE | subprocess.STARTF_USESHOWWINDOW
-        output = subprocess.check_output(  # noqa: S603
+        output = subprocess.check_output(  # ruff: ignore[subprocess-without-shell-equals-true]
             args, cwd=cwd, shell=shell, stderr=subprocess.STDOUT, env=final_env, startupinfo=startupinfo)
-        return (decode_bytes(output).strip(), None)
     except subprocess.CalledProcessError as error:
         return ('', decode_bytes(error.output).strip())
+    return (decode_bytes(output).strip(), None)
 
 
 def run_command_async(
@@ -134,9 +134,9 @@ def is_hash_equal(resource_path: ResourcePath, filesystem_path: Path, *, ignore_
         raise RuntimeError(msg)
     if not filesystem_path.exists():
         return False
-    source_hash = md5(resource_path.read_bytes()).hexdigest()  # noqa: S324
+    source_hash = md5(resource_path.read_bytes()).hexdigest()  # ruff: ignore[hashlib-insecure-hash-function]
     try:
-        return source_hash == md5(filesystem_path.read_bytes()).hexdigest()  # noqa: S324
+        return source_hash == md5(filesystem_path.read_bytes()).hexdigest()  # ruff: ignore[hashlib-insecure-hash-function]
     except FileNotFoundError:
         pass
     return False

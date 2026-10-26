@@ -46,9 +46,9 @@ class ApiWrapper(ApiWrapperInterface):
         session = self.__session()
         if session:
             request: Request[Any, Any] = Request(method, params)
-            session.send_request(request, lambda result: handler(result, False), lambda result: handler(result, True))  # noqa: FBT003
+            session.send_request(request, lambda result: handler(result, False), lambda result: handler(result, True))  # ruff: ignore[boolean-positional-value-in-call]
         else:
-            handler(None, True)  # noqa: FBT003
+            handler(None, True)  # ruff: ignore[boolean-positional-value-in-call]
 
 
 class ClientHandler(AbstractPlugin, ClientHandlerInterface, ABC):
