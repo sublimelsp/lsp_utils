@@ -72,7 +72,7 @@ class UvRunner:
         if which('uv'):
             self._uv = 'uv'
         else:
-            def install(target_directory: Path) -> None:
+            def installer(target_directory: Path) -> None:
                 filename = get_uv_artifact_name()
                 url = ARTIFACT_URL.format(tag=UV_TAG, filename=filename)
                 with TemporaryDirectory(dir=target_directory) as tempdir:
@@ -84,7 +84,7 @@ class UvRunner:
                     extracted_path.joinpath(UV_BINARY).replace(target_uv_path)
                     target_uv_path.chmod(0o744)
 
-            target_directory = InstallDirectory(UV_RUNTIME_DIR, 'uv', UV_TAG).install(install)
+            target_directory = InstallDirectory(UV_RUNTIME_DIR, 'uv', UV_TAG).install(installer)
             remove_legacy_uv_files()
             self._uv = str(target_directory / UV_BINARY)
 

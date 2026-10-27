@@ -229,7 +229,7 @@ class NodeRunner:
             legacy_dirs=[parent_path / source_path.name],
         )
 
-        def install(target_path: Path) -> None:
+        def installer(target_path: Path) -> None:
             try:
                 source_path.copytree(target_path, exist_ok=True)
                 if not skip_npm_install:
@@ -240,7 +240,7 @@ class NodeRunner:
                 msg = f'Error installing the server:\n{error}'
                 raise RuntimeError(msg) from error
 
-        return install_dir.install(install)
+        return install_dir.install(installer)
 
 
 @final

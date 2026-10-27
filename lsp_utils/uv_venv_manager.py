@@ -115,7 +115,7 @@ class UvVenvManager:
         source_pyproject_path = self._source_resource_path / PYPROJECT_TOML
         source_uv_lock_path = self._source_resource_path / UV_LOCK
 
-        def install(target_path: Path) -> None:
+        def installer(target_path: Path) -> None:
             if not self._uv:
                 self._uv = UvRunner()
             source_pyproject_path.copy(target_path / PYPROJECT_TOML)
@@ -128,7 +128,7 @@ class UvVenvManager:
                 msg = f'Expected "{binary_name}" binary not found in "{bin_path}" after installation'
                 raise RuntimeError(msg)
 
-        self._install_dir.install(install)
+        self._install_dir.install(installer)
         self._remove_legacy_files()
 
     def _remove_legacy_files(self) -> None:

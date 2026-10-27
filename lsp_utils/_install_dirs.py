@@ -140,11 +140,11 @@ class InstallDirectory:
         self._use()
         return False
 
-    def install(self, install: Callable[[Path], None]) -> Path:
+    def install(self, installer: Callable[[Path], None]) -> Path:
         """
         Install into :attr:`path` unless already installed, and record it as used.
 
-        :param install: Called with the empty installation directory to install into. Should raise on failure.
+        :param installer: Called with the empty installation directory to install into. Should raise on failure.
         :returns: The path to the complete installation.
         """
         if not self.is_installed():
@@ -153,7 +153,7 @@ class InstallDirectory:
                 msg = f'Failed removing incomplete installation directory "{self.path}"'
                 raise RuntimeError(msg)
             self.path.mkdir(parents=True)
-            install(self.path)
+            installer(self.path)
             (self.path / INSTALLED_MARKER_FILE).touch()
         self._use()
         return self.path
