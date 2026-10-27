@@ -11,7 +11,7 @@ dist/
 _version.py
 
 # docs build artifacts
-site/
+docs/site/
 
 # editor files
 *.sublime-project
