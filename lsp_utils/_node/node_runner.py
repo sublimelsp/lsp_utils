@@ -18,6 +18,7 @@ from typing import Any
 from typing import Callable
 from typing import final
 from typing import TYPE_CHECKING
+from typing_extensions import deprecated
 from typing_extensions import override
 import os
 import shutil
@@ -162,6 +163,9 @@ class NodeRunner:
             raise NodeNotInitializedError(msg)
         return [self._npm]
 
+    @deprecated(
+        'Use install_versioned_project_dependencies() which doesn\'t replace files of a server that might still be '
+        'running.')
     def install_project_dependencies(
         self, source_path: ResourcePath,
         target_path: Path,
@@ -169,6 +173,12 @@ class NodeRunner:
         skip_npm_install: bool = False,
         on_server_installed: ServerInstalledCallback | None = None,
     ) -> None:
+        """
+        Install the server into `target_path`, replacing an installation with outdated dependencies.
+
+        **Deprecated:** use :meth:`install_versioned_project_dependencies` instead. Replacing the files of a server
+        that might still be running fails on Windows if the files are locked.
+        """
         node_version = str(self.resolve_version())
         if (
             not (target_path / INSTALLING_MARKER_FILE).is_file()
