@@ -7,7 +7,7 @@ Combine with :class:`InstallDirectory` so that every release is installed into i
 from __future__ import annotations
 
 from .download import download_to_directory
-from .download import open_url
+from .download import http_request
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -16,13 +16,13 @@ if TYPE_CHECKING:
 
 __all__ = [
     'download_github_release_asset',
-    'get_latest_github_release_tag',
+    'fetch_latest_github_release_tag',
 ]
 
 GITHUB_URL = 'https://github.com'
 
 
-def get_latest_github_release_tag(repo: str) -> str:
+def fetch_latest_github_release_tag(repo: str) -> str:
     """
     Return the tag of the latest release of a GitHub repository.
 
@@ -31,7 +31,7 @@ def get_latest_github_release_tag(repo: str) -> str:
 
     :param repo: The repository, as `owner/name`.
     """
-    with open_url(f'{GITHUB_URL}/{repo}/releases/latest', method='HEAD') as response:
+    with http_request(f'{GITHUB_URL}/{repo}/releases/latest', method='HEAD') as response:
         url = response.geturl()
     _, separator, tag = url.rstrip('/').rpartition('/releases/tag/')
     if not separator or not tag:
@@ -47,8 +47,8 @@ def download_github_release_asset(
     target_directory: Path,
     *,
     executables: Iterable[str] = (),
+    filename: str | None = None,
     sha256: str | None = None,
-    save_as: str | None = None,
 ) -> None:
     """
     Download an asset of a GitHub release into a directory.
@@ -79,15 +79,14 @@ def download_github_release_asset(
     :param target_directory: The existing directory to store the asset or its extracted contents in.
     :param executables: Paths, relative to `target_directory`, of files to make executable once downloaded. Zip
                         archives don't preserve the executable permission, for example.
+    :param filename: The file name of the download, which determines how it's handled and what a file that isn't an
+                     archive is stored as. Defaults to `asset`.
     :param sha256: The expected SHA-256 hex digest of the asset, verified before it's used.
-    :param save_as: The file name to store a file that isn't an archive under, instead of the asset name (without the
-                    `.gz` extension).
     """
     download_to_directory(
         f'{GITHUB_URL}/{repo}/releases/download/{tag}/{asset}',
         target_directory,
-        filename=asset,
+        filename=filename or asset,
         executables=executables,
         sha256=sha256,
-        save_as=save_as,
     )

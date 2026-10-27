@@ -24,7 +24,7 @@ Downloads
 
 .. autofunction:: lsp_utils.download_to_directory
 
-.. autofunction:: lsp_utils.open_url
+.. autofunction:: lsp_utils.http_request
 
 .. autofunction:: lsp_utils.select_platform_asset
 
@@ -39,4 +39,4 @@ GitHub releases
 
 .. autofunction:: lsp_utils.download_github_release_asset
 
-.. autofunction:: lsp_utils.get_latest_github_release_tag
+.. autofunction:: lsp_utils.fetch_latest_github_release_tag
