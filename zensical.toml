@@ -1,0 +1,58 @@
+[project]
+site_name = "lsp_utils"
+site_description = "Module with LSP-related utilities for Sublime Text"
+site_url = "https://sublimelsp.github.io/lsp_utils/"
+repo_url = "https://github.com/sublimelsp/lsp_utils"
+repo_name = "sublimelsp/lsp_utils"
+edit_uri = "edit/main/docs/"
+copyright = "Copyright &copy; 2020 SublimeLSP"
+nav = [
+  { "Home" = "index.md" },
+  { "API Documentation" = [
+    "client-handlers.md",
+    "server-resource-handlers.md",
+    "api-handler.md",
+    "utilities.md",
+  ] },
+]
+
+[project.theme]
+features = [
+  "content.code.copy",
+  "navigation.footer",
+  "navigation.sections",
+  "search.highlight",
+  "toc.follow",
+]
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to light mode"
+
+[project.plugins.mkdocstrings.handlers.python]
+paths = ["."]
+inventories = ["https://docs.python.org/3/objects.inv"]
+
+[project.plugins.mkdocstrings.handlers.python.options]
+docstring_style = "sphinx"
+# Converts Sphinx roles and directives in docstrings to Markdown.
+extensions = ["scripts/griffe_sphinx_markup.py"]
+inherited_members = false
+members_order = "source"
+merge_init_into_class = true
+scoped_crossrefs = true
+separate_signature = true
+show_root_heading = true
+show_signature_annotations = true
+show_source = false
+show_symbol_type_heading = true
+show_symbol_type_toc = true
+signature_crossrefs = true

@@ -15,8 +15,6 @@ jobs:
         with:
           python-version: 3.15
 
-      - run: |
-          cd docs
-          make install
-          make build
-          make deploy
+      - run: pip install --group docs
+      - run: zensical build --clean
+      - run: ghp-import --no-jekyll --push --force site

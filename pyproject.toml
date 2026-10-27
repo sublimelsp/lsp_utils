@@ -13,6 +13,13 @@ classifiers = [
 ]
 dynamic = ["version"]
 
+[dependency-groups]
+docs = [
+  "ghp-import==2.1.0",
+  "mkdocstrings-python==2.0.10",
+  "zensical==0.0.73",
+]
+
 [build-system]
 requires = ["hatch-vcs>=0.4", "hatchling>=1.20"]
 build-backend = "hatchling.build"
@@ -110,6 +117,11 @@ ignore = [
   "assert",
   "relative-imports",  # https://docs.astral.sh/ruff/rules/relative-imports/
   "raise-vanilla-class",  # https://docs.astral.sh/ruff/rules/raise-vanilla-class/
+]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*" = [
+  "implicit-namespace-package",  # https://docs.astral.sh/ruff/rules/implicit-namespace-package/
 ]
 
 [tool.ruff.lint.isort]
