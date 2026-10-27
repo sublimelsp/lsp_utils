@@ -82,11 +82,11 @@ class InstallDirectory:
     """
     A versioned installation directory of a server, named `<parent>/<name>-<hash>`.
 
-    The hash covers everything that affects the installation (for example the server version, the platform or the
-    contents of a lock file) so an update installs into a new directory instead of replacing files of a server that
-    might still be running. Installation directories of the same `name` that are no longer current are removed in
-    the background once they were last used by an earlier run of Sublime Text. Removal that fails (for example
-    because files are locked on Windows) is retried during the next run.
+    The hash covers everything that affects the installation (for example the server version or the contents of a
+    lock file) so an update installs into a new directory instead of replacing files of a server that might still be
+    running. Installation directories of the same `name` that are no longer current are removed in the background
+    once they were last used by an earlier run of Sublime Text. Removal that fails (for example because files are
+    locked on Windows) is retried during the next run.
 
     Example of a :class:`ServerResourceInterface` implementation that downloads a server:
 
@@ -94,7 +94,7 @@ class InstallDirectory:
 
         class MyServer(ServerResourceInterface):
             def __init__(self, storage_path: Path) -> None:
-                self._install_dir = InstallDirectory(storage_path, 'server', SERVER_VERSION, sublime.platform())
+                self._install_dir = InstallDirectory(storage_path, 'server', SERVER_VERSION)
                 ...
 
             def needs_installation(self) -> bool:
