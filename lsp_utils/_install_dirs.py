@@ -24,9 +24,9 @@ if TYPE_CHECKING:
 
 __all__ = [
     'INSTALLED_MARKER_FILE',
+    'InstallDirectory',
     'compute_install_hash',
     'mark_in_use',
-    'prepare_install_dir',
     'remove_unused_install_dirs_async',
 ]
 
@@ -80,39 +80,90 @@ def _is_used_in_this_run(path: Path) -> bool:
         return True
 
 
-def prepare_install_dir(
-    parent: Path,
-    name: str,
-    install_hash: str,
-    install: Callable[[Path], None],
-    *,
-    legacy_dirs: Sequence[Path] = (),
-) -> Path:
+class InstallDirectory:
     """
-    Return the `<parent>/<name>-<install_hash>` installation directory, installing into it first if needed.
+    A versioned installation directory of a server, named `<parent>/<name>-<hash>`.
 
-    Also starts removal of other installation directories of the same `name` that are no longer used.
+    The hash covers everything that affects the installation (for example the server version, the platform or the
+    contents of a lock file) so an update installs into a new directory instead of replacing files of a server that
+    might still be running. Installation directories of the same `name` that are no longer current are removed in
+    the background once they were last used by an earlier run of Sublime Text. Removal that fails (for example
+    because files are locked on Windows) is retried during the next run.
 
-    :param parent: The directory containing the installation directories.
-    :param name: The name of the installation directories, without the hash.
-    :param install_hash: The hash returned from :func:`compute_install_hash`.
-    :param install: Called with the empty installation directory to install into. Should raise on failure.
-    :param legacy_dirs: Unversioned installation directories of older lsp_utils versions to remove once unused.
-    :returns: The path to the complete installation.
+    Example of a :class:`ServerResourceInterface` implementation that downloads a server:
+
+    .. code:: py
+
+        class MyServer(ServerResourceInterface):
+            def __init__(self, storage_path: Path) -> None:
+                self._install_dir = InstallDirectory(storage_path, 'server', SERVER_VERSION, sublime.platform())
+                ...
+
+            def needs_installation(self) -> bool:
+                return self._install_dir.needs_installation()
+
+            def install_or_update(self) -> None:
+                self._install_dir.install(download_and_extract_server)
+
+            @property
+            def binary_path(self) -> str:
+                return str(self._install_dir.path / 'bin' / 'server')
     """
-    target = parent / f'{name}-{install_hash}'
-    if not (target / INSTALLED_MARKER_FILE).is_file():
-        # A directory without the marker is a leftover of an interrupted installation or removal.
-        if not try_rmtree(target):
-            msg = f'Failed removing incomplete installation directory "{target}"'
-            raise RuntimeError(msg)
-        target.mkdir(parents=True)
-        install(target)
-        (target / INSTALLED_MARKER_FILE).touch()
-    mark_in_use(target)
-    pattern = re.compile(rf'{re.escape(name)}-[0-9a-f]{{8}}')
-    remove_unused_install_dirs_async(parent, pattern, keep=target, legacy_dirs=legacy_dirs)
-    return target
+
+    def __init__(self, parent: Path, name: str, *hash_parts: bytes | str, legacy_dirs: Sequence[Path] = ()) -> None:
+        """
+        Create an installation directory of the given name, with a hash of `hash_parts`.
+
+        :param parent: The directory containing the installation directories. Typically the package storage.
+        :param name: The name of the installation directories, without the hash. Must not be shared with other kinds
+                     of installations within the same `parent`.
+        :param hash_parts: All inputs that affect the installation.
+        :param legacy_dirs: Unversioned installation directories used previously, to remove once unused.
+        """
+        self._parent = parent
+        self._name = name
+        self._legacy_dirs = legacy_dirs
+        self.path = parent / f'{name}-{compute_install_hash(*hash_parts)}'
+        """The path to the installation directory. Depends on the hash."""
+
+    def is_installed(self) -> bool:
+        """Return whether the installation into :attr:`path` has completed."""
+        return (self.path / INSTALLED_MARKER_FILE).is_file()
+
+    def needs_installation(self) -> bool:
+        """
+        Return whether :meth:`install` needs to be called.
+
+        If the installation is complete, it is recorded as used instead, the same as :meth:`install` would do. Call
+        this or :meth:`install` before every start of the server so that the directory isn't removed while in use.
+        """
+        if not self.is_installed():
+            return True
+        self._use()
+        return False
+
+    def install(self, install: Callable[[Path], None]) -> Path:
+        """
+        Install into :attr:`path` unless already installed, and record it as used.
+
+        :param install: Called with the empty installation directory to install into. Should raise on failure.
+        :returns: The path to the complete installation.
+        """
+        if not self.is_installed():
+            # A directory without the marker is a leftover of an interrupted installation or removal.
+            if not try_rmtree(self.path):
+                msg = f'Failed removing incomplete installation directory "{self.path}"'
+                raise RuntimeError(msg)
+            self.path.mkdir(parents=True)
+            install(self.path)
+            (self.path / INSTALLED_MARKER_FILE).touch()
+        self._use()
+        return self.path
+
+    def _use(self) -> None:
+        mark_in_use(self.path)
+        pattern = re.compile(rf'{re.escape(self._name)}-[0-9a-f]{{8}}')
+        remove_unused_install_dirs_async(self._parent, pattern, keep=self.path, legacy_dirs=self._legacy_dirs)
 
 
 def remove_unused_install_dirs_async(

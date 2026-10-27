@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from .._install_dirs import compute_install_hash
-from .._install_dirs import prepare_install_dir
+from .._install_dirs import InstallDirectory
 from .._util import logger
 from ..constants import INSTALLING_MARKER_FILE
 from ..helpers import is_hash_equal
@@ -220,11 +219,14 @@ class NodeRunner:
             msg = f'Resource "{package_json_path}" does not exist inside the package'
             raise RuntimeError(msg)
         package_lock_path = source_path / 'package-lock.json'
-        install_hash = compute_install_hash(
+        install_dir = InstallDirectory(
+            parent_path,
+            source_path.name,
             package_json_path.read_bytes(),
             package_lock_path.read_bytes() if package_lock_path.exists() else b'',
             str(self.resolve_version()),
             'skip-npm-install' if skip_npm_install else '',
+            legacy_dirs=[parent_path / source_path.name],
         )
 
         def install(target_path: Path) -> None:
@@ -238,8 +240,7 @@ class NodeRunner:
                 msg = f'Error installing the server:\n{error}'
                 raise RuntimeError(msg) from error
 
-        return prepare_install_dir(
-            parent_path, source_path.name, install_hash, install, legacy_dirs=[parent_path / source_path.name])
+        return install_dir.install(install)
 
 
 @final

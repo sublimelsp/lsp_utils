@@ -10,3 +10,9 @@ ServerResourceInterface
 -----------------------
 
 .. autoclass:: lsp_utils.ServerResourceInterface
+
+InstallDirectory
+----------------
+
+.. autoclass:: lsp_utils.InstallDirectory
+    :members:

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from ._install_dirs import compute_install_hash
-from ._install_dirs import prepare_install_dir
+from ._install_dirs import InstallDirectory
 from .constants import INSTALLING_MARKER_FILE
 from .helpers import prepend_to_path
 from .uv_runner import get_uv_id
@@ -86,9 +85,15 @@ class UvVenvManager:
         self._source_resource_path = pyproject_directory_resource_path
         self._plugin_storage_path = plugin_storage_path
         self._server_binary_name = server_binary_name
-        self._install_name = f'{pyproject_directory_resource_path.name}-venv'
-        self._install_hash = self._compute_install_hash()
-        self._install_path = plugin_storage_path / f'{self._install_name}-{self._install_hash}'
+        source_uv_lock_path = pyproject_directory_resource_path / UV_LOCK
+        self._install_dir = InstallDirectory(
+            plugin_storage_path,
+            f'{pyproject_directory_resource_path.name}-venv',
+            (pyproject_directory_resource_path / PYPROJECT_TOML).read_bytes(),
+            source_uv_lock_path.read_bytes() if source_uv_lock_path.exists() else b'',
+            get_uv_id(),
+            legacy_dirs=[plugin_storage_path / '.venv'],
+        )
         self._uv: UvRunner | None = None
 
     @property
@@ -99,7 +104,7 @@ class UvVenvManager:
         Depends on the contents of `pyproject.toml` and `uv.lock` and on the version of uv so changes when those are
         updated.
         """
-        return self._install_path / '.venv'
+        return self._install_dir.path / '.venv'
 
     @property
     def venv_bin_path(self) -> Path:
@@ -123,18 +128,8 @@ class UvVenvManager:
                 msg = f'Expected "{binary_name}" binary not found in "{bin_path}" after installation'
                 raise RuntimeError(msg)
 
-        prepare_install_dir(
-            self._plugin_storage_path, self._install_name, self._install_hash, install,
-            legacy_dirs=[self._plugin_storage_path / '.venv'])
+        self._install_dir.install(install)
         self._remove_legacy_files()
-
-    def _compute_install_hash(self) -> str:
-        source_uv_lock_path = self._source_resource_path / UV_LOCK
-        return compute_install_hash(
-            (self._source_resource_path / PYPROJECT_TOML).read_bytes(),
-            source_uv_lock_path.read_bytes() if source_uv_lock_path.exists() else b'',
-            get_uv_id(),
-        )
 
     def _remove_legacy_files(self) -> None:
         # Older lsp_utils versions installed directly into the plugin storage. Remove the remaining files once the
