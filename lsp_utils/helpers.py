@@ -3,6 +3,7 @@ from __future__ import annotations
 from ._util import logger
 from hashlib import md5
 from os import PathLike
+from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Tuple
@@ -17,7 +18,6 @@ import threading
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from pathlib import Path
     from sublime_lib import ResourcePath
 
 StringCallback = Callable[[str], None]
@@ -134,12 +134,28 @@ def rmtree_ex(path: str | Path, *, ignore_errors: bool = False) -> None:
     # See https://stackoverflow.com/a/14076169/4643765
     # See https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
     path = fR'\\?\{path}' if sublime.platform() == 'windows' else path
+    root = Path(path).absolute()
 
-    def on_error(func: Callable[[str], object], failed_path: str, _exc_info: object) -> None:
-        # Read-only files can't be removed on Windows. Make the file writable and try again.
+    def force_remove(entry: Path) -> None:
+        # On POSIX, removing an entry requires write access to its parent directory.
+        if entry.parent == root or root in entry.parent.parents:
+            entry.parent.chmod(stat.S_IRWXU)
+        if entry.is_symlink():
+            # Never chmod a symlink, as that would change the permissions of its target.
+            entry.unlink()
+        elif entry.is_dir():
+            # Directories need read and execute access to list and remove their contents.
+            entry.chmod(stat.S_IRWXU)
+            shutil.rmtree(entry, onerror=on_error)  # pyright: ignore[reportDeprecated]
+        else:
+            entry.chmod(stat.S_IWRITE)
+            entry.unlink()
+
+    def on_error(_func: Callable[..., object], failed_path: str, _exc_info: object) -> None:
+        # Entries without the permissions needed to remove them, like read-only files (on Windows) or read-only and
+        # unlistable directories (on POSIX). Grant the permissions and remove the entry.
         try:
-            os.chmod(failed_path, stat.S_IWRITE)  # noqa: PTH101
-            func(failed_path)
+            force_remove(Path(failed_path).absolute())
         except OSError:
             if not ignore_errors:
                 raise
