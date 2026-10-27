@@ -23,9 +23,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 __all__ = [
-    'INSTALLED_MARKER_FILE',
     'InstallDirectory',
-    'compute_install_hash',
     'mark_in_use',
     'remove_unused_install_dirs_async',
 ]
