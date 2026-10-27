@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from ._install_dirs import INSTALLED_MARKER_FILE
-from ._install_dirs import mark_in_use
-from ._install_dirs import remove_unused_install_dirs_async
+from ._install_dirs import InstallDirectory
 from ._util import download_file
 from ._util import extract_archive
 from .helpers import run_command_ex
@@ -12,7 +10,6 @@ from pathlib import Path
 from shutil import which
 from tempfile import TemporaryDirectory
 from typing import final
-import re
 import sublime
 
 __all__ = [
@@ -75,25 +72,21 @@ class UvRunner:
         if which('uv'):
             self._uv = 'uv'
         else:
-            target_directory = UV_RUNTIME_DIR / UV_TAG
-            target_uv_path = target_directory / UV_BINARY
-            installed_marker_path = target_directory / INSTALLED_MARKER_FILE
-            if not installed_marker_path.is_file():
+            def install(target_directory: Path) -> None:
                 filename = get_uv_artifact_name()
                 url = ARTIFACT_URL.format(tag=UV_TAG, filename=filename)
-                target_directory.mkdir(parents=True, exist_ok=True)
                 with TemporaryDirectory(dir=target_directory) as tempdir:
                     archive_path = Path(tempdir, filename)
                     download_file(url, archive_path)
                     temporary_directory_path = Path(tempdir)
                     extracted_path = extract_archive(archive_path, temporary_directory_path) or temporary_directory_path
+                    target_uv_path = target_directory / UV_BINARY
                     extracted_path.joinpath(UV_BINARY).replace(target_uv_path)
                     target_uv_path.chmod(0o744)
-                    installed_marker_path.touch()
-            mark_in_use(target_directory)
-            remove_unused_install_dirs_async(UV_RUNTIME_DIR, re.compile(r'\d+\.\d+\.\d+'), keep=target_directory)
+
+            target_directory = InstallDirectory(UV_RUNTIME_DIR, 'uv', UV_TAG).install(install)
             remove_legacy_uv_files()
-            self._uv = str(target_uv_path)
+            self._uv = str(target_directory / UV_BINARY)
 
     def run_command(self, *args: str, cwd: str) -> None:
         run_command_ex(self._uv, *args, cwd=cwd)
