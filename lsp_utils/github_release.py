@@ -11,7 +11,9 @@ from .constants import HOST_ARCH
 from hashlib import sha256 as sha256_hash
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import cast
 from typing import TYPE_CHECKING
+from typing import TypedDict
 from urllib.request import Request
 from urllib.request import urlopen
 import gzip
@@ -25,6 +27,7 @@ if TYPE_CHECKING:
     from http.client import HTTPResponse
 
 __all__ = [
+    'PlatformAssets',
     'UnsupportedPlatformError',
     'download_github_release_asset',
     'get_latest_github_release_tag',
@@ -38,21 +41,41 @@ ARCHIVE_SUFFIXES = ('.zip', '.tar.gz', '.tgz', '.tar.bz2', '.tar.xz')
 CHUNK_SIZE = 1024 * 1024
 
 
+PlatformAssets = TypedDict('PlatformAssets', {
+    'linux': str,
+    'linux-arm64': str,
+    'linux-x32': str,
+    'linux-x64': str,
+    'osx': str,
+    'osx-arm64': str,
+    'osx-x64': str,
+    'windows': str,
+    'windows-arm64': str,
+    'windows-x32': str,
+    'windows-x64': str,
+}, total=False)
+"""
+Release assets by `<platform>-<arch>`, for :func:`select_platform_asset`.
+
+A key of just the `<platform>` matches any architecture of that platform.
+"""
+
+
 class UnsupportedPlatformError(RuntimeError):
     """Raised when no release asset is available for the current platform and architecture."""
 
 
-def select_platform_asset(assets: Mapping[str, str]) -> str:
+def select_platform_asset(assets: PlatformAssets) -> str:
     """
     Return the release asset for the current platform and architecture.
 
-    :param assets: Maps `<platform>-<arch>` (for example `osx-arm64`) to the name of the asset, where `platform` is
-                   one of `windows`, `osx` or `linux` and `arch` is one of `x64`, `arm64` or `x32`. A key of just the
+    :param assets: The names of the assets by `<platform>-<arch>` (for example `osx-arm64`). A key of just the
                    `<platform>` matches any architecture of that platform.
     :raises UnsupportedPlatformError: When there is no asset for the current platform and architecture.
     """
     platform = sublime.platform()
-    asset = assets.get(f'{platform}-{HOST_ARCH}') or assets.get(platform)
+    assets_by_key = cast('Mapping[str, str]', assets)
+    asset = assets_by_key.get(f'{platform}-{HOST_ARCH}') or assets_by_key.get(platform)
     if not asset:
         msg = f'No release asset is available for {platform} ({HOST_ARCH})'
         raise UnsupportedPlatformError(msg)
@@ -100,7 +123,7 @@ def download_github_release_asset(
     .. code:: py
 
         TAG = 'v1.2.3'
-        ASSETS = {
+        ASSETS: PlatformAssets = {
             'linux-x64': 'server-x86_64-unknown-linux-gnu.tar.gz',
             'osx-arm64': 'server-aarch64-apple-darwin.tar.gz',
             'windows-x64': 'server-x86_64-pc-windows-msvc.zip',

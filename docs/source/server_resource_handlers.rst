@@ -26,6 +26,8 @@ GitHub releases
 
 .. autofunction:: lsp_utils.select_platform_asset
 
+.. autoclass:: lsp_utils.PlatformAssets
+
 .. autofunction:: lsp_utils.get_latest_github_release_tag
 
 .. autoexception:: lsp_utils.UnsupportedPlatformError

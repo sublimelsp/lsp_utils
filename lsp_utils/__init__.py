@@ -12,6 +12,7 @@ from .constants import SETTINGS_FILENAME
 from .generic_client_handler import GenericClientHandler
 from .github_release import download_github_release_asset
 from .github_release import get_latest_github_release_tag
+from .github_release import PlatformAssets
 from .github_release import select_platform_asset
 from .github_release import UnsupportedPlatformError
 from .helpers import rmtree_ex
@@ -29,6 +30,7 @@ __all__ = [
     'InstallDirectory',
     'NodeManager',
     'NodeRunner',
+    'PlatformAssets',
     'ServerResourceInterface',
     'ServerStatus',
     'UnsupportedPlatformError',
