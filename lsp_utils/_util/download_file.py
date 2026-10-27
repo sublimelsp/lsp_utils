@@ -35,7 +35,7 @@ def extract_archive(archive_file: Path, target_directory: Path) -> Path | None:
     if archive_name.endswith('.zip'):
         with ZipFile(archive_file) as archive:
             return extract_files_from_archive(archive, target_directory)
-    elif archive_name.endswith(('.tar.gz', 'tgz', '.tar.bz2', '.tar.xz')):
+    elif archive_name.endswith(('.tar.gz', '.tgz', '.tar.bz2', '.tar.xz')):
         with tarfile.open(archive_file, 'r:*') as archive:
             return extract_files_from_archive(archive, target_directory)
     else:

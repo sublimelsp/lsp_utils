@@ -10,6 +10,10 @@ from .api_wrapper_interface import ApiWrapperInterface
 from .constants import HOST_ARCH
 from .constants import SETTINGS_FILENAME
 from .generic_client_handler import GenericClientHandler
+from .github_release import download_github_release_asset
+from .github_release import get_latest_github_release_tag
+from .github_release import select_platform_asset
+from .github_release import UnsupportedPlatformError
 from .helpers import rmtree_ex
 from .server_resource_interface import ServerResourceInterface
 from .server_resource_interface import ServerStatus
@@ -27,9 +31,13 @@ __all__ = [
     'NodeRunner',
     'ServerResourceInterface',
     'ServerStatus',
+    'UnsupportedPlatformError',
     'UvRunner',
     'UvVenvManager',
     'download_file',
+    'download_github_release_asset',
     'extract_archive',
+    'get_latest_github_release_tag',
     'rmtree_ex',
+    'select_platform_asset',
 ]
