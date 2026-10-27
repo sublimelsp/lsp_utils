@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 __all__ = [
     'PlatformAssets',
     'UnsupportedPlatformError',
-    'download_to_directory',
+    'download_and_extract',
     'http_request',
     'select_platform_asset',
 ]
@@ -80,7 +80,7 @@ def select_platform_asset(assets: PlatformAssets) -> str:
     return asset
 
 
-def download_to_directory(
+def download_and_extract(
     url: str,
     target_directory: Path,
     *,
@@ -105,9 +105,9 @@ def download_to_directory(
 
         install_dir = InstallDirectory(storage_path, 'server', VERSION)
         if install_dir.needs_installation():
-            install_dir.install(lambda path: download_to_directory(URL, path, executables=['bin/server']))
+            install_dir.install(lambda path: download_and_extract(URL, path, executables=['bin/server']))
 
-    For GitHub releases, see :func:`download_github_release_asset`.
+    For GitHub releases, see :func:`download_and_extract_github_asset`.
 
     :param url: The URL to download.
     :param target_directory: The existing directory to store the file or its extracted contents in.

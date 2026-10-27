@@ -22,7 +22,7 @@ Downloads
 
 .. automodule:: lsp_utils.download
 
-.. autofunction:: lsp_utils.download_to_directory
+.. autofunction:: lsp_utils.download_and_extract
 
 .. autofunction:: lsp_utils.http_request
 
@@ -37,6 +37,6 @@ GitHub releases
 
 .. automodule:: lsp_utils.github_release
 
-.. autofunction:: lsp_utils.download_github_release_asset
+.. autofunction:: lsp_utils.download_and_extract_github_asset
 
 .. autofunction:: lsp_utils.fetch_latest_github_release_tag

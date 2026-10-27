@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from ._install_dirs import InstallDirectory
-from .github_release import download_github_release_asset
+from .github_release import download_and_extract_github_asset
 from .helpers import run_command_ex
 from contextlib import suppress
 from LSP.plugin import ST_STORAGE_PATH
@@ -71,7 +71,7 @@ class UvRunner:
             self._uv = 'uv'
         else:
             def installer(target_directory: Path) -> None:
-                download_github_release_asset(
+                download_and_extract_github_asset(
                     UV_REPO, UV_TAG, get_uv_artifact_name(), target_directory, executables=[UV_BINARY])
 
             target_directory = InstallDirectory(UV_RUNTIME_DIR, 'uv', UV_TAG).install(installer)

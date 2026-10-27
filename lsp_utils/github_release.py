@@ -6,7 +6,7 @@ Combine with :class:`InstallDirectory` so that every release is installed into i
 
 from __future__ import annotations
 
-from .download import download_to_directory
+from .download import download_and_extract
 from .download import http_request
 from typing import TYPE_CHECKING
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 __all__ = [
-    'download_github_release_asset',
+    'download_and_extract_github_asset',
     'fetch_latest_github_release_tag',
 ]
 
@@ -40,7 +40,7 @@ def fetch_latest_github_release_tag(repo: str) -> str:
     return tag
 
 
-def download_github_release_asset(
+def download_and_extract_github_asset(
     repo: str,
     tag: str,
     asset: str,
@@ -53,7 +53,7 @@ def download_github_release_asset(
     """
     Download an asset of a GitHub release into a directory.
 
-    Archives are extracted and gzipped files decompressed, the same as with :func:`download_to_directory`.
+    Archives are extracted and gzipped files decompressed, the same as with :func:`download_and_extract`.
 
     Typically called as the installer of an :class:`InstallDirectory`:
 
@@ -69,7 +69,7 @@ def download_github_release_asset(
 
         install_dir = InstallDirectory(storage_path, 'server', TAG)
         if install_dir.needs_installation():
-            install_dir.install(lambda path: download_github_release_asset(
+            install_dir.install(lambda path: download_and_extract_github_asset(
                 'owner/server', TAG, select_platform_asset(ASSETS), path, executables=[BINARY]))
         binary_path = install_dir.path / BINARY
 
@@ -83,7 +83,7 @@ def download_github_release_asset(
                      archive is stored as. Defaults to `asset`.
     :param sha256: The expected SHA-256 hex digest of the asset, verified before it's used.
     """
-    download_to_directory(
+    download_and_extract(
         f'{GITHUB_URL}/{repo}/releases/download/{tag}/{asset}',
         target_directory,
         filename=filename or asset,

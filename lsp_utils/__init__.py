@@ -9,13 +9,13 @@ from ._util import extract_archive
 from .api_wrapper_interface import ApiWrapperInterface
 from .constants import HOST_ARCH
 from .constants import SETTINGS_FILENAME
-from .download import download_to_directory
+from .download import download_and_extract
 from .download import http_request
 from .download import PlatformAssets
 from .download import select_platform_asset
 from .download import UnsupportedPlatformError
 from .generic_client_handler import GenericClientHandler
-from .github_release import download_github_release_asset
+from .github_release import download_and_extract_github_asset
 from .github_release import fetch_latest_github_release_tag
 from .helpers import rmtree_ex
 from .server_resource_interface import ServerResourceInterface
@@ -38,9 +38,9 @@ __all__ = [
     'UnsupportedPlatformError',
     'UvRunner',
     'UvVenvManager',
+    'download_and_extract',
+    'download_and_extract_github_asset',
     'download_file',
-    'download_github_release_asset',
-    'download_to_directory',
     'extract_archive',
     'fetch_latest_github_release_tag',
     'http_request',
