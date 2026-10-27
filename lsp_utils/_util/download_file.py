@@ -32,7 +32,7 @@ def extract_archive(archive_file: Path, target_directory: Path) -> Path | None:
              If there is no single parent then returns `None` (means that files are directly under `target_directory`).
     """
     archive_name = archive_file.name
-    if archive_name.endswith('.zip'):
+    if archive_name.endswith(('.zip', '.vsix')):
         with ZipFile(archive_file) as archive:
             return extract_files_from_archive(archive, target_directory)
     elif archive_name.endswith(('.tar.gz', '.tgz', '.tar.bz2', '.tar.xz')):
