@@ -11,6 +11,8 @@ nav = [
   { "API Documentation" = [
     "client-handlers.md",
     "server-resource-handlers.md",
+    "nodejs.md",
+    "python.md",
     "api-handler.md",
     "utilities.md",
   ] },

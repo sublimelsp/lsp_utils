@@ -30,6 +30,8 @@ runtime on the PATH. Press the "Download Node.js" button to get required Node.js
 
 
 class NodeManager:
+    """Resolves a Node.js runtime and installs servers that run on Node.js."""
+
     @classmethod
     def on_pre_start_async(
         cls,
@@ -96,6 +98,18 @@ class NodeManager:
 
     @classmethod
     def resolve(cls, package_name: str, required_node_version: str) -> NodeRunner:
+        """
+        Return a Node.js runtime that satisfies the required version.
+
+        The runtimes listed in the `nodejs_runtime` lsp_utils setting are tried in order. The `system` runtime uses
+        Node.js found on the `PATH` and the `local` runtime uses Node.js installed by lsp_utils in the package
+        storage, downloading it if needed.
+
+        :param package_name: The name of the package that requires Node.js. Used in messages and logs.
+        :param required_node_version: NPM semantic version (typically a range) specifying which Node.js version is
+            required. See `node_version_requirement` of :meth:`on_pre_start_async`.
+        :returns: The resolved runtime.
+        """
         node_runtime = cls._resolve_node_runtime(package_name, NpmSpec(required_node_version))
         debug(f'Resolved Node.js Runtime for package {package_name}: {node_runtime}')
         return node_runtime

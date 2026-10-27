@@ -46,6 +46,7 @@ def create_version(version: str) -> Version:
 
 
 class NodeRunner:
+    """A Node.js runtime, as returned by :meth:`NodeManager.resolve`."""
 
     def __init__(self) -> None:
         self._node: Path | None = None
@@ -62,6 +63,7 @@ class NodeRunner:
         raise Exception(msg)
 
     def node_binary_path(self) -> Path:
+        """Return the path to the `node` binary."""
         if not self._node:
             raise NodeNotInitializedError
         return self._node
@@ -71,6 +73,7 @@ class NodeRunner:
         return list(self._additional_paths)
 
     def node_env(self) -> dict[str, str]:
+        """Return environment variables that need to be set when running `node`."""
         if IS_WINDOWS_7_OR_LOWER:
             return {'NODE_SKIP_PLATFORM_CHECK': '1'}
         return {}
@@ -108,6 +111,7 @@ class NodeRunner:
             raise Exception(msg)
 
     def resolve_version(self) -> Version:
+        """Return the version of Node.js."""
         if self._version:
             return self._version
         if not self._node:
@@ -129,12 +133,14 @@ class NodeRunner:
         stderr: int = subprocess.PIPE,
         env: dict[str, Any] | None = None,
     ) -> subprocess.Popen[bytes]:
+        """Start `node` with the given arguments and return the process."""
         if not self._node:
             raise NodeNotInitializedError
         return start_process(
             [self._node, *args], stdin=stdin, stdout=stdout, stderr=stderr, extra_env=self._process_env(env))
 
     def run_install(self, cwd: str | PathLike[str]) -> None:
+        """Install the production dependencies of the npm project in `cwd` with `npm ci`."""
         if not Path(cwd).is_dir():
             msg = f'Specified working directory "{cwd}" does not exist'
             raise Exception(msg)

@@ -79,4 +79,5 @@ class UvRunner:
             self._uv = str(target_directory / UV_BINARY)
 
     def run_command(self, *args: str, cwd: str) -> None:
+        """Run uv with the given arguments in the `cwd` directory. Raises on failure."""
         run_command_ex(self._uv, *args, cwd=cwd)
