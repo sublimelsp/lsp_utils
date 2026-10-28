@@ -24,6 +24,17 @@ SemanticVersion = Tuple[int, int, int]
 is_windows = sublime.platform() == 'windows'
 
 
+def prepend_to_path(path: str | list[str] | None, extra_paths: Sequence[str]) -> str:
+    """
+    Return `path` (a `PATH` string or a list of its entries) with `extra_paths` put first.
+
+    Empty entries are dropped and entries of `extra_paths` that are already in `path` are moved to the front instead
+    of being added again.
+    """
+    original_paths = path.split(os.pathsep) if isinstance(path, str) else (path or [])
+    return os.pathsep.join([*extra_paths, *(p for p in original_paths if p and p not in extra_paths)])
+
+
 def start_process(
     args: Sequence[str | PathLike[str]],
     *,
@@ -38,7 +49,7 @@ def start_process(
     if extra_env:
         env.update(extra_env)
     if extra_paths:
-        env['PATH'] = os.path.pathsep.join(extra_paths) + os.path.pathsep + env.get('PATH', '')
+        env['PATH'] = prepend_to_path(env.get('PATH'), extra_paths)
     startupinfo = None
     if sys.platform == 'win32':
         startupinfo = subprocess.STARTUPINFO()
@@ -73,7 +84,7 @@ def run_command_sync(
         if extra_env:
             final_env.update(extra_env)
         if extra_paths:
-            final_env['PATH'] = os.path.pathsep.join(extra_paths) + os.path.pathsep + final_env['PATH']
+            final_env['PATH'] = prepend_to_path(final_env.get('PATH'), extra_paths)
     startupinfo = None
     if is_windows:
         startupinfo = subprocess.STARTUPINFO()
