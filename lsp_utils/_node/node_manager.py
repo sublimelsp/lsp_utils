@@ -9,7 +9,6 @@ from .node_runner import NodeRunnerPath
 from .node_runner import ServerInstalledCallback
 from LSP.plugin import ST_STORAGE_PATH
 from LSP.plugin.core.logging import debug
-from os.path import pathsep
 from pathlib import Path
 from typing import cast
 from typing import TYPE_CHECKING
@@ -83,14 +82,7 @@ class NodeManager:
                 server_directory_resource_path, destination_server_directory, skip_npm_install=skip_npm_install,
                 on_server_installed=on_server_installed)
             server_path = str(destination_server_directory / server_binary_path)
-        context.configuration.env.update(node_runner.node_env())
-        # Put the managed Node.js binary directory first on the PATH so that processes spawned by the server
-        # that call `node` use the same runtime.
-        additional_paths = node_runner.additional_paths()
-        if additional_paths:
-            original_path = context.configuration.env.get('PATH') or ''
-            original_paths = [p for p in original_path.split(pathsep) if p and p not in additional_paths]
-            context.configuration.env['PATH'] = pathsep.join([*additional_paths, *original_paths])
+        node_runner.apply_env(context.configuration.env)
         context.variables.update({
             'node_bin': str(node_runner.node_binary_path()),
             'server_path': str(server_path),

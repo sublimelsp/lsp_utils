@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from .constants import INSTALLING_MARKER_FILE
 from .helpers import is_hash_equal
+from .helpers import prepend_to_path
 from .helpers import rmtree_ex
 from .uv_runner import UvRunner
-from os import pathsep
 from typing import final
 from typing import TYPE_CHECKING
 import sublime
@@ -58,8 +58,8 @@ class UvVenvManager:
         if not server_path or server_path == 'auto':
             uv_venv_manager = UvVenvManager(plugin_storage_path, pyproject_directory_resource_path, server_binary_name)
             uv_venv_manager.install_async()
-            path = context.configuration.env.get('PATH', '')
-            context.configuration.env['PATH'] = f'{uv_venv_manager.venv_bin_path}{pathsep}{path}'
+            context.configuration.env['PATH'] = prepend_to_path(
+                context.configuration.env.get('PATH'), [str(uv_venv_manager.venv_bin_path)])
             context.variables['server_path'] = str(uv_venv_manager.venv_bin_path / server_binary_name)
         else:
             context.variables['server_path'] = server_path

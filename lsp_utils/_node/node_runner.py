@@ -3,6 +3,7 @@ from __future__ import annotations
 from .._util import logger
 from ..constants import INSTALLING_MARKER_FILE
 from ..helpers import is_hash_equal
+from ..helpers import prepend_to_path
 from ..helpers import rmtree_ex
 from ..helpers import run_command_sync
 from ..helpers import start_process
@@ -17,6 +18,7 @@ from typing import Callable
 from typing import final
 from typing import TYPE_CHECKING
 from typing_extensions import override
+import os
 import shutil
 import sublime
 import subprocess  # ruff: ignore[suspicious-subprocess-import]
@@ -64,12 +66,30 @@ class NodeRunner:
 
     def additional_paths(self) -> list[str]:
         """Directories that should be prepended to the PATH so that `node` resolves to this runtime."""
-        return self._additional_paths
+        return list(self._additional_paths)
 
     def node_env(self) -> dict[str, str]:
         if IS_WINDOWS_7_OR_LOWER:
             return {'NODE_SKIP_PLATFORM_CHECK': '1'}
         return {}
+
+    def apply_env(self, env: dict[str, str]) -> None:
+        """
+        Update `env` in place with the variables needed to run this runtime's `node`.
+
+        Merges in `node_env()` and puts `additional_paths()` first on the `PATH` so that `node` resolves to this
+        runtime, also in processes spawned by the started process.
+        """
+        env.update(self.node_env())
+        if self._additional_paths:
+            env['PATH'] = prepend_to_path(env.get('PATH'), self._additional_paths)
+
+    def _process_env(self, extra_env: dict[str, str] | None = None) -> dict[str, str]:
+        env = os.environ.copy()
+        if extra_env:
+            env.update(extra_env)
+        self.apply_env(env)
+        return env
 
     def check_binary_present(self) -> None:
         if self._node is None:
@@ -91,7 +111,7 @@ class NodeRunner:
         if not self._node:
             raise NodeNotInitializedError
         # In this case we have fully resolved binary path already so shouldn't need `shell` on Windows.
-        version, error = run_command_sync([self._node, '--version'], extra_env=self.node_env(), shell=False)
+        version, error = run_command_sync([self._node, '--version'], env=self._process_env(), shell=False)
         if error is None:
             self._version = create_version(version)
         else:
@@ -109,12 +129,8 @@ class NodeRunner:
     ) -> subprocess.Popen[bytes]:
         if not self._node:
             raise NodeNotInitializedError
-        if env is None:
-            env = {}
-        env.update(self.node_env())
         return start_process(
-            [self._node, *args], stdin=stdin, stdout=stdout, stderr=stderr, extra_env=env,
-            extra_paths=self._additional_paths)
+            [self._node, *args], stdin=stdin, stdout=stdout, stderr=stderr, extra_env=self._process_env(env))
 
     def run_install(self, cwd: str | PathLike[str]) -> None:
         if not Path(cwd).is_dir():
@@ -129,7 +145,7 @@ class NodeRunner:
             '--verbose',
         ]
         stdout, error = run_command_sync(
-            [*self.npm_command(), *args], cwd=cwd, extra_env=self.node_env(), extra_paths=self._additional_paths,
+            [*self.npm_command(), *args], cwd=cwd, env=self._process_env(),
             shell=False,
         )
         logger.info('START output of command: "{}"'.format(' '.join(args)))
