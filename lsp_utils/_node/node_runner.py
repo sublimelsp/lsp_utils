@@ -62,6 +62,10 @@ class NodeRunner:
             raise NodeNotInitializedError
         return self._node
 
+    def additional_paths(self) -> list[str]:
+        """Directories that should be prepended to the PATH so that `node` resolves to this runtime."""
+        return self._additional_paths
+
     def node_env(self) -> dict[str, str]:
         if IS_WINDOWS_7_OR_LOWER:
             return {'NODE_SKIP_PLATFORM_CHECK': '1'}

@@ -9,6 +9,7 @@ from .node_runner import NodeRunnerPath
 from .node_runner import ServerInstalledCallback
 from LSP.plugin import ST_STORAGE_PATH
 from LSP.plugin.core.logging import debug
+from os.path import pathsep
 from pathlib import Path
 from typing import cast
 from typing import TYPE_CHECKING
@@ -42,6 +43,9 @@ class NodeManager:
 
         Automatically adds support for a root `server_path` package setting that defaults to `"auto"`, meaning
         that the package-managed server instance will be used. It can be overridden to use a custom server binary.
+
+        When the lsp_utils-managed Node.js runtime is used, its binary directory is prepended to the server's PATH
+        so that any processes spawned by the server that call `node` use that same runtime.
 
         :param context: The plugin context.
         :param plugin_storage_path: The path to the plugin's storage (`cls.plugin_storage_path`).
@@ -80,6 +84,13 @@ class NodeManager:
                 on_server_installed=on_server_installed)
             server_path = str(destination_server_directory / server_binary_path)
         context.configuration.env.update(node_runner.node_env())
+        # Put the managed Node.js binary directory first on the PATH so that processes spawned by the server
+        # that call `node` use the same runtime.
+        additional_paths = node_runner.additional_paths()
+        if additional_paths:
+            original_path = context.configuration.env.get('PATH') or ''
+            original_paths = [p for p in original_path.split(pathsep) if p and p not in additional_paths]
+            context.configuration.env['PATH'] = pathsep.join([*additional_paths, *original_paths])
         context.variables.update({
             'node_bin': str(node_runner.node_binary_path()),
             'server_path': str(server_path),
