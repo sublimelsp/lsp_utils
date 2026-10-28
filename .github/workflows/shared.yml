@@ -66,9 +66,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: latest_tags
     steps:
+      # Checked out at the workspace root so that annotation paths match the repository paths.
       - uses: actions/checkout@v7
-        with:
-          path: lsp_utils
 
       - uses: actions/setup-python@v7
         with:
@@ -78,15 +77,14 @@ jobs:
           sudo apt update
           sudo apt install --no-install-recommends -y x11-xserver-utils
 
+      # Cloned next to the checkout, where pyright's `extraPaths` expect them.
       - name: Clone dependencies for type checking
         run: |
-          git clone --branch "${{ needs.latest_tags.outputs.lsp }}" --depth 1 https://github.com/sublimelsp/LSP.git
-          git clone --branch "${{ needs.latest_tags.outputs.sublime_lib }}" --depth 1 https://github.com/SublimeText/sublime_lib.git
+          git clone --branch "${{ needs.latest_tags.outputs.lsp }}" --depth 1 https://github.com/sublimelsp/LSP.git ../LSP
+          git clone --branch "${{ needs.latest_tags.outputs.sublime_lib }}" --depth 1 https://github.com/SublimeText/sublime_lib.git ../sublime_lib
 
       - run: pip3 install tox --user
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-      - run: |
-          cd lsp_utils
-          tox
+      - run: tox
         env:
           RUFF_OUTPUT_FORMAT: github
