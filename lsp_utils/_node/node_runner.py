@@ -112,7 +112,9 @@ class NodeRunner:
         if env is None:
             env = {}
         env.update(self.node_env())
-        return start_process([self._node, *args], stdin=stdin, stdout=stdout, stderr=stderr, extra_env=env)
+        return start_process(
+            [self._node, *args], stdin=stdin, stdout=stdout, stderr=stderr, extra_env=env,
+            extra_paths=self._additional_paths)
 
     def run_install(self, cwd: str | PathLike[str]) -> None:
         if not Path(cwd).is_dir():

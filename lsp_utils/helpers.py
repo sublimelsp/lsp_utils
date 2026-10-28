@@ -32,10 +32,13 @@ def start_process(
     stderr: int = subprocess.PIPE,
     cwd: str | PathLike[str] | None = None,
     extra_env: dict[str, str] | None = None,  # merged with envs obtained from current process
+    extra_paths: list[str] | None = None,  # prepended to the PATH
 ) -> subprocess.Popen[bytes]:
     env = os.environ.copy()
     if extra_env:
         env.update(extra_env)
+    if extra_paths:
+        env['PATH'] = os.path.pathsep.join(extra_paths) + os.path.pathsep + env.get('PATH', '')
     startupinfo = None
     if sys.platform == 'win32':
         startupinfo = subprocess.STARTUPINFO()
