@@ -129,6 +129,8 @@ deps = [
   "basedpyright==1.40.2",
   "ruff==0.17.2",
 ]
+# Lets both tools emit GitHub Actions annotations when running in CI.
+pass_env = ["GITHUB_ACTIONS", "RUFF_OUTPUT_FORMAT"]
 commands = [
   ["basedpyright", "lsp_utils"],
   ["ruff", "check"],

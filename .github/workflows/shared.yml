@@ -88,3 +88,5 @@ jobs:
       - run: |
           cd lsp_utils
           tox
+        env:
+          RUFF_OUTPUT_FORMAT: github
