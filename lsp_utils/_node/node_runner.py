@@ -62,6 +62,10 @@ class NodeRunner:
             raise NodeNotInitializedError
         return self._node
 
+    def additional_paths(self) -> list[str]:
+        """Directories that should be prepended to the PATH so that `node` resolves to this runtime."""
+        return self._additional_paths
+
     def node_env(self) -> dict[str, str]:
         if IS_WINDOWS_7_OR_LOWER:
             return {'NODE_SKIP_PLATFORM_CHECK': '1'}
@@ -108,7 +112,9 @@ class NodeRunner:
         if env is None:
             env = {}
         env.update(self.node_env())
-        return start_process([self._node, *args], stdin=stdin, stdout=stdout, stderr=stderr, extra_env=env)
+        return start_process(
+            [self._node, *args], stdin=stdin, stdout=stdout, stderr=stderr, extra_env=env,
+            extra_paths=self._additional_paths)
 
     def run_install(self, cwd: str | PathLike[str]) -> None:
         if not Path(cwd).is_dir():
