@@ -6,7 +6,6 @@ from .helpers import prepend_to_path
 from .uv_runner import get_uv_id
 from .uv_runner import UvRunner
 from contextlib import suppress
-from os import pathsep
 from typing import final
 from typing import TYPE_CHECKING
 import sublime

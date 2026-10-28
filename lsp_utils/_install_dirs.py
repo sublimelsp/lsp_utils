@@ -43,7 +43,7 @@ def _get_run_id() -> str:
 
 def compute_install_hash(*parts: bytes | str) -> str:
     """Return a short hash of all inputs that affect an installation."""
-    digest = md5(INSTALL_LAYOUT_VERSION.encode('utf-8'))  # noqa: S324
+    digest = md5(INSTALL_LAYOUT_VERSION.encode('utf-8'))  # ruff: ignore[hashlib-insecure-hash-function]
     for part in parts:
         data = part.encode('utf-8') if isinstance(part, str) else part
         digest.update(len(data).to_bytes(8, 'little'))
