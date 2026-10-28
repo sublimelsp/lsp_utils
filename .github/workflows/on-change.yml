@@ -16,12 +16,12 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  ci-latest-tag:
+  latest-lsp-tag:
     uses: ./.github/workflows/shared.yml
     with:
       lsp_use_latest_tag: true
 
-  ci-latest-commit:
+  latest-lsp-commit:
     uses: ./.github/workflows/shared.yml
     with:
       lsp_use_latest_tag: false
@@ -31,8 +31,8 @@ jobs:
     name: CI
     if: always()
     needs:
-      - ci-latest-tag
-      - ci-latest-commit
+      - latest-lsp-tag
+      - latest-lsp-commit
     runs-on: ubuntu-latest
     steps:
       - name: Check that all jobs succeeded
