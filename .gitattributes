@@ -10,3 +10,4 @@ renovate.json export-ignore
 scripts/ export-ignore
 tests/ export-ignore
 tox.ini export-ignore
+uv.lock export-ignore

@@ -13,6 +13,14 @@ classifiers = [
 ]
 dynamic = ["version"]
 
+[dependency-groups]
+dev = [
+  "basedpyright==1.40.2",
+  "ruff==0.17.2",
+  "sublime-text-stubs==4213.0",
+  "typing-extensions==4.16.0",
+]
+
 [build-system]
 requires = ["hatch-vcs>=0.4", "hatchling>=1.20"]
 build-backend = "hatchling.build"
@@ -59,6 +67,14 @@ ignore = [
 ]
 pythonVersion = "3.8"
 typeCheckingMode = "standard"
+
+# Create the .venv that editors use for type checking with `uv sync --python 3.14`. The version has to be given since
+# .python-version holds the version that Sublime Text runs the code with.
+[tool.uv]
+package = false
+
+[tool.uv.dependency-groups]
+dev = { requires-python = ">=3.13" }
 
 [tool.ruff]
 line-length = 120
@@ -123,12 +139,7 @@ env_list = ["py3"]
 skipsdist = true
 
 [tool.tox.env_run_base]
-deps = [
-  "basedpyright==1.40.2",
-  "ruff==0.17.2",
-  "sublime-text-stubs==4213.0",
-  "typing-extensions==4.16.0",
-]
+dependency_groups = ["dev"]
 # Lets both tools emit GitHub Actions annotations when running in CI.
 pass_env = ["GITHUB_ACTIONS", "RUFF_OUTPUT_FORMAT"]
 commands = [

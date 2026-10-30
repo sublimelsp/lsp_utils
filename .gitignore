@@ -5,6 +5,7 @@ __pycache__
 *.pickle
 .ruff_cache
 .tox
+.venv
 
 # build artifacts
 dist/
