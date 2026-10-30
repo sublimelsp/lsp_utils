@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .._install_dirs import InstallDirectory
 from .._util import logger
 from ..constants import INSTALLING_MARKER_FILE
 from ..helpers import is_hash_equal
@@ -17,6 +18,7 @@ from typing import Any
 from typing import Callable
 from typing import final
 from typing import TYPE_CHECKING
+from typing_extensions import deprecated
 from typing_extensions import override
 import os
 import shutil
@@ -161,6 +163,9 @@ class NodeRunner:
             raise NodeNotInitializedError(msg)
         return [self._npm]
 
+    @deprecated(
+        'Use install_versioned_project_dependencies() which doesn\'t replace files of a server that might still be '
+        'running.')
     def install_project_dependencies(
         self, source_path: ResourcePath,
         target_path: Path,
@@ -168,6 +173,12 @@ class NodeRunner:
         skip_npm_install: bool = False,
         on_server_installed: ServerInstalledCallback | None = None,
     ) -> None:
+        """
+        Install the server into `target_path`, replacing an installation with outdated dependencies.
+
+        **Deprecated:** use :meth:`install_versioned_project_dependencies` instead. Replacing the files of a server
+        that might still be running fails on Windows if the files are locked.
+        """
         node_version = str(self.resolve_version())
         if (
             not (target_path / INSTALLING_MARKER_FILE).is_file()
@@ -197,6 +208,49 @@ class NodeRunner:
             self.run_install(cwd=target_path)
         (target_path / NODE_VERSION_MARKER_FILE).write_text(node_version, encoding='utf-8')
         (target_path / INSTALLING_MARKER_FILE).unlink()
+
+    def install_versioned_project_dependencies(
+        self, source_path: ResourcePath,
+        parent_path: Path,
+        *,
+        skip_npm_install: bool = False,
+        on_server_installed: ServerInstalledCallback | None = None,
+    ) -> Path:
+        """
+        Install the server into a `<parent_path>/<source directory name>-<hash>` directory.
+
+        The hash depends on `package.json`, `package-lock.json` and the Node.js version so an update installs into a
+        new directory instead of replacing files of a server that might still be running.
+
+        :returns: The path to the server directory.
+        """
+        package_json_path = source_path / 'package.json'
+        if not package_json_path.exists():
+            msg = f'Resource "{package_json_path}" does not exist inside the package'
+            raise RuntimeError(msg)
+        package_lock_path = source_path / 'package-lock.json'
+        install_dir = InstallDirectory(
+            parent_path,
+            source_path.name,
+            package_json_path.read_bytes(),
+            package_lock_path.read_bytes() if package_lock_path.exists() else b'',
+            str(self.resolve_version()),
+            'skip-npm-install' if skip_npm_install else '',
+            legacy_dirs=[parent_path / source_path.name],
+        )
+
+        def installer(target_path: Path) -> None:
+            try:
+                source_path.copytree(target_path, exist_ok=True)
+                if not skip_npm_install:
+                    self.run_install(cwd=target_path)
+                if on_server_installed:
+                    on_server_installed(target_path)
+            except Exception as error:
+                msg = f'Error installing the server:\n{error}'
+                raise RuntimeError(msg) from error
+
+        return install_dir.install(installer)
 
 
 @final
@@ -237,15 +291,9 @@ class NodeRunnerLocal(NodeRunner):
             install_node.run()
         self._resolve_paths()
 
-    @override
-    def check_binary_present(self) -> None:
-        super().check_binary_present()
-        if (self._base_dir / INSTALLING_MARKER_FILE).exists():
-            msg = 'Node.js installation is incomplete'
-            raise NodeNotInitializedError(msg)
-        if self._npm and not self._npm.is_file():
-            msg = '"npm" binary not found'
-            raise NodeNotInitializedError(msg)
+    @property
+    def install_path(self) -> Path:
+        return self._base_dir
 
     # --- private methods ----------------------------------------------------------------------------------------------
 

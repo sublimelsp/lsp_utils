@@ -6,6 +6,7 @@ from .._util import logger
 from ..constants import HOST_ARCH
 from ..constants import INSTALLING_MARKER_FILE
 from ..helpers import rmtree_ex
+from ..helpers import try_rmtree
 from .node_constants import NODE_DIST_URL
 from .node_constants import NODE_RUNTIME_VERSION
 from typing import final
@@ -31,8 +32,10 @@ class NodeInstaller:
         self._node_version = node_version
 
     def run(self) -> None:
-        rmtree_ex(self._base_dir, ignore_errors=True)
-        self._base_dir.mkdir(exist_ok=True, parents=True)
+        if not try_rmtree(self._base_dir):
+            msg = f'Failed removing incomplete Node.js installation in "{self._base_dir}"'
+            raise RuntimeError(msg)
+        self._base_dir.mkdir(parents=True)
         marker_file_path = (self._base_dir / INSTALLING_MARKER_FILE)
         marker_file_path.open('a', encoding='utf-8').close()
         archive_filename, url = self._node_archive()

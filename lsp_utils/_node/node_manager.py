@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from .._install_dirs import mark_in_use
+from .._install_dirs import remove_unused_install_dirs_async
 from .._util import logger
 from ..constants import SETTINGS_FILENAME
 from ..third_party.semantic_version import NpmSpec  # pyright: ignore[reportPrivateLocalImportUsage]
+from .node_constants import NODE_RUNTIME_VERSION
 from .node_runner import NodeRunner
 from .node_runner import NodeRunnerLocal
 from .node_runner import NodeRunnerPath
@@ -12,6 +15,7 @@ from LSP.plugin.core.logging import debug
 from pathlib import Path
 from typing import cast
 from typing import TYPE_CHECKING
+import re
 import sublime
 
 if TYPE_CHECKING:
@@ -19,6 +23,7 @@ if TYPE_CHECKING:
     from sublime_lib import ResourcePath
 
 
+NODE_RUNTIME_DIR = Path(ST_STORAGE_PATH) / 'lsp_utils' / 'node-runtime'
 NO_NODE_FOUND_MESSAGE = 'Could not start {package_name} due to not being able to resolve suitable Node.js \
 runtime on the PATH. Press the "Download Node.js" button to get required Node.js version \
 (note that it will be used only by LSP and will not affect your system otherwise).'
@@ -65,7 +70,8 @@ class NodeManager:
         :param on_server_installed: Callback called when the server gets installed or updated. Gets passed the Path to
             the server directory (containing 'package.json').
 
-        :returns: Path to the server directory (containing 'package.json') if the server is managed.
+        :returns: Path to the server directory (containing 'package.json') if the server is managed. The directory
+            name includes a hash of the installation inputs so it changes when the server or Node.js is updated.
         """
         package_name = plugin_storage_path.name
         node_runner = NodeManager.resolve(package_name, node_version_requirement)
@@ -77,9 +83,8 @@ class NodeManager:
             server_path = 'auto'
         destination_server_directory = None
         if not server_path or server_path == 'auto':
-            destination_server_directory = plugin_storage_path / server_directory_resource_path.name
-            node_runner.install_project_dependencies(
-                server_directory_resource_path, destination_server_directory, skip_npm_install=skip_npm_install,
+            destination_server_directory = node_runner.install_versioned_project_dependencies(
+                server_directory_resource_path, plugin_storage_path, skip_npm_install=skip_npm_install,
                 on_server_installed=on_server_installed)
             server_path = str(destination_server_directory / server_binary_path)
         node_runner.apply_env(context.configuration.env)
@@ -119,8 +124,7 @@ class NodeManager:
                     log_lines.append(f' * {ex}')
             elif runtime_type in {'local', 'local-test'}:
                 log_lines.append(f'Resolving Node.js Runtime from lsp_utils for package {package_name}...')
-                runtime_dir = Path(ST_STORAGE_PATH) / 'lsp_utils' / 'node-runtime'
-                local_runner = NodeRunnerLocal(runtime_dir)
+                local_runner = NodeRunnerLocal(NODE_RUNTIME_DIR)
                 try:
                     local_runner.check_binary_present()
                 except Exception as ex:
@@ -145,9 +149,18 @@ class NodeManager:
                     break
                 except Exception as ex:
                     log_lines.append(f' * {ex}')
+        cls._remove_unused_node_runtimes(resolved_runtime)
         if not resolved_runtime:
             log_lines.append('--- lsp_utils Node.js resolving end ---')
             logger.debug('\n'.join(log_lines))
             msg = 'Failed resolving Node.js Runtime. Please check in the console for more details.'
             raise Exception(msg)
         return resolved_runtime
+
+    @classmethod
+    def _remove_unused_node_runtimes(cls, resolved_runtime: NodeRunner | None) -> None:
+        if isinstance(resolved_runtime, NodeRunnerLocal):
+            mark_in_use(resolved_runtime.install_path)
+        if NODE_RUNTIME_DIR.is_dir():
+            remove_unused_install_dirs_async(
+                NODE_RUNTIME_DIR, re.compile(r'\d+\.\d+\.\d+'), keep=NODE_RUNTIME_DIR / NODE_RUNTIME_VERSION)

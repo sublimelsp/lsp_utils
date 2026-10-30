@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from ._client_handler import ClientHandler
+from ._install_dirs import InstallDirectory
 from ._node.node_manager import NodeManager
 from ._node.node_runner import NodeRunner
 from ._util import download_file
@@ -21,6 +22,7 @@ __all__ = [
     'ApiWrapperInterface',
     'ClientHandler',
     'GenericClientHandler',
+    'InstallDirectory',
     'NodeManager',
     'NodeRunner',
     'ServerResourceInterface',
