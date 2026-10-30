@@ -2,7 +2,7 @@
 
 Module with LSP-related utilities for Sublime Text.
 
-📘 [Documentation](https://sublimelsp.github.io/lsp_utils/)
+📘 [Documentation](https://sublime-lsp-utils.netlify.app/)
 
 ## How to use
 
