@@ -12,6 +12,7 @@ from .constants import HOST_ARCH
 from hashlib import sha256 as sha256_hash
 from pathlib import Path
 from posixpath import basename
+from sublime_lib import ActivityIndicator
 from tempfile import TemporaryDirectory
 from typing import cast
 from typing import TYPE_CHECKING
@@ -96,6 +97,8 @@ def download_and_extract(
     - A file compressed with gzip (`.gz`) is decompressed and stored under `filename` without the `.gz` extension.
     - Any other file is stored as is under `filename`.
 
+    An activity indicator is shown in the status bar of the active window in the meantime.
+
     Typically called as the installer of an :class:`InstallDirectory`:
 
     .. code:: py
@@ -121,7 +124,8 @@ def download_and_extract(
     if not filename:
         msg = f'Failed determining the file name of "{url}"'
         raise ValueError(msg)
-    with TemporaryDirectory(dir=target_directory) as tempdir:
+    indicator = ActivityIndicator(sublime.active_window(), f'[LSP] Downloading {filename}')
+    with indicator, TemporaryDirectory(dir=target_directory) as tempdir:
         download_path = Path(tempdir, filename)
         digest = sha256_hash()
         with http_request(url) as response, download_path.open('wb') as out_file:
