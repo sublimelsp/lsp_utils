@@ -1,10 +1,10 @@
 # caches
 .DS_Store
 __pycache__
-.mypy_cache
 *.pickle
 .ruff_cache
 .tox
+.venv
 
 # build artifacts
 dist/
