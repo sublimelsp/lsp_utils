@@ -38,7 +38,6 @@ disallow_untyped_defs = true
 follow_imports = "silent"
 mypy_path = [
   "..",
-  "../LSP/stubs",
   "../sublime_lib",
 ]
 namespace_packages = true
@@ -52,7 +51,6 @@ ignore_missing_imports = true
 [tool.pyright]
 extraPaths = [
   "..",
-  "../LSP/stubs",
   "../sublime_lib",
 ]
 ignore = [
@@ -128,6 +126,7 @@ skipsdist = true
 deps = [
   "basedpyright==1.40.2",
   "ruff==0.17.2",
+  "sublime-text-stubs==4213.0",
 ]
 # Lets both tools emit GitHub Actions annotations when running in CI.
 pass_env = ["GITHUB_ACTIONS", "RUFF_OUTPUT_FORMAT"]
