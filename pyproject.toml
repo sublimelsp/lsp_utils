@@ -39,23 +39,6 @@ tag-pattern = "v{version}"
 [tool.hatch.version]
 source = "vcs"
 
-[tool.mypy]
-python_version = "3.11"
-check_untyped_defs = true
-disallow_untyped_defs = true
-# Don't report errors in external packages.
-follow_imports = "silent"
-mypy_path = [
-  "..",
-]
-namespace_packages = true
-strict_optional = true
-
-[[tool.mypy.overrides]]
-module = "lsp_utils.third_party.semantic_version.*"
-ignore_errors = true
-ignore_missing_imports = true
-
 [tool.pyright]
 extraPaths = [
   "..",
