@@ -17,7 +17,6 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     outputs:
       lsp: ${{ steps.tags.outputs.lsp }}
-      sublime_lib: ${{ steps.tags.outputs.lib }}
     steps:
       - id: tags
         run: |
@@ -26,7 +25,6 @@ jobs:
           else
             echo "lsp=$(gh api repos/sublimelsp/LSP -q .default_branch)" >> "$GITHUB_OUTPUT"
           fi
-          echo "lib=$(gh release view --repo SublimeText/sublime_lib --json tagName -q .tagName)" >> "$GITHUB_OUTPUT"
 
   smoke:
     name: Smoke test (${{ matrix.os }})
@@ -77,11 +75,9 @@ jobs:
           sudo apt update
           sudo apt install --no-install-recommends -y x11-xserver-utils
 
-      # Cloned next to the checkout, where pyright's `extraPaths` expect them.
-      - name: Clone dependencies for type checking
-        run: |
-          git clone --branch "${{ needs.latest_tags.outputs.lsp }}" --depth 1 https://github.com/sublimelsp/LSP.git ../LSP
-          git clone --branch "${{ needs.latest_tags.outputs.sublime_lib }}" --depth 1 https://github.com/SublimeText/sublime_lib.git ../sublime_lib
+      # Cloned next to the checkout, where pyright's `extraPaths` expects it.
+      - name: Clone LSP for type checking
+        run: git clone --branch "${{ needs.latest_tags.outputs.lsp }}" --depth 1 https://github.com/sublimelsp/LSP.git ../LSP
 
       - run: pip3 install tox --user
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH

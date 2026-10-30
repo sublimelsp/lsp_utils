@@ -26,6 +26,7 @@ source = { virtual = "." }
 dev = [
     { name = "basedpyright", marker = "python_full_version >= '3.13'" },
     { name = "ruff", marker = "python_full_version >= '3.13'" },
+    { name = "sublime-lib", marker = "python_full_version >= '3.13'" },
     { name = "sublime-text-stubs", marker = "python_full_version >= '3.13'" },
     { name = "typing-extensions", marker = "python_full_version >= '3.13'" },
 ]
@@ -39,6 +40,7 @@ dev = ">=3.13"
 dev = [
     { name = "basedpyright", marker = "python_full_version >= '3.13'", specifier = "==1.40.2" },
     { name = "ruff", marker = "python_full_version >= '3.13'", specifier = "==0.17.2" },
+    { name = "sublime-lib", marker = "python_full_version >= '3.13'", git = "https://github.com/SublimeText/sublime_lib?rev=v2.2.1" },
     { name = "sublime-text-stubs", marker = "python_full_version >= '3.13'", specifier = "==4213.0" },
     { name = "typing-extensions", marker = "python_full_version >= '3.13'", specifier = "==4.16.0" },
 ]
@@ -83,6 +85,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/1c/9a/c7da96c2c96d20704cf9027f7a5121da272a8c05f1d1531ba949e3b3df04/ruff-0.17.2-py3-none-win_amd64.whl", hash = "sha256:1b59d447f197bef9ef48a22ba1a6016137753c6099e9bac9c36eb566e422424c", size = 10282826, upload-time = "2026-10-22T18:37:55.2Z" },
     { url = "https://files.pythonhosted.org/packages/81/60/a3604c79cb02777b6cb84da894104021986f06c4bc41375102cc95049a32/ruff-0.17.2-py3-none-win_arm64.whl", hash = "sha256:195ad918027f817c119310ca89a42d347887dfc28934aaa869325e9c5dc9d962", size = 9827036, upload-time = "2026-10-22T18:37:58.031Z" },
 ]
+
+[[package]]
+name = "sublime-lib"
+version = "2.2.1"
+source = { git = "https://github.com/SublimeText/sublime_lib?rev=v2.2.1#7f220c09a24e15eb39764a98c17941547adac491" }
 
 [[package]]
 name = "sublime-text-stubs"
