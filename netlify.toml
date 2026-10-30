@@ -5,3 +5,5 @@
   base    = "docs/"
   publish = "site/"
   command = "zensical build --clean"
+  # The API docs are generated from the docstrings so also build when the Python source changes.
+  ignore  = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF . ../lsp_utils/ ../netlify.toml"
