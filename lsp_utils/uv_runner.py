@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 from ._install_dirs import InstallDirectory
-from ._util import download_file
-from ._util import extract_archive
+from .github_release import download_and_extract_github_asset
 from .helpers import run_command_ex
 from contextlib import suppress
 from LSP.plugin import ST_STORAGE_PATH
 from pathlib import Path
 from shutil import which
-from tempfile import TemporaryDirectory
 from typing import final
 import sublime
 
@@ -20,7 +18,7 @@ __all__ = [
 UV_TAG = '0.13.0'
 UV_BINARY = 'uv.exe' if sublime.platform() == 'windows' else 'uv'
 UV_RUNTIME_DIR = Path(ST_STORAGE_PATH) / 'lsp_utils' / 'uv'
-ARTIFACT_URL = 'https://github.com/astral-sh/uv/releases/download/{tag}/{filename}'
+UV_REPO = 'astral-sh/uv'
 ARTIFACT_ARCH_MAPPING = {
     'x64': 'x86_64',
     'arm64': 'aarch64',
@@ -73,16 +71,8 @@ class UvRunner:
             self._uv = 'uv'
         else:
             def installer(target_directory: Path) -> None:
-                filename = get_uv_artifact_name()
-                url = ARTIFACT_URL.format(tag=UV_TAG, filename=filename)
-                with TemporaryDirectory(dir=target_directory) as tempdir:
-                    archive_path = Path(tempdir, filename)
-                    download_file(url, archive_path)
-                    temporary_directory_path = Path(tempdir)
-                    extracted_path = extract_archive(archive_path, temporary_directory_path) or temporary_directory_path
-                    target_uv_path = target_directory / UV_BINARY
-                    extracted_path.joinpath(UV_BINARY).replace(target_uv_path)
-                    target_uv_path.chmod(0o744)
+                download_and_extract_github_asset(
+                    UV_REPO, UV_TAG, get_uv_artifact_name(), target_directory, executables=[UV_BINARY])
 
             target_directory = InstallDirectory(UV_RUNTIME_DIR, 'uv', UV_TAG).install(installer)
             remove_legacy_uv_files()

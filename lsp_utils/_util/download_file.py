@@ -2,22 +2,34 @@ from __future__ import annotations
 
 from shutil import copyfileobj
 from typing import TYPE_CHECKING
+from urllib.request import Request
 from urllib.request import urlopen
 from zipfile import ZipFile
 import tarfile
 
 if TYPE_CHECKING:
+    from http.client import HTTPResponse
     from pathlib import Path
 
 __all__ = [
     'download_file',
     'extract_archive',
+    'http_request',
 ]
+
+USER_AGENT = 'Sublime Text lsp_utils'
+TIMEOUT = 60
+
+
+def http_request(url: str, *, method: str = 'GET') -> HTTPResponse:
+    """Send an HTTP request with the User-Agent of lsp_utils and a timeout. Use the response as a context manager."""
+    request = Request(url, headers={'User-Agent': USER_AGENT}, method=method)  # ruff: ignore[suspicious-url-open-usage]
+    return urlopen(request, timeout=TIMEOUT)  # ruff: ignore[suspicious-url-open-usage]
 
 
 def download_file(url: str, target_path: Path) -> None:
     """Download given URL to the specified target file path."""
-    with urlopen(url) as response, target_path.open('wb') as out_file:  # ruff: ignore[suspicious-url-open-usage]
+    with http_request(url) as response, target_path.open('wb') as out_file:
         copyfileobj(response, out_file)
 
 
@@ -32,10 +44,10 @@ def extract_archive(archive_file: Path, target_directory: Path) -> Path | None:
              If there is no single parent then returns `None` (means that files are directly under `target_directory`).
     """
     archive_name = archive_file.name
-    if archive_name.endswith('.zip'):
+    if archive_name.endswith(('.zip', '.vsix')):
         with ZipFile(archive_file) as archive:
             return extract_files_from_archive(archive, target_directory)
-    elif archive_name.endswith(('.tar.gz', 'tgz', '.tar.bz2', '.tar.xz')):
+    elif archive_name.endswith(('.tar.gz', '.tgz', '.tar.bz2', '.tar.xz')):
         with tarfile.open(archive_file, 'r:*') as archive:
             return extract_files_from_archive(archive, target_directory)
     else:
