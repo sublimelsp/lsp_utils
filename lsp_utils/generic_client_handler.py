@@ -20,18 +20,16 @@ __all__ = ['GenericClientHandler']
 
 
 class GenericClientHandler(ClientHandler):
-    """An generic implementation of an LSP plugin handler."""
+    """A generic implementation of an LSP plugin handler."""
 
     package_name: str = ''
     """
     The name of the released package. Also used for the name of the LSP client and for reading package settings.
 
-    This name must be set and must match the basename of the corresponding `*.sublime-settings` file.
+    This name is required and must match the basename of the corresponding `*.sublime-settings` file.
     It's also used as a directory name for package storage when implementing a server resource interface.
-    Recommended to use `__package__` value fo this one. If you need to override handler name in the UI,
+    Recommended to use `__package__` value for this one. If you need to override handler name in the UI,
     override :meth:`get_displayed_name()` also.
-
-    :required: Yes
     """
 
     # --- ClientHandler handlers --------------------------------------------------------------------------------------
@@ -39,6 +37,13 @@ class GenericClientHandler(ClientHandler):
     @classmethod
     @override
     def setup(cls) -> None:
+        """
+        Register the plugin with LSP.
+
+        Call this from the `plugin_loaded` function of your package.
+
+        :raises Exception: If :attr:`package_name` is not set.
+        """
         if not cls.package_name:
             msg = f'ERROR: [lsp_utils] package_name is required to instantiate an instance of {cls}'
             raise Exception(msg)
@@ -47,6 +52,12 @@ class GenericClientHandler(ClientHandler):
     @classmethod
     @override
     def cleanup(cls) -> None:
+        """
+        Unregister the plugin from LSP.
+
+        Call this from the `plugin_unloaded` function of your package. Also removes the directory returned from
+        :meth:`package_storage()` if the package is being removed by Package Control.
+        """
 
         def run_async() -> None:
             if Path(cls.package_storage()).is_dir():
@@ -129,6 +140,13 @@ class GenericClientHandler(ClientHandler):
     @classmethod
     @override
     def read_settings(cls) -> tuple[sublime.Settings, str]:
+        """
+        Load the settings of the package from the `*.sublime-settings` file named after :attr:`package_name`.
+
+        Saves the settings back to the file if :meth:`on_settings_read()` returns `True`.
+
+        :returns: The settings object and the resource path of the settings file.
+        """
         filename = f"{cls.package_name}.sublime-settings"
         loaded_settings = sublime.load_settings(filename)
         changed = cls.on_settings_read(loaded_settings)

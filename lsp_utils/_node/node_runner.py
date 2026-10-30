@@ -59,6 +59,11 @@ class NodeRunner:
         return f'{self.__class__.__name__}(node: {self._node}, npm: {self._npm}, version: {self._version or None})'
 
     def install_node(self) -> None:
+        """
+        Install this Node.js runtime.
+
+        :raises Exception: If this runtime doesn't support installation, as is the case for one found on the `PATH`.
+        """
         msg = 'Not supported!'
         raise Exception(msg)
 
@@ -97,6 +102,11 @@ class NodeRunner:
         return env
 
     def check_binary_present(self) -> None:
+        """
+        Check that both the `node` and the `npm` binaries were found.
+
+        :raises NodeNotInitializedError: If either of the binaries is missing.
+        """
         if self._node is None:
             msg = '"node" binary not found'
             raise NodeNotInitializedError(msg)
@@ -105,6 +115,12 @@ class NodeRunner:
             raise NodeNotInitializedError(msg)
 
     def check_satisfies_version(self, required_node_version: NpmSpec) -> None:
+        """
+        Check that the version of this runtime satisfies the requirement.
+
+        :param required_node_version: The version specification to satisfy.
+        :raises Exception: If the version doesn't satisfy the requirement.
+        """
         node_version = self.resolve_version()
         if node_version not in required_node_version:
             msg = f'Node.js version requirement failed. Expected {required_node_version}, got {node_version}.'
@@ -164,6 +180,11 @@ class NodeRunner:
             raise Exception(msg)
 
     def npm_command(self) -> list[Path]:
+        """
+        Return the command prefix for running `npm`.
+
+        :raises NodeNotInitializedError: If the `npm` binary was not found.
+        """
         if self._npm is None:
             msg = 'Npm binary not initialized'
             raise NodeNotInitializedError(msg)
