@@ -127,6 +127,7 @@ deps = [
   "basedpyright==1.40.2",
   "ruff==0.17.2",
   "sublime-text-stubs==4213.0",
+  "typing-extensions==4.16.0",
 ]
 # Lets both tools emit GitHub Actions annotations when running in CI.
 pass_env = ["GITHUB_ACTIONS", "RUFF_OUTPUT_FORMAT"]
