@@ -16,7 +16,7 @@ dynamic = ["version"]
 [dependency-groups]
 dev = [
   "basedpyright==1.40.2",
-  "ruff==0.17.2",
+  "ruff==0.17.3",
   "sublime-lib @ git+https://github.com/SublimeText/sublime_lib@v2.2.1",
   "sublime-text-stubs==4213.0",
   "typing-extensions==4.16.0",
