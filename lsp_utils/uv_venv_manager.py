@@ -107,10 +107,16 @@ class UvVenvManager:
 
     @property
     def venv_bin_path(self) -> Path:
+        """The path to the directory with the binaries of the venv (`Scripts` on Windows, `bin` elsewhere)."""
         bin_dir = 'Scripts' if sublime.platform() == 'windows' else 'bin'
         return self.venv_path / bin_dir
 
     def install_async(self) -> None:
+        """
+        Create the venv with the dependencies from `pyproject.toml` and `uv.lock` unless it already exists.
+
+        Blocks while installing so must be called on the async thread.
+        """
         source_pyproject_path = self._source_resource_path / PYPROJECT_TOML
         source_uv_lock_path = self._source_resource_path / UV_LOCK
 

@@ -4,6 +4,7 @@
 .style.yapf export-ignore
 docs/ export-ignore
 mypy.ini export-ignore
+netlify.toml export-ignore
 pyrightconfig.json export-ignore
 renovate.json export-ignore
 scripts/ export-ignore

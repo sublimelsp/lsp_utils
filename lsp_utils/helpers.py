@@ -130,6 +130,14 @@ def decode_bytes(data: bytes) -> str:
 
 
 def rmtree_ex(path: str | Path, *, ignore_errors: bool = False) -> None:
+    """
+    Remove a directory tree like `shutil.rmtree`, including entries that `shutil.rmtree` fails to remove.
+
+    Removes read-only files and directories that can't be listed, and paths longer than 255 characters on Windows.
+
+    :param path: The directory to remove.
+    :param ignore_errors: Ignore entries that can't be removed even after granting permissions.
+    """
     # On Windows, "shutil.rmtree" will raise file not found errors when deleting a long path (>255 chars).
     # See https://stackoverflow.com/a/14076169/4643765
     # See https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation

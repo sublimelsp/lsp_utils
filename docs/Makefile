@@ -1,24 +1,17 @@
-# Minimal makefile for Sphinx documentation
+# Minimal makefile for Zensical documentation
 
-# You can set these variables from the command line.
-SOURCEDIR     = source
-BUILDDIR      = .
+ZENSICAL = uv run --no-project --python ">=3.11" --with-requirements requirements.txt zensical
 
-.PHONY: clean
+.PHONY: install build serve clean
 
 install:
-	pip3 install sphinx sphinx-rtd-theme sphinx-autodoc-typehints ghp-import
-	rm -rf source/modules
-	mkdir -p source/modules
-	cd source/modules && git clone --branch main --depth 1 -- https://github.com/sublimelsp/LSP.git
-	sed -i -E 's/sublime\.DRAW_[A-Z_]*/0/g' source/modules/LSP/plugin/core/views.py
-	sed -i -E 's/sublime\.HIDE_ON_MINIMAP/0/g' source/modules/LSP/plugin/core/views.py
+	$(ZENSICAL) --version
 
 build:
-	sphinx-build -M html "$(SOURCEDIR)" "$(BUILDDIR)"
+	$(ZENSICAL) build --clean
 
-deploy:
-	ghp-import --no-jekyll --push --force html
+serve:
+	$(ZENSICAL) serve
 
 clean:
-	rm -rf doctrees html source/modules
+	rm -rf site

@@ -11,10 +11,7 @@ dist/
 _version.py
 
 # docs build artifacts
-docs/html/
-docs/doctrees/
-docs/source/modules/
-*.doctree
+docs/site/
 
 # editor files
 *.sublime-project
