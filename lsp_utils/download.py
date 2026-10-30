@@ -104,8 +104,7 @@ def download_and_extract(
         URL = f'https://example.com/server/{VERSION}/server-{sublime.platform()}.zip'
 
         install_dir = InstallDirectory(storage_path, 'server', VERSION)
-        if install_dir.needs_installation():
-            install_dir.install(lambda path: download_and_extract(URL, path, executables=['bin/server']))
+        install_dir.install(lambda path: download_and_extract(URL, path, executables=['bin/server']))
 
     For GitHub releases, see :func:`download_and_extract_github_asset`.
 

@@ -88,24 +88,16 @@ class InstallDirectory:
     once they were last used by an earlier run of Sublime Text. Removal that fails (for example because files are
     locked on Windows) is retried during the next run.
 
-    Example of a :class:`ServerResourceInterface` implementation that downloads a server:
+    Example of an `LspPlugin` that downloads a server:
 
     .. code:: py
 
-        class MyServer(ServerResourceInterface):
-            def __init__(self, storage_path: Path) -> None:
-                self._install_dir = InstallDirectory(storage_path, 'server', SERVER_VERSION)
-                ...
-
-            def needs_installation(self) -> bool:
-                return self._install_dir.needs_installation()
-
-            def install_or_update(self) -> None:
-                self._install_dir.install(download_and_extract_server)
-
-            @property
-            def binary_path(self) -> str:
-                return str(self._install_dir.path / 'bin' / 'server')
+        class MyPlugin(LspPlugin):
+            @classmethod
+            def on_pre_start_async(cls, context: OnPreStartContext) -> None:
+                install_dir = InstallDirectory(cls.plugin_storage_path, 'server', SERVER_VERSION)
+                server_dir = install_dir.install(download_and_extract_server)
+                context.variables['server_path'] = str(server_dir / 'bin' / 'server')
     """
 
     def __init__(self, parent: Path, name: str, *hash_parts: bytes | str, legacy_dirs: Sequence[Path] = ()) -> None:
@@ -128,21 +120,11 @@ class InstallDirectory:
         """Return whether the installation into :attr:`path` has completed."""
         return (self.path / INSTALLED_MARKER_FILE).is_file()
 
-    def needs_installation(self) -> bool:
-        """
-        Return whether :meth:`install` needs to be called.
-
-        If the installation is complete, it is recorded as used instead, the same as :meth:`install` would do. Call
-        this or :meth:`install` before every start of the server so that the directory isn't removed while in use.
-        """
-        if not self.is_installed():
-            return True
-        self._use()
-        return False
-
     def install(self, installer: Callable[[Path], None]) -> Path:
         """
         Install into :attr:`path` unless already installed, and record it as used.
+
+        Call this before every start of the server so that the directory isn't removed while in use.
 
         :param installer: Called with the empty installation directory to install into. Should raise on failure.
         :returns: The path to the complete installation.

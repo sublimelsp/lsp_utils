@@ -68,10 +68,9 @@ def download_and_extract_github_asset(
         BINARY = 'server.exe' if sublime.platform() == 'windows' else 'server'
 
         install_dir = InstallDirectory(storage_path, 'server', TAG)
-        if install_dir.needs_installation():
-            install_dir.install(lambda path: download_and_extract_github_asset(
-                'owner/server', TAG, select_platform_asset(ASSETS), path, executables=[BINARY]))
-        binary_path = install_dir.path / BINARY
+        server_dir = install_dir.install(lambda path: download_and_extract_github_asset(
+            'owner/server', TAG, select_platform_asset(ASSETS), path, executables=[BINARY]))
+        binary_path = server_dir / BINARY
 
     :param repo: The repository, as `owner/name`.
     :param tag: The tag of the release.
