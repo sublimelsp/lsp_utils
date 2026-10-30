@@ -1,7 +1,7 @@
 [project]
 site_name = "lsp_utils"
 site_description = "Module with LSP-related utilities for Sublime Text"
-site_url = "https://sublimelsp.github.io/lsp_utils/"
+site_url = "https://sublime-lsp-utils.netlify.app/"
 repo_url = "https://github.com/sublimelsp/lsp_utils"
 repo_name = "sublimelsp/lsp_utils"
 edit_uri = "edit/main/docs/src/"
