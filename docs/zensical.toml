@@ -10,11 +10,8 @@ copyright = "Copyright &copy; 2020 SublimeLSP"
 nav = [
   { "Home" = "index.md" },
   { "API Documentation" = [
-    "client-handlers.md",
-    "server-resource-handlers.md",
     "nodejs.md",
     "python.md",
-    "api-handler.md",
     "utilities.md",
   ] },
 ]
