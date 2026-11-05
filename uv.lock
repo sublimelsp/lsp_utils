@@ -41,7 +41,7 @@ dev = [
     { name = "basedpyright", marker = "python_full_version >= '3.13'", specifier = "==1.40.2" },
     { name = "ruff", marker = "python_full_version >= '3.13'", specifier = "==0.17.3" },
     { name = "sublime-lib", marker = "python_full_version >= '3.13'", git = "https://github.com/SublimeText/sublime_lib?rev=v2.2.1" },
-    { name = "sublime-text-stubs", marker = "python_full_version >= '3.13'", specifier = "==4213.0" },
+    { name = "sublime-text-stubs", marker = "python_full_version >= '3.13'", specifier = "==4213.1" },
     { name = "typing-extensions", marker = "python_full_version >= '3.13'", specifier = "==4.16.0" },
 ]
 
@@ -93,11 +93,11 @@ source = { git = "https://github.com/SublimeText/sublime_lib?rev=v2.2.1#7f220c09
 
 [[package]]
 name = "sublime-text-stubs"
-version = "4213.0"
+version = "4213.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/37/c5/8f049f79b6018388a2de32c1186a47ddc41d78f6aced9295b271f86a3b88/sublime_text_stubs-4213.0.tar.gz", hash = "sha256:8b0956c89796a7c7965f679a2a18e1ff2e3cb4074271c1c238778ae9d58ac110", size = 84753, upload-time = "2026-10-25T14:54:10.96Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ba/19/6d63141554e05edb20ef98379988fb88cdce3973065d828c6fbdabe58ff0/sublime_text_stubs-4213.1.tar.gz", hash = "sha256:797a0f219846fb2dc155e585371686a407d62277c8608d09317d107f4bf53515", size = 86185, upload-time = "2026-11-05T00:38:15.271Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bb/c2/e2167df6c7196a11497e694f334ab4f5e9692ade895f2ef3327d37d4b318/sublime_text_stubs-4213.0-py3-none-any.whl", hash = "sha256:c95eb7f9f86d05b7440ba5f9977e90bfb06e8de644bf73fda3e9d2ecac2982ad", size = 37779, upload-time = "2026-10-25T14:54:09.681Z" },
+    { url = "https://files.pythonhosted.org/packages/08/c4/62427d627269109ca3d8f353d9dd17c11b97ea3fa00d7d15b2718a14d2fa/sublime_text_stubs-4213.1-py3-none-any.whl", hash = "sha256:7f30dfad8d0a85b8518d3f96757af298448b1ec0d5c8511a072b6c8a30995cee", size = 37876, upload-time = "2026-11-05T00:38:14.023Z" },
 ]
 
 [[package]]
