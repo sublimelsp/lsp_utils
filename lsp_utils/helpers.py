@@ -117,8 +117,10 @@ def run_command_async(
     thread.start()
 
 
-def run_command_ex(*cmd: str | PathLike[str], cwd: str | PathLike[str] | None = None) -> str:
-    output, error = run_command_sync(list(cmd), cwd=cwd)
+def run_command_ex(
+    *cmd: str | PathLike[str], cwd: str | PathLike[str] | None = None, env: dict[str, str] | None = None,
+) -> str:
+    output, error = run_command_sync(list(cmd), cwd=cwd, env=env)
     if error:
         raise Exception(error)
     return output
