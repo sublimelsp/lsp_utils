@@ -8,6 +8,8 @@ from LSP.plugin import ST_STORAGE_PATH
 from pathlib import Path
 from shutil import which
 from typing import final
+import certifi
+import os
 import sublime
 
 __all__ = [
@@ -80,4 +82,17 @@ class UvRunner:
 
     def run_command(self, *args: str, cwd: str) -> None:
         """Run uv with the given arguments in the `cwd` directory. Raises on failure."""
-        run_command_ex(self._uv, *args, cwd=cwd)
+        run_command_ex(self._uv, *args, cwd=cwd, remove_env=get_injected_env_vars())
+
+
+def get_injected_env_vars() -> list[str]:
+    """
+    Return the names of environment variables that Sublime Text injected and that must not be passed to uv.
+
+    When `SSL_CERT_FILE` is unset, Sublime Text sets it to its bundled certifi CA file (`certifi.where()`) for
+    plugins. uv gives that variable precedence over the user's own TLS configuration (`UV_SYSTEM_CERTS`,
+    `system-certs` in `uv.toml`), so behind a proxy that intercepts TLS with a root CA from the system store, every
+    download fails with "invalid peer certificate: UnknownIssuer". Only the injected value is dropped; a
+    `SSL_CERT_FILE` set by the user is kept.
+    """
+    return ['SSL_CERT_FILE'] if os.environ.get('SSL_CERT_FILE') == certifi.where() else []

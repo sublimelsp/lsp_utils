@@ -67,6 +67,7 @@ def run_command_sync(
     extra_env: dict[str, str] | None = None,  # merged with envs obtained from current process
     extra_paths: list[str] | None = None,
     *,
+    remove_env: Sequence[str] | None = None,  # names removed from the final envs
     shell: bool = is_windows,
 ) -> tuple[str, str | None]:
     """
@@ -81,12 +82,14 @@ def run_command_sync(
     final_env = None
     if env:
         final_env = env
-    elif extra_env or extra_paths:
+    elif extra_env or extra_paths or remove_env:
         final_env = os.environ.copy()
         if extra_env:
             final_env.update(extra_env)
         if extra_paths:
             final_env['PATH'] = prepend_to_path(final_env.get('PATH'), extra_paths)
+    if final_env is not None and remove_env:
+        final_env = {key: value for key, value in final_env.items() if key not in remove_env}
     startupinfo = None
     if is_windows:
         startupinfo = subprocess.STARTUPINFO()
@@ -117,8 +120,10 @@ def run_command_async(
     thread.start()
 
 
-def run_command_ex(*cmd: str | PathLike[str], cwd: str | PathLike[str] | None = None) -> str:
-    output, error = run_command_sync(list(cmd), cwd=cwd)
+def run_command_ex(
+    *cmd: str | PathLike[str], cwd: str | PathLike[str] | None = None, remove_env: Sequence[str] | None = None,
+) -> str:
+    output, error = run_command_sync(list(cmd), cwd=cwd, remove_env=remove_env)
     if error:
         raise Exception(error)
     return output
