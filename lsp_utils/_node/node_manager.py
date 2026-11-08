@@ -77,12 +77,7 @@ class NodeManager:
         """
         package_name = plugin_storage_path.name
         node_runner = NodeManager.resolve(package_name, node_version_requirement)
-        if hasattr(context.configuration, 'root_settings'):
-            server_path = context.configuration.root_settings.get('server_path')
-        elif hasattr(context.configuration, 'server_path'):
-            server_path = context.configuration.server_path
-        else:
-            server_path = 'auto'
+        server_path = context.configuration.root_settings.get('server_path')
         destination_server_directory = None
         if not server_path or server_path == 'auto':
             destination_server_directory = node_runner.install_versioned_project_dependencies(

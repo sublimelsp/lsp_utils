@@ -50,12 +50,7 @@ class UvVenvManager:
         :param server_binary_name: The name of the binary used to start the server within the venv's
             `scripts/bin` directory.
         """
-        if hasattr(context.configuration, 'root_settings'):
-            server_path = context.configuration.root_settings.get('server_path')
-        elif hasattr(context.configuration, 'server_path'):
-            server_path = context.configuration.server_path
-        else:
-            server_path = 'auto'
+        server_path = context.configuration.root_settings.get('server_path')
         if not server_path or server_path == 'auto':
             uv_venv_manager = UvVenvManager(plugin_storage_path, pyproject_directory_resource_path, server_binary_name)
             uv_venv_manager.install_async()
