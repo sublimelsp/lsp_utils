@@ -1,2 +1,2 @@
-mkdocstrings-python==2.0.10
-zensical==0.0.74
+mkdocstrings-python==2.0.11
+zensical==0.1.1
