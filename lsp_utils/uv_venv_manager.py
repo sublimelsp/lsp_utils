@@ -61,7 +61,10 @@ class UvVenvManager:
             context.variables['server_path'] = server_path
 
     def __init__(
-        self, plugin_storage_path: Path, pyproject_directory_resource_path: ResourcePath, server_binary_name: str,
+        self,
+        plugin_storage_path: Path,
+        pyproject_directory_resource_path: ResourcePath,
+        server_binary_name: str | None = None,
     ) -> None:
         """
         Initialize UvVenvManager.
@@ -71,7 +74,8 @@ class UvVenvManager:
             `pyproject.toml` file. Must have a `Packages/<package_name>/` prefix followed by the path to
             the directory containing `pyproject.toml` within the package.
         :param server_binary_name: The name of the binary used to start the server within the venv's
-            `scripts/bin` directory.
+            `scripts/bin` directory. Its presence is verified after installation. Can be omitted when the venv
+            doesn't provide a server binary, for example when it only carries packages such as typing stubs.
         """
         if not (pyproject_directory_resource_path / PYPROJECT_TOML).exists():
             msg = f'Expected "{pyproject_directory_resource_path / PYPROJECT_TOML}" resource not found!'
@@ -122,8 +126,10 @@ class UvVenvManager:
             if source_uv_lock_path.exists():
                 source_uv_lock_path.copy(target_path / UV_LOCK)
             self._uv.run_command('sync', '--frozen', cwd=str(target_path))
-            bin_path = self.venv_bin_path
             binary_name = self._server_binary_name
+            if binary_name is None:
+                return
+            bin_path = self.venv_bin_path
             if not (bin_path / binary_name).is_file() and not (bin_path / f'{binary_name}.exe').is_file():
                 msg = f'Expected "{binary_name}" binary not found in "{bin_path}" after installation'
                 raise RuntimeError(msg)
