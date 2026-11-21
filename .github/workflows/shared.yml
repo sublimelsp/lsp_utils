@@ -75,7 +75,8 @@ jobs:
           sudo apt update
           sudo apt install --no-install-recommends -y x11-xserver-utils
 
-      # Cloned next to the checkout, where pyright's `extraPaths` expects it.
+      # Cloned next to the checkout, where tox puts it on the type checker's path.
+      # TODO: Temporary. Remove this, and tox's commands_pre, once LSP ships its own stubs.
       - name: Clone LSP for type checking
         run: git clone --branch "${{ needs.latest_tags.outputs.lsp }}" --depth 1 https://github.com/sublimelsp/LSP.git ../LSP
 

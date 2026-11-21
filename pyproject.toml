@@ -33,32 +33,23 @@ exclude = [
   "*.lock",
 ]
 
+[tool.hatch.build.hooks.vcs]
+version-file = "lsp_utils/_version.py"
+
 [tool.hatch.version]
 source = "vcs"
 # Releases from main are tagged "X.Y.Z" (older ones "vX.Y.Z"), releases from the py38 branch "py38-X.Y.Z".
 tag-pattern = "^(?:v|py38-)?(?P<version>\\d+(?:\\.\\d+)*)$"
 
-[tool.hatch.build.hooks.vcs]
-version-file = "lsp_utils/_version.py"
-
 [tool.pyright]
-extraPaths = [
-  "..",
-]
 ignore = [
   "**/third_party/",
   "**/tests/smoke/",
 ]
 pythonVersion = "3.8"
 typeCheckingMode = "standard"
-
-# Create the .venv that editors use for type checking with `uv sync --python 3.14`. The version has to be given since
-# .python-version holds the version that Sublime Text runs the code with.
-[tool.uv]
-package = false
-
-[tool.uv.dependency-groups]
-dev = { requires-python = ">=3.13" }
+# sublime-text-stubs only provides stubs, the actual "sublime" modules exist only in Sublime Text's plugin host.
+reportMissingModuleSource = false
 
 [tool.ruff]
 line-length = 120
@@ -120,13 +111,28 @@ required-imports = ["from __future__ import annotations"]
 
 [tool.tox]
 env_list = ["py3"]
-skipsdist = true
+no_package = true
 
 [tool.tox.env_run_base]
 dependency_groups = ["dev"]
 # Lets both tools emit GitHub Actions annotations when running in CI.
 pass_env = ["GITHUB_ACTIONS", "RUFF_OUTPUT_FORMAT"]
+# Puts the parent directory on the tox venv's sys.path so that basedpyright can resolve the LSP package checked out
+# next to this one. Done here rather than through pyright's `extraPaths`, which would override the paths that editors
+# (e.g. LSP-basedpyright) configure.
+# TODO: Temporary. Remove this, and the LSP clone in the lint workflow, once LSP ships its own stubs.
+commands_pre = [
+  ["python", "-c", "import pathlib, sys; pathlib.Path(sys.argv[1], 'lsp_parent_dir.pth').write_text(sys.argv[2])", "{env_site_packages_dir}", "{tox_root}{/}.."],
+]
 commands = [
   ["basedpyright", "lsp_utils"],
   ["ruff", "check"],
 ]
+
+# Create the .venv that editors use for type checking with `uv sync --python 3.14`. The version has to be given since
+# .python-version holds the version that Sublime Text runs the code with.
+[tool.uv]
+package = false
+
+[tool.uv.dependency-groups]
+dev = { requires-python = ">=3.13" }
