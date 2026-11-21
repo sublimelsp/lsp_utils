@@ -48,6 +48,8 @@ ignore = [
 ]
 pythonVersion = "3.8"
 typeCheckingMode = "standard"
+# sublime-text-stubs only provides stubs, the actual "sublime" modules exist only in Sublime Text's plugin host.
+reportMissingModuleSource = false
 
 [tool.ruff]
 line-length = 120
