@@ -120,6 +120,7 @@ pass_env = ["GITHUB_ACTIONS", "RUFF_OUTPUT_FORMAT"]
 # Puts the parent directory on the tox venv's sys.path so that basedpyright can resolve the LSP package checked out
 # next to this one. Done here rather than through pyright's `extraPaths`, which would override the paths that editors
 # (e.g. LSP-basedpyright) configure.
+# TODO: Temporary. Remove this, and the LSP clone in the lint workflow, once LSP ships its own stubs.
 commands_pre = [
   ["python", "-c", "import pathlib, sys; pathlib.Path(sys.argv[1], 'lsp_parent_dir.pth').write_text(sys.argv[2])", "{env_site_packages_dir}", "{tox_root}{/}.."],
 ]
