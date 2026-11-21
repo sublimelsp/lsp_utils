@@ -33,32 +33,21 @@ exclude = [
   "*.lock",
 ]
 
+[tool.hatch.build.hooks.vcs]
+version-file = "lsp_utils/_version.py"
+
 [tool.hatch.version]
 source = "vcs"
 # Releases from main are tagged "X.Y.Z" (older ones "vX.Y.Z"), releases from the py38 branch "py38-X.Y.Z".
 tag-pattern = "^(?:v|py38-)?(?P<version>\\d+(?:\\.\\d+)*)$"
 
-[tool.hatch.build.hooks.vcs]
-version-file = "lsp_utils/_version.py"
-
 [tool.pyright]
-extraPaths = [
-  "..",
-]
 ignore = [
   "**/third_party/",
   "**/tests/smoke/",
 ]
 pythonVersion = "3.8"
 typeCheckingMode = "standard"
-
-# Create the .venv that editors use for type checking with `uv sync --python 3.14`. The version has to be given since
-# .python-version holds the version that Sublime Text runs the code with.
-[tool.uv]
-package = false
-
-[tool.uv.dependency-groups]
-dev = { requires-python = ">=3.13" }
 
 [tool.ruff]
 line-length = 120
@@ -120,7 +109,7 @@ required-imports = ["from __future__ import annotations"]
 
 [tool.tox]
 env_list = ["py3"]
-skipsdist = true
+no_package = true
 
 [tool.tox.env_run_base]
 dependency_groups = ["dev"]
@@ -130,3 +119,11 @@ commands = [
   ["basedpyright", "lsp_utils"],
   ["ruff", "check"],
 ]
+
+# Create the .venv that editors use for type checking with `uv sync --python 3.14`. The version has to be given since
+# .python-version holds the version that Sublime Text runs the code with.
+[tool.uv]
+package = false
+
+[tool.uv.dependency-groups]
+dev = { requires-python = ">=3.13" }
