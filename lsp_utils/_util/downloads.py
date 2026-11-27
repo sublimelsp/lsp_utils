@@ -73,17 +73,17 @@ def get_top_level_directory(names: list[str]) -> str | None:
     """
     Check if all files in a list are contained within a parent directory.
 
+    Member names starting with `./` (as produced by `tar -C dir -czf out.tar.gz .`) are treated as if that prefix
+    wasn't there and the bare `.` entry is ignored.
+
     Returns str | None: Common parent name if present.
     """
-    # Filter out directory entries and get top-level paths.
     top_levels: set[str] = set()
     for name in names:
-        # Skip empty entries
-        if not name:
-            continue
-        # Get the first component of the path
-        top_level = name.split('/')[0]
-        top_levels.add(top_level)
+        # Get the first meaningful component of the path, skipping `.` and empty components.
+        parts = [part for part in name.split('/') if part not in {'', '.'}]
+        if parts:
+            top_levels.add(parts[0])
 
     # If there's only one top-level entry, all files share a parent
     return top_levels.pop() if len(top_levels) == 1 else None
