@@ -17,7 +17,7 @@ __all__ = [
 ]
 
 
-UV_TAG = '0.13.9'
+UV_TAG = '0.13.10'
 UV_BINARY = 'uv.exe' if sublime.platform() == 'windows' else 'uv'
 UV_RUNTIME_DIR = Path(ST_STORAGE_PATH) / 'lsp_utils' / 'uv'
 UV_REPO = 'astral-sh/uv'
